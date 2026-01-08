@@ -4,18 +4,19 @@ import { auth } from "@clerk/nextjs/server";
 
 export type FormContainerProps = {
   table:
-    | "teacher"
-    | "student"
-    | "parent"
-    | "subject"
-    | "class"
-    | "lesson"
-    | "exam"
-    | "assignment"
-    | "result"
-    | "attendance"
-    | "event"
-    | "announcement";
+  | "teacher"
+  | "student"
+  // | "parent"
+  | "subject"
+  | "class"
+  | "lesson"
+  // | "exam"
+  | "assignment"
+  // | "result"
+  | "attendance"
+  | "event"
+  | "announcement"
+  | "grade";
   type: "create" | "update" | "delete";
   data?: any;
   id?: number | string;
@@ -60,15 +61,7 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
         });
         relatedData = { classes: studentClasses, grades: studentGrades };
         break;
-      case "exam":
-        const examLessons = await prisma.lesson.findMany({
-          where: {
-            ...(role === "teacher" ? { teacherId: currentUserId! } : {}),
-          },
-          select: { id: true, name: true },
-        });
-        relatedData = { lessons: examLessons };
-        break;
+
 
       default:
         break;

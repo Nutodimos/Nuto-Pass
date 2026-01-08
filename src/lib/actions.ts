@@ -3,15 +3,17 @@
 import { revalidatePath } from "next/cache";
 import {
   ClassSchema,
-  ExamSchema,
+
   StudentSchema,
   SubjectSchema,
   TeacherSchema,
+  AssignmentSchema,
+  GradeSchema,
 } from "./formValidationSchemas";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
 
-type CurrentState = { success: boolean; error: boolean };
+type CurrentState = { success: boolean; error: boolean; messages?: string[] };
 
 export const createSubject = async (
   currentState: CurrentState,
@@ -76,7 +78,7 @@ export const deleteSubject = async (
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
-    return { success: false, error: true };
+    return { success: false, error: true, messages: ["Something went wrong!"] };
   }
 };
 
@@ -131,9 +133,12 @@ export const deleteClass = async (
 
     // revalidatePath("/list/class");
     return { success: true, error: false };
-  } catch (err) {
+  } catch (err: any) {
     console.log(err);
-    return { success: false, error: true };
+    if (err.code === "P2003") {
+      return { success: false, error: true, messages: ["Start by deleting all students/lessons related to this level!"] };
+    }
+    return { success: false, error: true, messages: ["Something went wrong!"] };
   }
 };
 
@@ -142,12 +147,13 @@ export const createTeacher = async (
   data: TeacherSchema
 ) => {
   try {
-    const user = await clerkClient.users.createUser({
+    const user = await clerkClient().users.createUser({
       username: data.username,
       password: data.password,
       firstName: data.name,
       lastName: data.surname,
-      publicMetadata:{role:"teacher"}
+      publicMetadata: { role: "teacher" },
+      ...(data.email ? { emailAddress: [data.email] } : {}),
     });
 
     await prisma.teacher.create({
@@ -160,7 +166,7 @@ export const createTeacher = async (
         phone: data.phone || null,
         address: data.address,
         img: data.img || null,
-        bloodType: data.bloodType,
+        bloodType: data.bloodType || null,
         sex: data.sex,
         birthday: data.birthday,
         subjects: {
@@ -173,9 +179,10 @@ export const createTeacher = async (
 
     // revalidatePath("/list/teachers");
     return { success: true, error: false };
-  } catch (err) {
+  } catch (err: any) {
     console.log(err);
-    return { success: false, error: true };
+    const messages = err.errors?.map((e: any) => e.message) || [err.message || "Something went wrong!"];
+    return { success: false, error: true, messages };
   }
 };
 
@@ -187,7 +194,7 @@ export const updateTeacher = async (
     return { success: false, error: true };
   }
   try {
-    const user = await clerkClient.users.updateUser(data.id, {
+    const user = await clerkClient().users.updateUser(data.id, {
       username: data.username,
       ...(data.password !== "" && { password: data.password }),
       firstName: data.name,
@@ -207,7 +214,7 @@ export const updateTeacher = async (
         phone: data.phone || null,
         address: data.address,
         img: data.img || null,
-        bloodType: data.bloodType,
+        bloodType: data.bloodType || null,
         sex: data.sex,
         birthday: data.birthday,
         subjects: {
@@ -219,9 +226,10 @@ export const updateTeacher = async (
     });
     // revalidatePath("/list/teachers");
     return { success: true, error: false };
-  } catch (err) {
+  } catch (err: any) {
     console.log(err);
-    return { success: false, error: true };
+    const messages = err.errors?.map((e: any) => e.message) || [err.message || "Something went wrong!"];
+    return { success: false, error: true, messages };
   }
 };
 
@@ -231,7 +239,7 @@ export const deleteTeacher = async (
 ) => {
   const id = data.get("id") as string;
   try {
-    await clerkClient.users.deleteUser(id);
+    await clerkClient().users.deleteUser(id);
 
     await prisma.teacher.delete({
       where: {
@@ -243,7 +251,7 @@ export const deleteTeacher = async (
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
-    return { success: false, error: true };
+    return { success: false, error: true, messages: ["Something went wrong!"] };
   }
 };
 
@@ -258,16 +266,16 @@ export const createStudent = async (
       include: { _count: { select: { students: true } } },
     });
 
-    if (classItem && classItem.capacity === classItem._count.students) {
-      return { success: false, error: true };
-    }
+    // Capacity check removed
 
-    const user = await clerkClient.users.createUser({
+
+    const user = await clerkClient().users.createUser({
       username: data.username,
       password: data.password,
       firstName: data.name,
       lastName: data.surname,
-      publicMetadata:{role:"student"}
+      publicMetadata: { role: "student" },
+      ...(data.email ? { emailAddress: [data.email] } : {}),
     });
 
     await prisma.student.create({
@@ -280,20 +288,20 @@ export const createStudent = async (
         phone: data.phone || null,
         address: data.address,
         img: data.img || null,
-        bloodType: data.bloodType,
+        bloodType: data.bloodType || null,
         sex: data.sex,
         birthday: data.birthday,
         gradeId: data.gradeId,
         classId: data.classId,
-        parentId: data.parentId,
       },
     });
 
     // revalidatePath("/list/students");
     return { success: true, error: false };
-  } catch (err) {
+  } catch (err: any) {
     console.log(err);
-    return { success: false, error: true };
+    const messages = err.errors?.map((e: any) => e.message) || [err.message || "Something went wrong!"];
+    return { success: false, error: true, messages };
   }
 };
 
@@ -305,7 +313,7 @@ export const updateStudent = async (
     return { success: false, error: true };
   }
   try {
-    const user = await clerkClient.users.updateUser(data.id, {
+    const user = await clerkClient().users.updateUser(data.id, {
       username: data.username,
       ...(data.password !== "" && { password: data.password }),
       firstName: data.name,
@@ -325,19 +333,19 @@ export const updateStudent = async (
         phone: data.phone || null,
         address: data.address,
         img: data.img || null,
-        bloodType: data.bloodType,
+        bloodType: data.bloodType || null,
         sex: data.sex,
         birthday: data.birthday,
         gradeId: data.gradeId,
         classId: data.classId,
-        parentId: data.parentId,
       },
     });
     // revalidatePath("/list/students");
     return { success: true, error: false };
-  } catch (err) {
+  } catch (err: any) {
     console.log(err);
-    return { success: false, error: true };
+    const messages = err.errors?.map((e: any) => e.message) || [err.message || "Something went wrong!"];
+    return { success: false, error: true, messages };
   }
 };
 
@@ -347,7 +355,7 @@ export const deleteStudent = async (
 ) => {
   const id = data.get("id") as string;
   try {
-    await clerkClient.users.deleteUser(id);
+    await clerkClient().users.deleteUser(id);
 
     await prisma.student.delete({
       where: {
@@ -359,41 +367,26 @@ export const deleteStudent = async (
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
-    return { success: false, error: true };
+    return { success: false, error: true, messages: ["Something went wrong!"] };
   }
 };
 
-export const createExam = async (
+
+export const createAssignment = async (
   currentState: CurrentState,
-  data: ExamSchema
+  data: AssignmentSchema
 ) => {
-  // const { userId, sessionClaims } = auth();
-  // const role = (sessionClaims?.metadata as { role?: string })?.role;
-
   try {
-    // if (role === "teacher") {
-    //   const teacherLesson = await prisma.lesson.findFirst({
-    //     where: {
-    //       teacherId: userId!,
-    //       id: data.lessonId,
-    //     },
-    //   });
-
-    //   if (!teacherLesson) {
-    //     return { success: false, error: true };
-    //   }
-    // }
-
-    await prisma.exam.create({
+    await prisma.assignment.create({
       data: {
         title: data.title,
-        startTime: data.startTime,
-        endTime: data.endTime,
+        startDate: data.startDate,
+        dueDate: data.dueDate,
         lessonId: data.lessonId,
       },
     });
 
-    // revalidatePath("/list/subjects");
+    // revalidatePath("/list/assignments");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
@@ -401,40 +394,24 @@ export const createExam = async (
   }
 };
 
-export const updateExam = async (
+export const updateAssignment = async (
   currentState: CurrentState,
-  data: ExamSchema
+  data: AssignmentSchema
 ) => {
-  // const { userId, sessionClaims } = auth();
-  // const role = (sessionClaims?.metadata as { role?: string })?.role;
-
   try {
-    // if (role === "teacher") {
-    //   const teacherLesson = await prisma.lesson.findFirst({
-    //     where: {
-    //       teacherId: userId!,
-    //       id: data.lessonId,
-    //     },
-    //   });
-
-    //   if (!teacherLesson) {
-    //     return { success: false, error: true };
-    //   }
-    // }
-
-    await prisma.exam.update({
+    await prisma.assignment.update({
       where: {
         id: data.id,
       },
       data: {
         title: data.title,
-        startTime: data.startTime,
-        endTime: data.endTime,
+        startDate: data.startDate,
+        dueDate: data.dueDate,
         lessonId: data.lessonId,
       },
     });
 
-    // revalidatePath("/list/subjects");
+    // revalidatePath("/list/assignments");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
@@ -442,27 +419,127 @@ export const updateExam = async (
   }
 };
 
-export const deleteExam = async (
+export const deleteAssignment = async (
   currentState: CurrentState,
   data: FormData
 ) => {
   const id = data.get("id") as string;
-
-  // const { userId, sessionClaims } = auth();
-  // const role = (sessionClaims?.metadata as { role?: string })?.role;
-
   try {
-    await prisma.exam.delete({
+    await prisma.assignment.delete({
       where: {
         id: parseInt(id),
-        // ...(role === "teacher" ? { lesson: { teacherId: userId! } } : {}),
       },
     });
 
-    // revalidatePath("/list/subjects");
+    // revalidatePath("/list/assignments");
+    return { success: true, error: false };
+  } catch (err) {
+    console.log(err);
+    return { success: false, error: true, messages: ["Something went wrong!"] };
+  }
+};
+
+export const updateAttendance = async (
+  lessonId: number,
+  studentId: string,
+  present: boolean
+) => {
+  try {
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+    });
+
+    if (!lesson) {
+      return { success: false, error: true };
+    }
+
+    const attendance = await prisma.attendance.findFirst({
+      where: {
+        lessonId: lessonId,
+        studentId: studentId,
+      },
+    });
+
+    if (attendance) {
+      await prisma.attendance.update({
+        where: { id: attendance.id },
+        data: { present },
+      });
+    } else {
+      await prisma.attendance.create({
+        data: {
+          lessonId,
+          studentId,
+          present,
+          date: new Date(),
+        },
+      });
+    }
+
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
     return { success: false, error: true };
+  }
+};
+
+export const createGrade = async (
+  currentState: CurrentState,
+  data: GradeSchema
+) => {
+  try {
+    await prisma.grade.create({
+      data: {
+        level: data.level,
+      },
+    });
+
+    // revalidatePath("/list/levels");
+    return { success: true, error: false };
+  } catch (err) {
+    console.log(err);
+    return { success: false, error: true };
+  }
+};
+
+export const updateGrade = async (
+  currentState: CurrentState,
+  data: GradeSchema
+) => {
+  try {
+    await prisma.grade.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        level: data.level,
+      },
+    });
+
+    // revalidatePath("/list/levels");
+    return { success: true, error: false };
+  } catch (err) {
+    console.log(err);
+    return { success: false, error: true };
+  }
+};
+
+export const deleteGrade = async (
+  currentState: CurrentState,
+  data: FormData
+) => {
+  const id = data.get("id") as string;
+  try {
+    await prisma.grade.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+
+    // revalidatePath("/list/levels");
+    return { success: true, error: false };
+  } catch (err) {
+    console.log(err);
+    return { success: false, error: true, messages: ["Something went wrong!"] };
   }
 };

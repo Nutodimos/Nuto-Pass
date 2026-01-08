@@ -53,6 +53,8 @@ const TeacherForm = ({
       toast(`Teacher has been ${type === "create" ? "created" : "updated"}!`);
       setOpen(false);
       router.refresh();
+    } else if (state.error) {
+      toast.error(state.messages ? state.messages.join("\n") : "Something went wrong!");
     }
   }, [state, router, type, setOpen]);
 
@@ -68,7 +70,7 @@ const TeacherForm = ({
       </span>
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Username"
+          label="Matric No"
           name="username"
           defaultValue={data?.username}
           register={register}
@@ -183,28 +185,37 @@ const TeacherForm = ({
             </p>
           )}
         </div>
-        <CldUploadWidget
-          uploadPreset="school"
-          onSuccess={(result, { widget }) => {
-            setImg(result.info);
-            widget.close();
-          }}
-        >
-          {({ open }) => {
-            return (
-              <div
-                className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer"
-                onClick={() => open()}
-              >
-                <Image src="/upload.png" alt="" width={28} height={28} />
-                <span>Upload a photo</span>
-              </div>
-            );
-          }}
-        </CldUploadWidget>
+        {process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ? (
+          <CldUploadWidget
+            uploadPreset="school"
+            onSuccess={(result, { widget }) => {
+              setImg(result.info);
+              widget.close();
+            }}
+          >
+            {({ open }) => {
+              return (
+                <div
+                  className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer"
+                  onClick={() => open()}
+                >
+                  <Image src="/upload.png" alt="" width={28} height={28} />
+                  <span>Upload a photo</span>
+                </div>
+              );
+            }}
+          </CldUploadWidget>
+        ) : (
+          <div className="text-xs text-gray-500 flex items-center gap-2 cursor-not-allowed opacity-50" title="Missing Cloudinary Key">
+            <Image src="/upload.png" alt="" width={28} height={28} />
+            <span>Upload a photo (Disabled)</span>
+          </div>
+        )}
       </div>
       {state.error && (
-        <span className="text-red-500">Something went wrong!</span>
+        <span className="text-red-500">
+          {state.messages ? state.messages.join(", ") : "Something went wrong!"}
+        </span>
       )}
       <button className="bg-blue-400 text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}

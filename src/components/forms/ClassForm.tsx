@@ -37,6 +37,12 @@ const ClassForm = ({
     formState: { errors },
   } = useForm<ClassSchema>({
     resolver: zodResolver(classSchema),
+    defaultValues: {
+      gradeId: data?.gradeId || relatedData?.grades?.[0]?.id,
+      supervisorId: data?.supervisorId || relatedData?.teachers?.[0]?.id,
+      name: data?.name || "",
+      id: data?.id,
+    }
   });
 
   // AFTER REACT 19 IT'LL BE USEACTIONSTATE
@@ -58,7 +64,7 @@ const ClassForm = ({
 
   useEffect(() => {
     if (state.success) {
-      toast(`Subject has been ${type === "create" ? "created" : "updated"}!`);
+      toast(`Level has been ${type === "create" ? "created" : "updated"}!`);
       setOpen(false);
       router.refresh();
     }
@@ -69,24 +75,18 @@ const ClassForm = ({
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">
-        {type === "create" ? "Create a new class" : "Update the class"}
+        {type === "create" ? "Create a new Level" : "Update the Level"}
       </h1>
 
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Class name"
+          label="Level Name"
           name="name"
           defaultValue={data?.name}
           register={register}
           error={errors?.name}
         />
-        <InputField
-          label="Capacity"
-          name="capacity"
-          defaultValue={data?.capacity}
-          register={register}
-          error={errors?.capacity}
-        />
+
         {data && (
           <InputField
             label="Id"
@@ -98,7 +98,7 @@ const ClassForm = ({
           />
         )}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Supervisor</label>
+          <label className="text-xs text-gray-500">Level Advisor</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
             {...register("supervisorId")}
@@ -122,12 +122,12 @@ const ClassForm = ({
             </p>
           )}
         </div>
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
+        <div className="hidden">
           <label className="text-xs text-gray-500">Grade</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
             {...register("gradeId")}
-            defaultValue={data?.gradeId}
+            defaultValue={data?.gradeId || grades[0]?.id}
           >
             {grades.map((grade: { id: number; level: number }) => (
               <option

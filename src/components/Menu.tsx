@@ -1,4 +1,5 @@
 import { currentUser } from "@clerk/nextjs/server";
+import { SignOutButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -14,9 +15,9 @@ const menuItems = [
       },
       {
         icon: "/teacher.png",
-        label: "Teachers",
-        href: "/list/teachers",
-        visible: ["admin", "teacher"],
+        label: "Lecturers",
+        href: "/list/lecturers",
+        visible: ["admin", "student"],
       },
       {
         icon: "/student.png",
@@ -24,22 +25,17 @@ const menuItems = [
         href: "/list/students",
         visible: ["admin", "teacher"],
       },
-      {
-        icon: "/parent.png",
-        label: "Parents",
-        href: "/list/parents",
-        visible: ["admin", "teacher"],
-      },
+
       {
         icon: "/subject.png",
-        label: "Subjects",
-        href: "/list/subjects",
+        label: "Courses",
+        href: "/list/courses",
         visible: ["admin"],
       },
       {
         icon: "/class.png",
-        label: "Classes",
-        href: "/list/classes",
+        label: "Levels",
+        href: "/list/levels",
         visible: ["admin", "teacher"],
       },
       {
@@ -48,24 +44,14 @@ const menuItems = [
         href: "/list/lessons",
         visible: ["admin", "teacher"],
       },
-      {
-        icon: "/exam.png",
-        label: "Exams",
-        href: "/list/exams",
-        visible: ["admin", "teacher", "student", "parent"],
-      },
+
       {
         icon: "/assignment.png",
         label: "Assignments",
         href: "/list/assignments",
         visible: ["admin", "teacher", "student", "parent"],
       },
-      {
-        icon: "/result.png",
-        label: "Results",
-        href: "/list/results",
-        visible: ["admin", "teacher", "student", "parent"],
-      },
+
       {
         icon: "/attendance.png",
         label: "Attendance",
@@ -129,6 +115,16 @@ const Menu = async () => {
           </span>
           {i.items.map((item) => {
             if (item.visible.includes(role)) {
+              if (item.label === "Logout") {
+                return (
+                  <SignOutButton key={item.label}>
+                    <span className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-lamaSkyLight cursor-pointer">
+                      <Image src={item.icon} alt="" width={20} height={20} />
+                      <span className="hidden lg:block">{item.label}</span>
+                    </span>
+                  </SignOutButton>
+                );
+              }
               return (
                 <Link
                   href={item.href}

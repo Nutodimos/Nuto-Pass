@@ -36,6 +36,7 @@ const StudentForm = ({
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<StudentSchema>({
     resolver: zodResolver(studentSchema),
@@ -64,6 +65,8 @@ const StudentForm = ({
       toast(`Student has been ${type === "create" ? "created" : "updated"}!`);
       setOpen(false);
       router.refresh();
+    } else if (state.error) {
+      toast.error(state.messages ? state.messages.join("\n") : "Something went wrong!");
     }
   }, [state, router, type, setOpen]);
 
@@ -79,7 +82,7 @@ const StudentForm = ({
       </span>
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Username"
+          label="Matric No"
           name="username"
           defaultValue={data?.username}
           register={register}
@@ -104,25 +107,32 @@ const StudentForm = ({
       <span className="text-xs text-gray-400 font-medium">
         Personal Information
       </span>
-      <CldUploadWidget
-        uploadPreset="school"
-        onSuccess={(result, { widget }) => {
-          setImg(result.info);
-          widget.close();
-        }}
-      >
-        {({ open }) => {
-          return (
-            <div
-              className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer"
-              onClick={() => open()}
-            >
-              <Image src="/upload.png" alt="" width={28} height={28} />
-              <span>Upload a photo</span>
-            </div>
-          );
-        }}
-      </CldUploadWidget>
+      {process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ? (
+        <CldUploadWidget
+          uploadPreset="school"
+          onSuccess={(result, { widget }) => {
+            setImg(result.info);
+            widget.close();
+          }}
+        >
+          {({ open }) => {
+            return (
+              <div
+                className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer"
+                onClick={() => open()}
+              >
+                <Image src="/upload.png" alt="" width={28} height={28} />
+                <span>Upload a photo</span>
+              </div>
+            );
+          }}
+        </CldUploadWidget>
+      ) : (
+        <div className="text-xs text-gray-500 flex items-center gap-2 cursor-not-allowed opacity-50" title="Missing Cloudinary Key">
+          <Image src="/upload.png" alt="" width={28} height={28} />
+          <span>Upload a photo (Disabled)</span>
+        </div>
+      )}
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
           label="First Name"
@@ -167,13 +177,7 @@ const StudentForm = ({
           error={errors.birthday}
           type="date"
         />
-        <InputField
-          label="Parent Id"
-          name="parentId"
-          defaultValue={data?.parentId}
-          register={register}
-          error={errors.parentId}
-        />
+
         {data && (
           <InputField
             label="Id"
@@ -200,7 +204,7 @@ const StudentForm = ({
             </p>
           )}
         </div>
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
+        <div className="flex flex-col gap-2 w-full md:w-1/4 hidden">
           <label className="text-xs text-gray-500">Grade</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
@@ -220,11 +224,19 @@ const StudentForm = ({
           )}
         </div>
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Class</label>
+          <label className="text-xs text-gray-500">Level</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
             {...register("classId")}
             defaultValue={data?.classId}
+            onChange={(e) => {
+              const selectedClassId = parseInt(e.target.value);
+              // We need to cast classes to any because TS doesn't know about gradeId property
+              const selectedClass = (classes as any[]).find((c) => c.id === selectedClassId);
+              if (selectedClass) {
+                setValue("gradeId", selectedClass.gradeId);
+              }
+            }}
           >
             {classes.map(
               (classItem: {
@@ -232,11 +244,10 @@ const StudentForm = ({
                 name: string;
                 capacity: number;
                 _count: { students: number };
+                gradeId: number;
               }) => (
                 <option value={classItem.id} key={classItem.id}>
-                  ({classItem.name} -{" "}
-                  {classItem._count.students + "/" + classItem.capacity}{" "}
-                  Capacity)
+                  {classItem.name}
                 </option>
               )
             )}
@@ -249,7 +260,9 @@ const StudentForm = ({
         </div>
       </div>
       {state.error && (
-        <span className="text-red-500">Something went wrong!</span>
+        <span className="text-red-500">
+          {state.messages ? state.messages.join(", ") : "Something went wrong!"}
+        </span>
       )}
       <button type="submit" className="bg-blue-400 text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}

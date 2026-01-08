@@ -4,6 +4,8 @@ import BigCalendar from "@/components/BigCalender";
 import EventCalendar from "@/components/EventCalendar";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import AttendanceCalendarContainer from "@/components/AttendanceCalendarContainer";
+import SubjectAttendanceSummary from "@/components/SubjectAttendanceSummary";
 
 const StudentPage = async () => {
   const { userId } = auth();
@@ -26,6 +28,8 @@ const StudentPage = async () => {
       </div>
       {/* RIGHT */}
       <div className="w-full xl:w-1/3 flex flex-col gap-8">
+        <AttendanceCalendarContainer studentId={userId!} />
+        <SubjectAttendanceSummary studentId={userId!} />
         <EventCalendar />
         <Announcements />
       </div>

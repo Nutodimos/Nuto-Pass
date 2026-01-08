@@ -2,6 +2,7 @@ import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
+import BiometricRegistrationButton from "@/components/BiometricRegistrationButton";
 
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
@@ -27,7 +28,7 @@ const StudentListPage = async ({
       accessor: "info",
     },
     {
-      header: "Student ID",
+      header: "Matric No",
       accessor: "studentId",
       className: "hidden md:table-cell",
     },
@@ -46,13 +47,13 @@ const StudentListPage = async ({
       accessor: "address",
       className: "hidden lg:table-cell",
     },
-    ...(role === "admin"
+    ...(role === "admin" || role === "teacher"
       ? [
-          {
-            header: "Actions",
-            accessor: "action",
-          },
-        ]
+        {
+          header: "Actions",
+          accessor: "action",
+        },
+      ]
       : []),
   ];
 
@@ -90,6 +91,9 @@ const StudentListPage = async ({
             //   <Image src="/delete.png" alt="" width={16} height={16} />
             // </button>
             <FormContainer table="student" type="delete" id={item.id} />
+          )}
+          {role === "admin" && (
+            <BiometricRegistrationButton studentId={item.id} />
           )}
         </div>
       </td>
@@ -153,7 +157,7 @@ const StudentListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && (
+            {(role === "admin" || role === "teacher") && (
               // <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               //   <Image src="/plus.png" alt="" width={14} height={14} />
               // </button>

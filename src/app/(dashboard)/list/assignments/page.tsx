@@ -25,8 +25,8 @@ const AssignmentListPage = async ({
   const { userId, sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
   const currentUserId = userId;
-  
-  
+
+
   const columns = [
     {
       header: "Subject Name",
@@ -48,14 +48,14 @@ const AssignmentListPage = async ({
     },
     ...(role === "admin" || role === "teacher"
       ? [
-          {
-            header: "Actions",
-            accessor: "action",
-          },
-        ]
+        {
+          header: "Actions",
+          accessor: "action",
+        },
+      ]
       : []),
   ];
-  
+
   const renderRow = (item: AssignmentList) => (
     <tr
       key={item.id}
@@ -131,15 +131,7 @@ const AssignmentListPage = async ({
         },
       };
       break;
-    case "parent":
-      query.lesson.class = {
-        students: {
-          some: {
-            parentId: currentUserId!,
-          },
-        },
-      };
-      break;
+
     default:
       break;
   }

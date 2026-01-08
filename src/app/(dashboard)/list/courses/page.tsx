@@ -20,7 +20,7 @@ const SubjectListPage = async ({
 
   const columns = [
     {
-      header: "Subject Name",
+      header: "Course Name",
       accessor: "name",
     },
     {
@@ -41,7 +41,7 @@ const SubjectListPage = async ({
     >
       <td className="flex items-center gap-4 p-4">{item.name}</td>
       <td className="hidden md:table-cell">
-        {item.teachers.map((teacher) => teacher.name).join(",")}
+        {item.teachers.map((teacher) => teacher.name + " " + teacher.surname).join(",")}
       </td>
       <td>
         <div className="flex items-center gap-2">
@@ -94,7 +94,7 @@ const SubjectListPage = async ({
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* TOP */}
       <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Subjects</h1>
+        <h1 className="hidden md:block text-lg font-semibold">All Courses</h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch />
           <div className="flex items-center gap-4 self-end">

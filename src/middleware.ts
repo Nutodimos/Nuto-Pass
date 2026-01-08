@@ -15,10 +15,11 @@ export default clerkMiddleware((auth, req) => {
   const { sessionClaims } = auth();
 
   const role = (sessionClaims?.metadata as { role?: string })?.role;
+  console.log(`Middleware: Path=${req.nextUrl.pathname}, Role=${role}, UserId=${auth().userId}`);
 
   for (const { matcher, allowedRoles } of matchers) {
     if (matcher(req) && !allowedRoles.includes(role!)) {
-      return NextResponse.redirect(new URL(`/${role}`, req.url));
+      return NextResponse.redirect(new URL(role ? `/${role}` : "/", req.url));
     }
   }
 });

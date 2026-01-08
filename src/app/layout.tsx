@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const inter = Inter({ subsets: ["latin"] });
+import {
+  ClerkProvider,
+} from "@clerk/nextjs";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Lama Dev School Management Dashboard",
-  description: "Next.js School Management System",
+  title: "Nutodimos Bio-Attendance",
+  description: "Fingerprint biometric attendance system",
 };
 
 export default function RootLayout({
@@ -20,8 +23,10 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={inter.className}>
-          {children} <ToastContainer position="bottom-right" theme="dark" />
+        <body className={`${inter.variable} antialiased`}>
+          {children}
+
+          <ToastContainer position="bottom-right" theme="dark" />
         </body>
       </html>
     </ClerkProvider>

@@ -3,6 +3,8 @@ import BigCalendarContainer from "@/components/BigCalendarContainer";
 import FormContainer from "@/components/FormContainer";
 import Performance from "@/components/Performance";
 import StudentAttendanceCard from "@/components/StudentAttendanceCard";
+import AttendanceCalendarContainer from "@/components/AttendanceCalendarContainer";
+import SubjectAttendanceSummary from "@/components/SubjectAttendanceSummary";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { Class, Student } from "@prisma/client";
@@ -21,14 +23,14 @@ const SingleStudentPage = async ({
 
   const student:
     | (Student & {
-        class: Class & { _count: { lessons: number } };
-      })
+      class: Class & { _count: { lessons: number } };
+    })
     | null = await prisma.student.findUnique({
-    where: { id },
-    include: {
-      class: { include: { _count: { select: { lessons: true } } } },
-    },
-  });
+      where: { id },
+      include: {
+        class: { include: { _count: { select: { lessons: true } } } },
+      },
+    });
 
   if (!student) {
     return notFound();
@@ -82,6 +84,10 @@ const SingleStudentPage = async ({
                   <Image src="/phone.png" alt="" width={14} height={14} />
                   <span>{student.phone || "-"}</span>
                 </div>
+                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
+                  <Image src="/singleAttendance.png" alt="" width={14} height={14} />
+                  <span>Matric No: {student.username}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -113,7 +119,7 @@ const SingleStudentPage = async ({
                 <h1 className="text-xl font-semibold">
                   {student.class.name.charAt(0)}th
                 </h1>
-                <span className="text-sm text-gray-400">Grade</span>
+                <span className="text-sm text-gray-400">Grade (Internal)</span>
               </div>
             </div>
             {/* CARD */}
@@ -143,7 +149,7 @@ const SingleStudentPage = async ({
               />
               <div className="">
                 <h1 className="text-xl font-semibold">{student.class.name}</h1>
-                <span className="text-sm text-gray-400">Class</span>
+                <span className="text-sm text-gray-400">Level</span>
               </div>
             </div>
           </div>
@@ -171,24 +177,22 @@ const SingleStudentPage = async ({
             >
               Student&apos;s Teachers
             </Link>
-            <Link
-              className="p-3 rounded-md bg-pink-50"
-              href={`/list/exams?classId=${student.class.id}`}
-            >
-              Student&apos;s Exams
-            </Link>
+
             <Link
               className="p-3 rounded-md bg-lamaSkyLight"
               href={`/list/assignments?classId=${student.class.id}`}
             >
               Student&apos;s Assignments
             </Link>
-            <Link
-              className="p-3 rounded-md bg-lamaYellowLight"
-              href={`/list/results?studentId=${student.id}`}
-            >
-              Student&apos;s Results
-            </Link>
+
+          </div>
+        </div>
+        <div className="w-full flex flex-col gap-4">
+          <div className="w-full bg-white p-4 rounded-md">
+            <AttendanceCalendarContainer studentId={student.id} />
+          </div>
+          <div className="w-full bg-white p-4 rounded-md">
+            <SubjectAttendanceSummary studentId={student.id} />
           </div>
         </div>
         <Performance />
