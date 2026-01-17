@@ -12,6 +12,7 @@ import {
 } from "./formValidationSchemas";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
+import { handleActionError } from "./utils";
 
 type CurrentState = { success: boolean; error: boolean; messages?: string[] };
 
@@ -32,8 +33,7 @@ export const createSubject = async (
     // revalidatePath("/list/subjects");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    return handleActionError(err);
   }
 };
 
@@ -57,8 +57,7 @@ export const updateSubject = async (
     // revalidatePath("/list/subjects");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    return handleActionError(err);
   }
 };
 
@@ -77,8 +76,7 @@ export const deleteSubject = async (
     // revalidatePath("/list/subjects");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
-    return { success: false, error: true, messages: ["Something went wrong!"] };
+    return handleActionError(err);
   }
 };
 
@@ -94,8 +92,7 @@ export const createClass = async (
     // revalidatePath("/list/class");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    return handleActionError(err);
   }
 };
 
@@ -114,8 +111,7 @@ export const updateClass = async (
     // revalidatePath("/list/class");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    return handleActionError(err);
   }
 };
 
@@ -133,12 +129,8 @@ export const deleteClass = async (
 
     // revalidatePath("/list/class");
     return { success: true, error: false };
-  } catch (err: any) {
-    console.log(err);
-    if (err.code === "P2003") {
-      return { success: false, error: true, messages: ["Start by deleting all students/lessons related to this level!"] };
-    }
-    return { success: false, error: true, messages: ["Something went wrong!"] };
+  } catch (err) {
+    return handleActionError(err);
   }
 };
 
@@ -179,10 +171,8 @@ export const createTeacher = async (
 
     // revalidatePath("/list/teachers");
     return { success: true, error: false };
-  } catch (err: any) {
-    console.log(err);
-    const messages = err.errors?.map((e: any) => e.message) || [err.message || "Something went wrong!"];
-    return { success: false, error: true, messages };
+  } catch (err) {
+    return handleActionError(err);
   }
 };
 
@@ -206,7 +196,6 @@ export const updateTeacher = async (
         id: data.id,
       },
       data: {
-        ...(data.password !== "" && { password: data.password }),
         username: data.username,
         name: data.name,
         surname: data.surname,
@@ -226,10 +215,8 @@ export const updateTeacher = async (
     });
     // revalidatePath("/list/teachers");
     return { success: true, error: false };
-  } catch (err: any) {
-    console.log(err);
-    const messages = err.errors?.map((e: any) => e.message) || [err.message || "Something went wrong!"];
-    return { success: false, error: true, messages };
+  } catch (err) {
+    return handleActionError(err);
   }
 };
 
@@ -250,8 +237,7 @@ export const deleteTeacher = async (
     // revalidatePath("/list/teachers");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
-    return { success: false, error: true, messages: ["Something went wrong!"] };
+    return handleActionError(err);
   }
 };
 
@@ -298,10 +284,8 @@ export const createStudent = async (
 
     // revalidatePath("/list/students");
     return { success: true, error: false };
-  } catch (err: any) {
-    console.log(err);
-    const messages = err.errors?.map((e: any) => e.message) || [err.message || "Something went wrong!"];
-    return { success: false, error: true, messages };
+  } catch (err) {
+    return handleActionError(err);
   }
 };
 
@@ -325,7 +309,6 @@ export const updateStudent = async (
         id: data.id,
       },
       data: {
-        ...(data.password !== "" && { password: data.password }),
         username: data.username,
         name: data.name,
         surname: data.surname,
@@ -342,10 +325,8 @@ export const updateStudent = async (
     });
     // revalidatePath("/list/students");
     return { success: true, error: false };
-  } catch (err: any) {
-    console.log(err);
-    const messages = err.errors?.map((e: any) => e.message) || [err.message || "Something went wrong!"];
-    return { success: false, error: true, messages };
+  } catch (err) {
+    return handleActionError(err);
   }
 };
 
@@ -366,8 +347,7 @@ export const deleteStudent = async (
     // revalidatePath("/list/students");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
-    return { success: false, error: true, messages: ["Something went wrong!"] };
+    return handleActionError(err);
   }
 };
 
@@ -389,8 +369,7 @@ export const createAssignment = async (
     // revalidatePath("/list/assignments");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    return handleActionError(err);
   }
 };
 
@@ -414,8 +393,7 @@ export const updateAssignment = async (
     // revalidatePath("/list/assignments");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    return handleActionError(err);
   }
 };
 
@@ -434,8 +412,7 @@ export const deleteAssignment = async (
     // revalidatePath("/list/assignments");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
-    return { success: false, error: true, messages: ["Something went wrong!"] };
+    return handleActionError(err);
   }
 };
 
@@ -497,8 +474,7 @@ export const createGrade = async (
     // revalidatePath("/list/levels");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    return handleActionError(err);
   }
 };
 
@@ -519,8 +495,7 @@ export const updateGrade = async (
     // revalidatePath("/list/levels");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    return handleActionError(err);
   }
 };
 
@@ -539,7 +514,32 @@ export const deleteGrade = async (
     // revalidatePath("/list/levels");
     return { success: true, error: false };
   } catch (err) {
+    return handleActionError(err);
+  }
+};
+
+export const updateSchoolConfig = async (
+  currentState: CurrentState,
+  formData: FormData
+) => {
+  const sessionYear = formData.get("sessionYear") as string;
+
+  if (!sessionYear) {
+    return { success: false, error: true, messages: ["Session year is required"] };
+  }
+
+  try {
+    await prisma.schoolConfig.upsert({
+      where: { key: "sessionYear" },
+      update: { value: sessionYear },
+      create: { key: "sessionYear", value: sessionYear },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/settings");
+    return { success: true, error: false };
+  } catch (err) {
     console.log(err);
-    return { success: false, error: true, messages: ["Something went wrong!"] };
+    return { success: false, error: true, messages: ["Failed to update settings"] };
   }
 };

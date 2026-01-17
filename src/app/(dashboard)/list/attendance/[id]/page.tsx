@@ -51,7 +51,7 @@ const ClassAttendancePage = async ({
         return (
             <tr
                 key={item.id}
-                className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+                className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-nutoSlate/10"
             >
                 <td className="flex items-center gap-4 p-4">
                     <Image
@@ -68,11 +68,11 @@ const ClassAttendancePage = async ({
                 </td>
                 <td className="hidden md:table-cell">{item.username}</td>
                 <td className="hidden md:table-cell">{item.biometricId || "Not Registered"}</td>
-                <td className="hidden md:table-cell font-bold text-lamaSky">{percentage}%</td>
+                <td className="hidden md:table-cell font-bold text-nutoSlate">{percentage}%</td>
                 <td>
                     <div className="flex items-center gap-2">
                         <Link href={`/list/students/${item.id}`}>
-                            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky">
+                            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-nutoSlate/20">
                                 <Image src="/view.png" alt="" width={16} height={16} />
                             </button>
                         </Link>

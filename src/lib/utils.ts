@@ -43,3 +43,37 @@ export const adjustScheduleToCurrentWeek = (
     };
   });
 };
+
+export const handleActionError = (
+  err: any
+): { success: boolean; error: true; messages: string[] } => {
+  console.log("Action Error:", err);
+
+  // Prisma Unique Constraint Violation
+  if (err.code === "P2002" && err.meta?.target) {
+    const field = err.meta.target[0];
+    const message = `${field.charAt(0).toUpperCase() + field.slice(1)
+      } already exists!`;
+    return { success: false, error: true, messages: [message] };
+  }
+
+  // Prisma Foreign Key Constraint Violation (Deletion issues)
+  if (err.code === "P2003") {
+    return {
+      success: false,
+      error: true,
+      messages: ["Cannot delete: This item is used specifically elsewhere."],
+    };
+  }
+
+  // Clerk Errors (e.g. Password validation, existing user)
+  if (err.errors && Array.isArray(err.errors)) {
+    // Collect all messages from Clerk errors
+    const messages = err.errors.map((e: any) => e.message);
+    return { success: false, error: true, messages };
+  }
+
+  // Fallback for generic errors
+  const message = err.message || "Something went wrong!";
+  return { success: false, error: true, messages: [message] };
+};

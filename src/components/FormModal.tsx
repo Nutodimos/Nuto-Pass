@@ -39,22 +39,28 @@ const deleteActionMap = {
 // import StudentForm from "./forms/StudentForm";
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
+  ssr: false,
   loading: () => <h1>Loading...</h1>,
 });
 const StudentForm = dynamic(() => import("./forms/StudentForm"), {
+  ssr: false,
   loading: () => <h1>Loading...</h1>,
 });
 const SubjectForm = dynamic(() => import("./forms/SubjectForm"), {
+  ssr: false,
   loading: () => <h1>Loading...</h1>,
 });
 const ClassForm = dynamic(() => import("./forms/ClassForm"), {
+  ssr: false,
   loading: () => <h1>Loading...</h1>,
 });
 
 const AssignmentForm = dynamic(() => import("./forms/AssignmentForm"), {
+  ssr: false,
   loading: () => <h1>Loading...</h1>,
 });
 const GradeForm = dynamic(() => import("./forms/GradeForm"), {
+  ssr: false,
   loading: () => <h1>Loading...</h1>,
 });
 // TODO: OTHER FORMS
@@ -119,10 +125,10 @@ const FormModal = ({
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
     type === "create"
-      ? "bg-lamaYellow"
+      ? "bg-nutoOrange"
       : type === "update"
-        ? "bg-lamaSky"
-        : "bg-lamaPurple";
+        ? "bg-nutoSlate"
+        : "bg-red-500";
 
   const [open, setOpen] = useState(false);
 
@@ -130,7 +136,6 @@ const FormModal = ({
     const [state, formAction] = useFormState(deleteActionMap[table], {
       success: false,
       error: false,
-      messages: [],
     });
 
     const router = useRouter();
@@ -141,7 +146,7 @@ const FormModal = ({
         setOpen(false);
         router.refresh();
       } else if (state.error) {
-        toast.error(state.messages ? state.messages[0] : "Deletion failed! Ensure no related data exists.");
+        toast.error((state as any).messages ? (state as any).messages[0] : "Deletion failed! Ensure no related data exists.");
       }
     }, [state, router]);
 
@@ -151,7 +156,7 @@ const FormModal = ({
         <span className="text-center font-medium">
           All data will be lost. Are you sure you want to delete this {table}?
         </span>
-        <button className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center">
+        <button className="bg-red-600 text-white py-2 px-4 rounded-md border-none w-max self-center btn-nuto hover:bg-red-700">
           Delete
         </button>
       </form>

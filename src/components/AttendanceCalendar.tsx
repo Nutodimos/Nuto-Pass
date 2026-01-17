@@ -112,8 +112,8 @@ const AttendanceCalendar = ({
                                 <div
                                     key={record.id}
                                     className={`p-3 rounded-md border-l-4 ${record.present
-                                            ? "bg-green-50 border-green-500"
-                                            : "bg-red-50 border-red-500"
+                                        ? "bg-green-50 border-green-500"
+                                        : "bg-red-50 border-red-500"
                                         }`}
                                 >
                                     <div className="font-medium">{record.lesson.subject.name}</div>
@@ -129,7 +129,7 @@ const AttendanceCalendar = ({
                         </div>
                         <button
                             onClick={() => setIsModalOpen(false)}
-                            className="mt-4 w-full py-2 bg-lamaSky text-white rounded-md hover:bg-lamaSkyLight"
+                            className="mt-4 w-full py-2 bg-nutoSlate text-white rounded-md hover:bg-nutoSlateDark"
                         >
                             Close
                         </button>

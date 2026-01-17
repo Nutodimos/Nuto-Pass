@@ -80,29 +80,93 @@
 .rbc-event:nth-child(1) {
   background-color: #e2f8ff !important;
 }
+
 .rbc-event:nth-child(2) {
   background-color: #fefce8 !important;
 }
+
 .rbc-event:nth-child(3) {
   background-color: #f2f1ff !important;
 }
+
 .rbc-event:nth-child(4) {
   background-color: #fdf2fb !important;
 }
+
 .rbc-event:nth-child(5) {
   background-color: #e2f8ff !important;
 }
+
 .rbc-event:nth-child(6) {
   background-color: #fefce8 !important;
 }
+
 .rbc-event:nth-child(7) {
   background-color: #f2f1ff !important;
 }
+
 .rbc-event:nth-child(8) {
   background-color: #fdf2fb !important;
 }
 
-.rbc-event-label{
+.rbc-event-label {
   color: gray !important;
   margin-bottom: 5px;
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* NutoPass Button Animation */
+.btn-nuto {
+  @apply transition-all duration-200 ease-out;
+}
+
+.btn-nuto:hover {
+  @apply -translate-y-0.5 shadow-md;
+}
+
+.btn-nuto:active {
+  @apply scale-95;
 }

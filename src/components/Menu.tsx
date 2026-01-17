@@ -2,6 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { SignOutButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
+import MenuLink from "./MenuLink";
 
 const menuItems = [
   {
@@ -91,7 +92,7 @@ const menuItems = [
         icon: "/setting.png",
         label: "Settings",
         href: "/settings",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ["admin"],
       },
       {
         icon: "/logout.png",
@@ -118,23 +119,14 @@ const Menu = async () => {
               if (item.label === "Logout") {
                 return (
                   <SignOutButton key={item.label}>
-                    <span className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-lamaSkyLight cursor-pointer">
+                    <span className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-nutoOrange/10 hover:text-nutoOrange transition-colors cursor-pointer">
                       <Image src={item.icon} alt="" width={20} height={20} />
                       <span className="hidden lg:block">{item.label}</span>
                     </span>
                   </SignOutButton>
                 );
               }
-              return (
-                <Link
-                  href={item.href}
-                  key={item.label}
-                  className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-lamaSkyLight"
-                >
-                  <Image src={item.icon} alt="" width={20} height={20} />
-                  <span className="hidden lg:block">{item.label}</span>
-                </Link>
-              );
+              return <MenuLink item={item} key={item.label} />;
             }
           })}
         </div>

@@ -45,7 +45,7 @@ const AttendanceClassListPage = async ({
     const renderRow = (item: ClassList) => (
         <tr
             key={item.id}
-            className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+            className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-nutoSlate/10"
         >
             <td className="flex items-center gap-4 p-4">
                 <div className="flex flex-col">
@@ -59,7 +59,7 @@ const AttendanceClassListPage = async ({
             <td>
                 <div className="flex items-center gap-2">
                     <Link href={`/list/attendance/${item.id}`}>
-                        <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky">
+                        <button className="w-7 h-7 flex items-center justify-center rounded-full bg-nutoSlate/20">
                             <Image src="/view.png" alt="" width={16} height={16} />
                         </button>
                     </Link>
