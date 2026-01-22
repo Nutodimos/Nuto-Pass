@@ -49,6 +49,7 @@ model Teacher {
   lessons   Lesson[]
   classes   Class[]
   birthday  DateTime
+  materials Material[]
 }
 
 
@@ -73,6 +74,7 @@ model Class {
   grade         Grade          @relation(fields: [gradeId], references: [id])
   events        Event[]
   announcements Announcement[]
+  materials     Material[]
 }
 
 model Subject {
@@ -80,6 +82,7 @@ model Subject {
   name     String    @unique
   teachers Teacher[]
   lessons  Lesson[]
+  materials Material[]
 }
 
 model Lesson {
@@ -137,13 +140,27 @@ model Event {
 }
 
 model Announcement {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  date        DateTime
+  id              Int                 @id @default(autoincrement())
+  title           String
+  description     String
+  date            DateTime
+  targetAudience  String              @default("all") // "all", "students", "teachers"
 
   classId Int?
-  class   Class? @relation(fields: [classId], references: [id])
+  class   Class?            @relation(fields: [classId], references: [id])
+  reads   AnnouncementRead[]
+}
+
+model AnnouncementRead {
+  id             Int          @id @default(autoincrement())
+  announcementId Int
+  userId         String
+  readAt         DateTime     @default(now())
+
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+  @@index([userId])
 }
 
 enum UserSex {
@@ -177,4 +194,18 @@ model SchoolConfig {
   id    Int    @id @default(autoincrement())
   key   String @unique
   value String
+}
+
+model Material {
+  id        Int      @id @default(autoincrement())
+  title     String
+  filePath  String
+  createdAt DateTime @default(now())
+
+  teacherId String?
+  teacher   Teacher? @relation(fields: [teacherId], references: [id])
+  subjectId Int
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  classId   Int
+  class     Class    @relation(fields: [classId], references: [id])
 }

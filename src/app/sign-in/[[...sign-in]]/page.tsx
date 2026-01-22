@@ -96,6 +96,8 @@ const LoginPage = () => {
               <div className="relative">
                 <input
                   type="text"
+                  name="identifier"
+                  autoComplete="username"
                   value={matricNo}
                   onChange={(e) => setMatricNo(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-nutoSlate focus:border-transparent outline-none transition-all bg-gray-50 focus:bg-white"
@@ -110,6 +112,8 @@ const LoginPage = () => {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
+                  name="password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-nutoSlate focus:border-transparent outline-none transition-all bg-gray-50 focus:bg-white pr-10"

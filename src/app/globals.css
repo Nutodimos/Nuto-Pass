@@ -2,19 +2,100 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Calendar Wrapper */
 .react-calendar {
   width: 100% !important;
   border: none !important;
   font-family: "Inter", sans-serif !important;
+  background: transparent !important;
 }
 
-.react-calendar__navigation__label__labelText {
+/* Navigation (Month/Year title and arrows) */
+.react-calendar__navigation {
+  display: flex;
+  margin-bottom: 20px;
+  height: 44px;
+}
+
+.react-calendar__navigation button {
+  min-width: 44px;
+  background: none;
+  font-size: 16px;
+  font-weight: 700;
+  color: #436275; /* nutoSlate */
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+  background-color: #f1f5f9;
+}
+
+/* Weekday labels (Mon, Tue...) */
+.react-calendar__month-view__weekdays {
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.75em;
+  color: #94a3b8;
+  text-decoration: none;
+  margin-bottom: 10px;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  padding: 0.5em;
+}
+
+.react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none;
+}
+
+/* Tiles (Days) */
+.react-calendar__tile {
+  padding: 10px;
+  background: none;
+  text-align: center;
+  font-size: 14px;
   font-weight: 600;
+  border-radius: 12px;
+  color: #475569;
+  height: 40px; /* Reduced height for better fit */
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  margin: 2px 0;
+  transition: all 0.2s ease;
 }
 
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+  background-color: #f1f5f9;
+  color: #436275;
+}
+
+/* Today */
+.react-calendar__tile--now {
+  background: transparent !important;
+  border: 2px solid #FF7F50 !important; /* nutoOrange */
+  color: #FF7F50 !important;
+}
+
+.react-calendar__tile--now:enabled:hover,
+.react-calendar__tile--now:enabled:focus {
+  background: #fff7ed !important;
+}
+
+/* Active (Selected) */
 .react-calendar__tile--active {
-  background-color: #c3ebfa !important;
-  color: black !important;
+  background: #436275 !important; /* nutoSlate */
+  color: white !important;
+  box-shadow: 0 4px 12px -2px rgba(67, 98, 117, 0.4);
+}
+
+.react-calendar__tile--active:enabled:hover,
+.react-calendar__tile--active:enabled:focus {
+  background: #364e5c !important;
 }
 
 .rbc-btn-group:first-child {

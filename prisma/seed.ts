@@ -16,22 +16,23 @@ async function main() {
     },
   });
 
-  // GRADE
-  for (let i = 1; i <= 6; i++) {
+  // GRADE (Internal - corresponds to 100L, 200L, etc.)
+  const levels = [100, 200, 300, 400, 500];
+  for (const level of levels) {
     await prisma.grade.create({
       data: {
-        level: i,
+        level: level,
       },
     });
   }
 
-  // CLASS
-  for (let i = 1; i <= 6; i++) {
+  // CLASS (Level names visible to users)
+  const gradeRecords = await prisma.grade.findMany({ orderBy: { level: 'asc' } });
+  for (const grade of gradeRecords) {
     await prisma.class.create({
       data: {
-        name: `${i}A`,
-        gradeId: i,
-
+        name: `${grade.level}L`,
+        gradeId: grade.id,
       },
     });
   }
@@ -68,7 +69,7 @@ async function main() {
         bloodType: "A+",
         sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
         subjects: { connect: [{ id: (i % 10) + 1 }] },
-        classes: { connect: [{ id: (i % 6) + 1 }] },
+        classes: { connect: [{ id: (i % 5) + 1 }] },
         birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 30)),
       },
     });
@@ -87,7 +88,7 @@ async function main() {
         startTime: new Date(new Date().setHours(new Date().getHours() + 1)),
         endTime: new Date(new Date().setHours(new Date().getHours() + 3)),
         subjectId: (i % 10) + 1,
-        classId: (i % 6) + 1,
+        classId: (i % 5) + 1,
         teacherId: `teacher${(i % 15) + 1}`,
       },
     });
@@ -109,8 +110,8 @@ async function main() {
         bloodType: "O-",
         sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
 
-        gradeId: (i % 6) + 1,
-        classId: (i % 6) + 1,
+        gradeId: (i % 5) + 1,
+        classId: (i % 5) + 1,
         birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 10)),
       },
     });

@@ -58,7 +58,7 @@ const TeacherForm = ({
     }
   }, [state, router, type, setOpen]);
 
-  const { subjects } = relatedData;
+  const { subjects, classes } = relatedData;
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -165,6 +165,27 @@ const TeacherForm = ({
             </p>
           )}
         </div>
+
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-xs text-gray-500">Classes</label>
+          <select
+            multiple
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("classes")}
+            defaultValue={data?.classes}
+          >
+            {relatedData?.classes?.map((item: { id: number; name: string }) => (
+              <option value={item.id} key={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+          {errors.classes?.message && (
+            <p className="text-xs text-red-400">
+              {errors.classes.message.toString()}
+            </p>
+          )}
+        </div>
         <div className="flex flex-col gap-2 w-full md:w-1/4">
           <label className="text-xs text-gray-500">Subjects</label>
           <select
@@ -212,15 +233,17 @@ const TeacherForm = ({
           </div>
         )}
       </div>
-      {state.error && (
-        <span className="text-red-500">
-          {state.messages ? state.messages.join(", ") : "Something went wrong!"}
-        </span>
-      )}
+      {
+        state.error && (
+          <span className="text-red-500">
+            {state.messages ? state.messages.join(", ") : "Something went wrong!"}
+          </span>
+        )
+      }
       <button className="bg-blue-400 text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}
       </button>
-    </form>
+    </form >
   );
 };
 

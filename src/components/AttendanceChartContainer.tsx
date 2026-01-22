@@ -28,18 +28,18 @@ const AttendanceChartContainer = async () => {
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
   const attendanceMap: { [key: string]: { present: number; absent: number } } =
-    {
-      Mon: { present: 0, absent: 0 },
-      Tue: { present: 0, absent: 0 },
-      Wed: { present: 0, absent: 0 },
-      Thu: { present: 0, absent: 0 },
-      Fri: { present: 0, absent: 0 },
-    };
+  {
+    Mon: { present: 0, absent: 0 },
+    Tue: { present: 0, absent: 0 },
+    Wed: { present: 0, absent: 0 },
+    Thu: { present: 0, absent: 0 },
+    Fri: { present: 0, absent: 0 },
+  };
 
   resData.forEach((item) => {
     const itemDate = new Date(item.date);
     const dayOfWeek = itemDate.getDay();
-    
+
     if (dayOfWeek >= 1 && dayOfWeek <= 5) {
       const dayName = daysOfWeek[dayOfWeek - 1];
 
@@ -58,12 +58,12 @@ const AttendanceChartContainer = async () => {
   }));
 
   return (
-    <div className="bg-white rounded-lg p-4 h-full">
-      <div className="flex justify-between items-center">
-        <h1 className="text-lg font-semibold">Attendance</h1>
-        <Image src="/moreDark.png" alt="" width={20} height={20} />
+    <div className="bg-white rounded-2xl p-6 h-full shadow-lg hover:shadow-xl transition-shadow">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-xl font-bold text-slate-800">Weekly Attendance</h1>
+        <Image src="/moreDark.png" alt="" width={20} height={20} className="opacity-50 hover:opacity-100 cursor-pointer" />
       </div>
-      <AttendanceChart data={data}/>
+      <AttendanceChart data={data} />
     </div>
   );
 };

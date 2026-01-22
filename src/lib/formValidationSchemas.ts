@@ -42,6 +42,7 @@ export const teacherSchema = z.object({
   birthday: z.coerce.date({ message: "Birthday is required!" }),
   sex: z.enum(["MALE", "FEMALE"], { message: "Sex is required!" }),
   subjects: z.array(z.string()).optional(), // subject ids
+  classes: z.array(z.string()).optional(), // class ids
 });
 
 export type TeacherSchema = z.infer<typeof teacherSchema>;
@@ -95,3 +96,25 @@ export const gradeSchema = z.object({
 
 export type GradeSchema = z.infer<typeof gradeSchema>;
 
+export const announcementSchema = z.object({
+  id: z.coerce.number().optional(),
+  title: z.string().min(1, { message: "Title is required!" }),
+  description: z.string().min(1, { message: "Description is required!" }),
+  date: z.coerce.date({ message: "Date is required!" }),
+  targetAudience: z.enum(["all", "students", "teachers"], {
+    message: "Target audience is required!",
+  }),
+  classId: z.coerce.number().optional(),
+});
+
+export type AnnouncementSchema = z.infer<typeof announcementSchema>;
+
+export const materialSchema = z.object({
+  id: z.coerce.number().optional(),
+  title: z.string().min(1, { message: "Title is required!" }),
+  subjectId: z.coerce.number().min(1, { message: "Subject is required!" }),
+  classId: z.coerce.number().min(1, { message: "Level is required!" }),
+  filePath: z.string().min(1, { message: "File is required!" }),
+});
+
+export type MaterialSchema = z.infer<typeof materialSchema>;

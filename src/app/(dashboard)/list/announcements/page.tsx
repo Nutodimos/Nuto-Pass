@@ -1,146 +1,260 @@
-import FormContainer from "@/components/FormContainer";
-import Pagination from "@/components/Pagination";
-import Table from "@/components/Table";
-import TableSearch from "@/components/TableSearch";
-import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/settings";
-import { Announcement, Class, Prisma } from "@prisma/client";
-import Image from "next/image";
 import { auth } from "@clerk/nextjs/server";
+import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import Image from "next/image";
+import Link from "next/link";
+import FormContainer from "@/components/FormContainer";
+import { Megaphone, Users, GraduationCap, Globe, Plus } from "lucide-react";
 
-
-type AnnouncementList = Announcement & { class: Class };
 const AnnouncementListPage = async ({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
-
   const { userId, sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
   const currentUserId = userId;
 
-  const columns = [
-    {
-      header: "Title",
-      accessor: "title",
-    },
-    {
-      header: "Class",
-      accessor: "class",
-    },
-    {
-      header: "Date",
-      accessor: "date",
-      className: "hidden md:table-cell",
-    },
-    ...(role === "admin"
-      ? [
-        {
-          header: "Actions",
-          accessor: "action",
-        },
-      ]
-      : []),
-  ];
-
-  const renderRow = (item: AnnouncementList) => (
-    <tr
-      key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-nutoSlate/10"
-    >
-      <td className="flex items-center gap-4 p-4">{item.title}</td>
-      <td>{item.class?.name || "-"}</td>
-      <td className="hidden md:table-cell">
-        {new Intl.DateTimeFormat("en-US").format(item.date)}
-      </td>
-      <td>
-        <div className="flex items-center gap-2">
-          {role === "admin" && (
-            <>
-              <FormContainer table="announcement" type="update" data={item} />
-              <FormContainer table="announcement" type="delete" id={item.id} />
-            </>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
-  const { page, ...queryParams } = searchParams;
-
+  const { page, search, ...queryParams } = searchParams;
   const p = page ? parseInt(page) : 1;
-
-  // URL PARAMS CONDITION
 
   const query: Prisma.AnnouncementWhereInput = {};
 
-  if (queryParams) {
-    for (const [key, value] of Object.entries(queryParams)) {
-      if (value !== undefined) {
-        switch (key) {
-          case "search":
-            query.title = { contains: value, mode: "insensitive" };
-            break;
-          default:
-            break;
-        }
-      }
-    }
+  if (search) {
+    query.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+    ];
   }
 
-  // ROLE CONDITIONS
-
+  // Role-based filtering
   const roleConditions = {
     teacher: { lessons: { some: { teacherId: currentUserId! } } },
     student: { students: { some: { id: currentUserId! } } },
-
   };
 
-  query.OR = [
-    { classId: null },
-    {
-      class: roleConditions[role as keyof typeof roleConditions] || {},
-    },
+  // Filter based on target audience
+  const audienceFilter: any[] = [
+    { targetAudience: "all" },
   ];
 
-  const [data, count] = await prisma.$transaction([
-    prisma.announcement.findMany({
-      where: query,
-      include: {
-        class: true,
+  if (role === "student") {
+    audienceFilter.push({ targetAudience: "students" });
+  } else if (role === "teacher") {
+    audienceFilter.push({ targetAudience: "teachers" });
+  }
+
+  const finalQuery = {
+    ...query,
+    AND: [
+      { OR: audienceFilter },
+      {
+        OR: [
+          { classId: null },
+          { class: roleConditions[role as keyof typeof roleConditions] || {} },
+        ],
       },
-      take: ITEM_PER_PAGE,
-      skip: ITEM_PER_PAGE * (p - 1),
-    }),
-    prisma.announcement.count({ where: query }),
-  ]);
+    ],
+  };
+
+  const data = await prisma.announcement.findMany({
+    where: finalQuery,
+    orderBy: {
+      date: "desc",
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      date: true,
+      targetAudience: true,
+      classId: true,
+      class: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  const getAudienceIcon = (audience: string) => {
+    switch (audience) {
+      case "students":
+        return <GraduationCap className="w-4 h-4" />;
+      case "teachers":
+        return <Users className="w-4 h-4" />;
+      default:
+        return <Globe className="w-4 h-4" />;
+    }
+  };
+
+  const getAudienceColor = (audience: string) => {
+    switch (audience) {
+      case "students":
+        return "bg-blue-100 text-blue-600";
+      case "teachers":
+        return "bg-purple-100 text-purple-600";
+      default:
+        return "bg-green-100 text-green-600";
+    }
+  };
 
   return (
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP */}
-      <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">
-          All Announcements
-        </h1>
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <TableSearch />
-          <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-nutoOrange">
-              <Image src="/filter.png" alt="" width={14} height={14} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-nutoOrange">
-              <Image src="/sort.png" alt="" width={14} height={14} />
-            </button>
-            {role === "admin" && (
-              <FormContainer table="announcement" type="create" />
-            )}
+    <div className="bg-gradient-to-br from-slate-50 to-white p-4 rounded-md flex-1 m-4 mt-0 relative">
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-gradient-to-br from-nutoSlate to-nutoSlateDark rounded-xl shadow-lg">
+            <Megaphone className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 bg-gradient-to-r from-nutoSlate to-nutoSlateDark bg-clip-text text-transparent">
+              Announcements
+            </h1>
+            <p className="text-sm text-slate-500 flex items-center gap-1">
+              <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              {data.length} announcement{data.length !== 1 ? 's' : ''} available
+            </p>
           </div>
         </div>
       </div>
-      {/* LIST */}
-      <Table columns={columns} renderRow={renderRow} data={data} />
-      {/* PAGINATION */}
-      <Pagination page={p} count={count} />
+
+      {/* ANNOUNCEMENTS GRID */}
+      <div className="space-y-4 pb-20">
+        {data.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <Megaphone className="w-12 h-12 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-700 mb-2">No announcements yet</h3>
+            <p className="text-sm text-slate-500 mb-6 max-w-md mx-auto">
+              {role === "admin"
+                ? "Start by creating your first announcement using the button below"
+                : "Check back later for important updates and notifications"}
+            </p>
+          </div>
+        ) : (
+          data.map((announcement, index) => (
+            <div
+              key={announcement.id}
+              style={{
+                animationDelay: `${index * 50}ms`,
+              }}
+              className="border border-slate-200 rounded-2xl p-5 hover:shadow-xl hover:border-nutoSlate/30 hover:-translate-y-1 transition-all duration-300 group bg-white animate-fadeInUp"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="p-3 bg-gradient-to-br from-nutoSlate/10 to-nutoSlate/5 rounded-xl group-hover:from-nutoSlate group-hover:to-nutoSlateDark transition-all duration-300">
+                    <Megaphone className="w-5 h-5 text-nutoSlate group-hover:text-white transition-colors duration-300" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg text-slate-800 mb-2 group-hover:text-nutoSlate transition-colors">
+                      {announcement.title}
+                    </h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      {announcement.description}
+                    </p>
+                  </div>
+                </div>
+                {role === "admin" && (
+                  <div className="flex items-center gap-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <FormContainer
+                      table="announcement"
+                      type="update"
+                      data={announcement}
+                    />
+                    <FormContainer
+                      table="announcement"
+                      type="delete"
+                      id={announcement.id}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* META INFO */}
+              <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100">
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <span>
+                    {new Intl.DateTimeFormat("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }).format(announcement.date)}
+                  </span>
+                </div>
+
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${getAudienceColor(
+                    announcement.targetAudience
+                  )}`}
+                >
+                  {getAudienceIcon(announcement.targetAudience)}
+                  <span className="capitalize">{announcement.targetAudience}</span>
+                </div>
+
+                {announcement.class && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-100 text-orange-600 text-xs font-medium">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
+                    </svg>
+                    <span>{announcement.class.name}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* FLOATING ACTION BUTTON (FAB) - Only for admin */}
+      {role === "admin" && (
+        <div className="fixed bottom-8 right-8 z-50 group">
+          <div className="relative">
+            {/* Pulsing ring effect */}
+            <div className="absolute inset-0 bg-nutoOrange rounded-full animate-ping opacity-75"></div>
+
+            {/* Main FAB button */}
+            <div className="relative">
+              <FormContainer table="announcement" type="create" />
+            </div>
+
+            {/* Tooltip */}
+            <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+              <div className="bg-slate-800 text-white text-sm px-3 py-2 rounded-lg shadow-lg">
+                Create New Announcement
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                  <div className="border-8 border-transparent border-l-slate-800"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

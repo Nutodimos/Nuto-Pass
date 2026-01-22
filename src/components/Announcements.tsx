@@ -24,44 +24,32 @@ const Announcements = async () => {
   });
 
   return (
-    <div className="bg-white p-4 rounded-md">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Announcements</h1>
-        <span className="text-xs text-gray-400">View All</span>
+    <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold text-slate-800">Announcements</h1>
+        <a href="/list/announcements" className="text-sm font-medium text-nutoSlate hover:text-nutoSlateDark hover:underline">
+          View All
+        </a>
       </div>
       <div className="flex flex-col gap-4 mt-4">
-        {data[0] && (
-          <div className="bg-nutoSlate/5 rounded-md p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-medium">{data[0].title}</h2>
-              <span className="text-xs text-gray-400 bg-white rounded-md px-1 py-1">
-                {new Intl.DateTimeFormat("en-GB").format(data[0].date)}
-              </span>
+        {data.length > 0 ? (
+          data.map((announcement, index) => (
+            <div
+              key={announcement.id}
+              className={`rounded-xl p-4 border border-slate-100 hover:shadow-md transition-all duration-200 group ${index % 2 === 0 ? "bg-slate-50/50" : "bg-white"
+                }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="font-semibold text-slate-800 group-hover:text-nutoSlate transition-colors line-clamp-1">{announcement.title}</h2>
+                <span className="text-[10px] font-medium text-slate-400 bg-white border border-slate-100 px-2 py-1 rounded-full whitespace-nowrap">
+                  {new Intl.DateTimeFormat("en-GB", { month: 'short', day: 'numeric' }).format(announcement.date)}
+                </span>
+              </div>
+              <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">{announcement.description}</p>
             </div>
-            <p className="text-sm text-gray-400 mt-1">{data[0].description}</p>
-          </div>
-        )}
-        {data[1] && (
-          <div className="bg-nutoOrange/5 rounded-md p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-medium">{data[1].title}</h2>
-              <span className="text-xs text-gray-400 bg-white rounded-md px-1 py-1">
-                {new Intl.DateTimeFormat("en-GB").format(data[1].date)}
-              </span>
-            </div>
-            <p className="text-sm text-gray-400 mt-1">{data[1].description}</p>
-          </div>
-        )}
-        {data[2] && (
-          <div className="bg-gray-50 rounded-md p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-medium">{data[2].title}</h2>
-              <span className="text-xs text-gray-400 bg-white rounded-md px-1 py-1">
-                {new Intl.DateTimeFormat("en-GB").format(data[2].date)}
-              </span>
-            </div>
-            <p className="text-sm text-gray-400 mt-1">{data[2].description}</p>
-          </div>
+          ))
+        ) : (
+          <div className="text-center py-8 text-slate-400 text-sm">No announcements</div>
         )}
       </div>
     </div>

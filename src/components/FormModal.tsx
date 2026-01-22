@@ -7,6 +7,8 @@ import {
   deleteTeacher,
   deleteAssignment,
   deleteGrade,
+  deleteAnnouncement,
+  deleteMaterial,
 } from "@/lib/actions";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -29,8 +31,9 @@ const deleteActionMap = {
   // result: deleteSubject, NO RESULTS
   attendance: deleteSubject,
   event: deleteSubject,
-  announcement: deleteSubject,
+  announcement: deleteAnnouncement,
   grade: deleteGrade,
+  material: deleteMaterial,
 };
 
 // USE LAZY LOADING
@@ -60,6 +63,14 @@ const AssignmentForm = dynamic(() => import("./forms/AssignmentForm"), {
   loading: () => <h1>Loading...</h1>,
 });
 const GradeForm = dynamic(() => import("./forms/GradeForm"), {
+  ssr: false,
+  loading: () => <h1>Loading...</h1>,
+});
+const AnnouncementForm = dynamic(() => import("./forms/AnnouncementForm"), {
+  ssr: false,
+  loading: () => <h1>Loading...</h1>,
+});
+const MaterialForm = dynamic(() => import("./forms/MaterialForm"), {
   ssr: false,
   loading: () => <h1>Loading...</h1>,
 });
@@ -113,6 +124,30 @@ const forms: {
       relatedData={relatedData}
     />
   ),
+  grade: (setOpen, type, data, relatedData) => (
+    <GradeForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+  announcement: (setOpen, type, data, relatedData) => (
+    <AnnouncementForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+  material: (setOpen, type, data, relatedData) => (
+    <MaterialForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
 };
 
 const FormModal = ({
@@ -122,10 +157,10 @@ const FormModal = ({
   id,
   relatedData,
 }: FormContainerProps & { relatedData?: any }) => {
-  const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
+  const size = type === "create" ? "w-14 h-14" : "w-7 h-7";
   const bgColor =
     type === "create"
-      ? "bg-nutoOrange"
+      ? "bg-gradient-to-br from-nutoOrange to-nutoOrangeDark text-white"
       : type === "update"
         ? "bg-nutoSlate"
         : "bg-red-500";
@@ -161,7 +196,16 @@ const FormModal = ({
         </button>
       </form>
     ) : type === "create" || type === "update" ? (
-      forms[table](setOpen, type, data, relatedData)
+      forms[table] ? (
+        forms[table](setOpen, type, data, relatedData)
+      ) : (
+        <div className="p-4 text-center">
+          <p className="text-slate-600 font-medium mb-2">Form not available</p>
+          <p className="text-sm text-slate-500">
+            The form for "{table}" has not been implemented yet.
+          </p>
+        </div>
+      )
     ) : (
       "Form not found!"
     );
@@ -170,22 +214,56 @@ const FormModal = ({
   return (
     <>
       <button
-        className={`${size} flex items-center justify-center rounded-full ${bgColor}`}
+        className={`${size} flex items-center justify-center rounded-full ${bgColor} ${type === "create"
+          ? "shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+          : ""
+          }`}
         onClick={() => setOpen(true)}
       >
-        <Image src={`/${type}.png`} alt="" width={16} height={16} />
+        <Image src={`/${type}.png`} alt="" width={type === "create" ? 24 : 16} height={type === "create" ? 24 : 16} />
       </button>
       {open && (
-        <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]">
+        <div className="w-screen h-screen fixed left-0 top-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in">
+          <div
+            className="bg-white p-6 rounded-2xl relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in"
+            style={{
+              animation: "scale-in 0.3s ease-out"
+            }}
+          >
             <Form />
             <div
-              className="absolute top-4 right-4 cursor-pointer"
+              className="absolute top-4 right-4 cursor-pointer p-2 hover:bg-slate-100 rounded-full transition-colors"
               onClick={() => setOpen(false)}
             >
               <Image src="/close.png" alt="" width={14} height={14} />
             </div>
           </div>
+          <style jsx>{`
+            @keyframes scale-in {
+              from {
+                opacity: 0;
+                transform: scale(0.9);
+              }
+              to {
+                opacity: 1;
+                transform: scale(1);
+              }
+            }
+            @keyframes fade-in {
+              from {
+                opacity: 0;
+              }
+              to {
+                opacity: 1;
+              }
+            }
+            .animate-scale-in {
+              animation: scale-in 0.3s ease-out;
+            }
+            .animate-fade-in {
+              animation: fade-in 0.2s ease-out;
+            }
+          `}</style>
         </div>
       )}
     </>

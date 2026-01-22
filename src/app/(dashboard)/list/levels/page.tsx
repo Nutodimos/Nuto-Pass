@@ -49,7 +49,7 @@ const ClassListPage = async ({
       <td className="flex items-center gap-4 p-4">{item.name}</td>
 
       <td className="hidden md:table-cell">
-        {item.supervisor.name + " " + item.supervisor.surname}
+        {item.supervisor ? item.supervisor.name + " " + item.supervisor.surname : "N/A"}
       </td>
       <td>
         <div className="flex items-center gap-2">

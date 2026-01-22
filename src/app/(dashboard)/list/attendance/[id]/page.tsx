@@ -1,6 +1,7 @@
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
+import AttendancePanel from "@/components/AttendancePanel";
 import prisma from "@/lib/prisma";
 import { Student, Class, Attendance } from "@prisma/client";
 import Image from "next/image";
@@ -101,7 +102,8 @@ const ClassAttendancePage = async ({
         }
     }
 
-    const [data, count] = await prisma.$transaction([
+    // Fetch students, count, lessons, and class info in one transaction
+    const [data, count, lessons, classInfo] = await prisma.$transaction([
         prisma.student.findMany({
             where: query,
             include: {
@@ -118,20 +120,56 @@ const ClassAttendancePage = async ({
             skip: ITEM_PER_PAGE * (p - 1),
         }),
         prisma.student.count({ where: query }),
+        prisma.lesson.findMany({
+            where: {
+                classId: parseInt(id),
+            },
+            include: {
+                subject: { select: { name: true } },
+                teacher: { select: { name: true, surname: true } },
+            },
+            orderBy: [
+                { day: "asc" },
+                { startTime: "asc" },
+            ],
+        }),
+        prisma.class.findUnique({
+            where: { id: parseInt(id) },
+            select: { name: true },
+        }),
     ]);
 
-    const className = data[0]?.class?.name || "Class";
+    const className = classInfo?.name || data[0]?.class?.name || "Class";
+
+    // Transform lessons for the component
+    const formattedLessons = lessons.map(lesson => ({
+        id: lesson.id,
+        name: lesson.name,
+        day: lesson.day,
+        startTime: lesson.startTime.toISOString(),
+        endTime: lesson.endTime.toISOString(),
+        subject: lesson.subject,
+        teacher: lesson.teacher,
+    }));
 
     return (
-        <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-            <div className="flex items-center justify-between">
-                <h1 className="hidden md:block text-lg font-semibold">{className} - Attendance Overview</h1>
-                <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                    <TableSearch />
+        <div className="flex flex-col gap-6 p-4">
+            {/* Attendance Session Control Panel */}
+            <AttendancePanel lessons={formattedLessons} className={className} />
+
+            {/* Student List */}
+            <div className="bg-white p-4 rounded-xl shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-slate-800">
+                        {className} - Students ({count})
+                    </h2>
+                    <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                        <TableSearch />
+                    </div>
                 </div>
+                <Table columns={columns} renderRow={renderRow} data={data} />
+                <Pagination page={p} count={count} />
             </div>
-            <Table columns={columns} renderRow={renderRow} data={data} />
-            <Pagination page={p} count={count} />
         </div>
     );
 };
