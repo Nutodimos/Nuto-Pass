@@ -42,7 +42,6 @@ export const teacherSchema = z.object({
   birthday: z.coerce.date({ message: "Birthday is required!" }),
   sex: z.enum(["MALE", "FEMALE"], { message: "Sex is required!" }),
   subjects: z.array(z.string()).optional(), // subject ids
-  classes: z.array(z.string()).optional(), // class ids
 });
 
 export type TeacherSchema = z.infer<typeof teacherSchema>;

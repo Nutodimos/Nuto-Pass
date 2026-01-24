@@ -167,11 +167,6 @@ export const createTeacher = async (
             id: parseInt(subjectId),
           })),
         },
-        classes: {
-          connect: data.classes?.map((classId: string) => ({
-            id: parseInt(classId),
-          })),
-        },
       },
     });
 
@@ -219,11 +214,6 @@ export const updateTeacher = async (
         subjects: {
           set: data.subjects?.map((subjectId: string) => ({
             id: parseInt(subjectId),
-          })),
-        },
-        classes: {
-          set: data.classes?.map((classId: string) => ({
-            id: parseInt(classId),
           })),
         },
       },
