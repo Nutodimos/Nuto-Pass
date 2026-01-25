@@ -1,110 +1,32 @@
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
-import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { Class, Prisma, Subject, Teacher } from "@prisma/client";
+import { Users, BookOpen, GraduationCap, Mail, Phone, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
 
-type TeacherList = Teacher & { subjects: Subject[] } & { classes: Class[] };
+type TeacherWithDetails = Teacher & {
+  subjects: Subject[];
+  classes: Class[];
+  _count: { lessons: number };
+};
 
-const TeacherListPage = async ({
+const LecturersPage = async ({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
-  const columns = [
-    {
-      header: "Info",
-      accessor: "info",
-    },
-    {
-      header: "Matric No",
-      accessor: "teacherId",
-      className: "hidden md:table-cell",
-    },
-    {
-      header: "Courses",
-      accessor: "subjects",
-      className: "hidden md:table-cell",
-    },
-    {
-      header: "Level",
-      accessor: "classes",
-      className: "hidden md:table-cell",
-    },
-    {
-      header: "Phone",
-      accessor: "phone",
-      className: "hidden lg:table-cell",
-    },
-    {
-      header: "Address",
-      accessor: "address",
-      className: "hidden lg:table-cell",
-    },
-    ...(role === "admin"
-      ? [
-        {
-          header: "Actions",
-          accessor: "action",
-        },
-      ]
-      : []),
-  ];
 
-  const renderRow = (item: TeacherList) => (
-    <tr
-      key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-nutoSlate/10"
-    >
-      <td className="flex items-center gap-4 p-4">
-        <Image
-          src={item.img || "/noAvatar.png"}
-          alt=""
-          width={40}
-          height={40}
-          className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
-        />
-        <div className="flex flex-col">
-          <h3 className="font-semibold">{item.name}</h3>
-          <p className="text-xs text-gray-500">{item?.email}</p>
-        </div>
-      </td>
-      <td className="hidden md:table-cell">{item.username}</td>
-      <td className="hidden md:table-cell">
-        {item.subjects.map((subject) => subject.name).join(",")}
-      </td>
-      <td className="hidden md:table-cell">
-        {item.classes.map((classItem) => classItem.name).join(",")}
-      </td>
-      <td className="hidden md:table-cell">{item.phone}</td>
-      <td className="hidden md:table-cell">{item.address}</td>
-      <td>
-        <div className="flex items-center gap-2">
-          <Link href={`/list/lecturers/${item.id}`}>
-            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-nutoSlate/20">
-              <Image src="/view.png" alt="" width={16} height={16} />
-            </button>
-          </Link>
-          {role === "admin" && (
-            <FormContainer table="teacher" type="delete" id={item.id} />
-          )}
-        </div>
-      </td>
-    </tr>
-  );
   const { page, ...queryParams } = searchParams;
-
   const p = page ? parseInt(page) : 1;
 
   // URL PARAMS CONDITION
-
   const query: Prisma.TeacherWhereInput = {};
 
   if (queryParams) {
@@ -115,6 +37,13 @@ const TeacherListPage = async ({
             query.lessons = {
               some: {
                 classId: parseInt(value),
+              },
+            };
+            break;
+          case "subjectId":
+            query.subjects = {
+              some: {
+                id: parseInt(value),
               },
             };
             break;
@@ -134,6 +63,7 @@ const TeacherListPage = async ({
       include: {
         subjects: true,
         classes: true,
+        _count: { select: { lessons: true } },
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
@@ -142,31 +72,138 @@ const TeacherListPage = async ({
   ]);
 
   return (
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP */}
-      <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Lecturers</h1>
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <TableSearch />
-          <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-nutoOrange">
-              <Image src="/filter.png" alt="" width={14} height={14} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-nutoOrange">
-              <Image src="/sort.png" alt="" width={14} height={14} />
-            </button>
+    <div className="flex-1 p-4 flex flex-col gap-4">
+      {/* HEADER */}
+      <div className="bg-gradient-to-br from-nutoSlate to-nutoSlateDark p-6 rounded-2xl shadow-lg">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
+              <Users className="w-7 h-7 text-white" />
+            </div>
+            <div className="text-white">
+              <h1 className="text-2xl font-bold">Lecturers</h1>
+              <p className="text-white/80 text-sm">{count} lecturers available</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="bg-white/10 rounded-xl px-4 py-2">
+              <TableSearch />
+            </div>
             {role === "admin" && (
               <FormContainer table="teacher" type="create" />
             )}
           </div>
         </div>
       </div>
-      {/* LIST */}
-      <Table columns={columns} renderRow={renderRow} data={data} />
+
+      {/* LECTURERS GRID */}
+      {data.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl">
+          <Users className="w-16 h-16 text-gray-300 mb-4" />
+          <h3 className="text-lg font-medium text-gray-500">No lecturers found</h3>
+          <p className="text-sm text-gray-400">Try adjusting your search</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data.map((lecturer: TeacherWithDetails) => (
+            <div
+              key={lecturer.id}
+              className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-lg transition-all group"
+            >
+              <Link href={`/list/lecturers/${lecturer.id}`} className="block">
+                {/* Header with Avatar */}
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100">
+                    <Image
+                      src={lecturer.img || "/noAvatar.png"}
+                      alt=""
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800 group-hover:text-nutoSlate transition-colors">
+                      {lecturer.name} {lecturer.surname}
+                    </h3>
+                    <p className="text-sm text-gray-500">ID: {lecturer.username}</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-nutoSlate transition-colors" />
+                </div>
+
+                {/* Contact Info */}
+                <div className="space-y-2 mb-4">
+                  {lecturer.email && (
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Mail className="w-4 h-4 text-nutoSlate" />
+                      <span className="truncate">{lecturer.email}</span>
+                    </div>
+                  )}
+                  {lecturer.phone && (
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Phone className="w-4 h-4 text-nutoOrange" />
+                      <span>{lecturer.phone}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Courses */}
+                {lecturer.subjects.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookOpen className="w-4 h-4 text-nutoSlate" />
+                      <span className="text-xs font-medium text-gray-500">Courses</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {lecturer.subjects.slice(0, 3).map((subject) => (
+                        <span
+                          key={subject.id}
+                          className="px-2 py-1 bg-nutoSlate/10 text-nutoSlate text-xs rounded-md"
+                        >
+                          {subject.name}
+                        </span>
+                      ))}
+                      {lecturer.subjects.length > 3 && (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-md">
+                          +{lecturer.subjects.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Stats */}
+                <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                    <BookOpen className="w-4 h-4 text-nutoSlate" />
+                    <span>{lecturer.subjects.length} Courses</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                    <GraduationCap className="w-4 h-4 text-nutoOrange" />
+                    <span>{lecturer._count.lessons} Lessons</span>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Admin Actions - Outside the Link */}
+              {role === "admin" && (
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+                  <FormContainer table="teacher" type="update" data={lecturer} />
+                  <FormContainer table="teacher" type="delete" id={lecturer.id} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* PAGINATION */}
-      <Pagination page={p} count={count} />
+      <div className="bg-white rounded-2xl p-2">
+        <Pagination page={p} count={count} />
+      </div>
     </div>
   );
 };
 
-export default TeacherListPage;
+export default LecturersPage;

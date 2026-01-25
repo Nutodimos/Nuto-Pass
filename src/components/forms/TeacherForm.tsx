@@ -10,7 +10,7 @@ import { useFormState } from "react-dom";
 import { createTeacher, updateTeacher } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { CldUploadWidget } from "next-cloudinary";
+import FirebaseUploadWidget from "../FirebaseUploadWidget";
 
 const TeacherForm = ({
   type,
@@ -61,13 +61,20 @@ const TeacherForm = ({
   const { subjects, classes } = relatedData;
 
   return (
-    <form className="flex flex-col gap-8" onSubmit={onSubmit}>
-      <h1 className="text-xl font-semibold">
-        {type === "create" ? "Create a new lecturer" : "Update the lecturer"}
-      </h1>
-      <span className="text-xs text-gray-400 font-medium">
-        Authentication Information
-      </span>
+    <form className="flex flex-col gap-6" onSubmit={onSubmit}>
+      <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-nutoSlate to-nutoSlateDark flex items-center justify-center">
+          <span className="text-white font-bold">L</span>
+        </div>
+        <h1 className="text-xl font-bold text-nutoSlateDark">
+          {type === "create" ? "Create New Lecturer" : "Update Lecturer"}
+        </h1>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="w-1 h-4 rounded-full bg-nutoSlate"></div>
+        <span className="text-sm font-semibold text-nutoSlate">Authentication Information</span>
+      </div>
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
           label="Matric No"
@@ -92,9 +99,10 @@ const TeacherForm = ({
           error={errors?.password}
         />
       </div>
-      <span className="text-xs text-gray-400 font-medium">
-        Personal Information
-      </span>
+      <div className="flex items-center gap-2">
+        <div className="w-1 h-4 rounded-full bg-nutoOrange"></div>
+        <span className="text-sm font-semibold text-nutoOrange">Personal Information</span>
+      </div>
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
           label="First Name"
@@ -150,9 +158,9 @@ const TeacherForm = ({
           />
         )}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Sex</label>
+          <label className="text-sm font-medium text-nutoSlateDark">Sex</label>
           <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200"
             {...register("sex")}
             defaultValue={data?.sex}
           >
@@ -168,10 +176,10 @@ const TeacherForm = ({
 
 
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Subjects</label>
+          <label className="text-sm font-medium text-nutoSlateDark">Courses</label>
           <select
             multiple
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200 min-h-[100px]"
             {...register("subjects")}
             defaultValue={data?.subjects}
           >
@@ -187,9 +195,8 @@ const TeacherForm = ({
             </p>
           )}
         </div>
-        {process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ? (
-          <CldUploadWidget
-            uploadPreset="school"
+        {process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? (
+          <FirebaseUploadWidget
             onSuccess={(result, { widget }) => {
               setImg(result.info);
               widget.close();
@@ -198,19 +205,29 @@ const TeacherForm = ({
             {({ open }) => {
               return (
                 <div
-                  className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 hover:border-nutoSlate hover:bg-nutoSlate/5 transition-all cursor-pointer"
                   onClick={() => open()}
                 >
-                  <Image src="/upload.png" alt="" width={28} height={28} />
-                  <span>Upload a photo</span>
+                  <div className="w-10 h-10 rounded-lg bg-nutoSlate/10 flex items-center justify-center">
+                    <Image src="/upload.png" alt="" width={20} height={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Upload a photo</p>
+                    <p className="text-xs text-gray-400">Click to browse files</p>
+                  </div>
                 </div>
               );
             }}
-          </CldUploadWidget>
+          </FirebaseUploadWidget>
         ) : (
-          <div className="text-xs text-gray-500 flex items-center gap-2 cursor-not-allowed opacity-50" title="Missing Cloudinary Key">
-            <Image src="/upload.png" alt="" width={28} height={28} />
-            <span>Upload a photo (Disabled)</span>
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed" title="Missing Cloudinary Key">
+            <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+              <Image src="/upload.png" alt="" width={20} height={20} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">Upload a photo</p>
+              <p className="text-xs text-gray-400">Upload disabled</p>
+            </div>
           </div>
         )}
       </div>
@@ -221,8 +238,11 @@ const TeacherForm = ({
           </span>
         )
       }
-      <button className="bg-blue-400 text-white p-2 rounded-md">
-        {type === "create" ? "Create" : "Update"}
+      <button
+        type="submit"
+        className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-nutoSlate to-nutoSlateDark text-white font-semibold text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+      >
+        {type === "create" ? "Create Lecturer" : "Update Lecturer"}
       </button>
     </form >
   );

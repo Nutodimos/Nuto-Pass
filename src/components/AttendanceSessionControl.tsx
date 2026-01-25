@@ -12,13 +12,17 @@ import {
     Loader2,
     Fingerprint,
     Zap,
+    UserCheck,
+    UserX,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import Image from "next/image";
 
 interface AttendanceSessionControlProps {
     lessonId: number;
     lessonName: string;
     className: string;
+    totalStudents?: number;
 }
 
 interface SessionData {
@@ -41,6 +45,7 @@ const AttendanceSessionControl = ({
     lessonId,
     lessonName,
     className,
+    totalStudents = 0,
 }: AttendanceSessionControlProps) => {
     const [session, setSession] = useState<SessionData | null>(null);
     const [loading, setLoading] = useState(false);
@@ -71,6 +76,38 @@ const AttendanceSessionControl = ({
         return () => clearInterval(interval);
     }, [session]);
 
+    // Polling for attendance updates during open session
+    useEffect(() => {
+        let pollInterval: NodeJS.Timeout;
+        if (session?.status === "OPEN") {
+            pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/attendance/session/${session.id}/attendees`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.count !== attendanceCount) {
+                            setAttendanceCount(data.count);
+                            if (data.recent && data.recent.length > recentAttendees.length) {
+                                const newAttendees = data.recent.slice(0, 5);
+                                setRecentAttendees(newAttendees);
+                                // Show toast for new scan
+                                if (newAttendees[0]) {
+                                    toast.success(`✓ ${newAttendees[0].name} ${newAttendees[0].surname} checked in!`, {
+                                        position: "top-right",
+                                        autoClose: 2000,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Polling error:", error);
+                }
+            }, 3000); // Poll every 3 seconds
+        }
+        return () => clearInterval(pollInterval);
+    }, [session, attendanceCount, recentAttendees.length]);
+
     const checkExistingSession = async () => {
         try {
             const res = await fetch(`/api/attendance/session?lessonId=${lessonId}`);
@@ -97,6 +134,7 @@ const AttendanceSessionControl = ({
             if (res.ok) {
                 setSession(data.session);
                 setAttendanceCount(0);
+                setRecentAttendees([]);
                 toast.success("🎉 Attendance session started!", {
                     position: "top-center",
                     autoClose: 3000,
@@ -124,7 +162,8 @@ const AttendanceSessionControl = ({
             if (res.ok) {
                 setSession(null);
                 setElapsedTime("00:00:00");
-                toast.success("✅ Session ended successfully!", {
+                setRecentAttendees([]);
+                toast.success(`✅ Session ended! ${attendanceCount} students marked present.`, {
                     position: "top-center",
                     autoClose: 3000,
                 });
@@ -153,6 +192,8 @@ const AttendanceSessionControl = ({
         );
     }
 
+    const absentCount = totalStudents - attendanceCount;
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -163,8 +204,8 @@ const AttendanceSessionControl = ({
             {/* Main Control Card */}
             <div
                 className={`relative rounded-2xl p-6 shadow-2xl transition-all duration-500 ${session?.status === "OPEN"
-                        ? "bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800"
-                        : "bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950"
+                    ? "bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800"
+                    : "bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950"
                     }`}
             >
                 {/* Animated Background Pattern */}
@@ -182,8 +223,8 @@ const AttendanceSessionControl = ({
                                 animate={session?.status === "OPEN" ? { scale: [1, 1.2, 1] } : {}}
                                 transition={{ repeat: Infinity, duration: 2 }}
                                 className={`p-3 rounded-xl ${session?.status === "OPEN"
-                                        ? "bg-white/20 text-white"
-                                        : "bg-slate-700 text-slate-400"
+                                    ? "bg-white/20 text-white"
+                                    : "bg-slate-700 text-slate-400"
                                     }`}
                             >
                                 <Fingerprint className="w-6 h-6" />
@@ -214,13 +255,13 @@ const AttendanceSessionControl = ({
                         </AnimatePresence>
                     </div>
 
-                    {/* Stats Row */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
+                    {/* Stats Row - Now 3 columns */}
+                    <div className={`grid gap-4 mb-6 ${session?.status === "OPEN" ? "grid-cols-3" : "grid-cols-2"}`}>
                         <motion.div
                             whileHover={{ scale: 1.02 }}
                             className={`p-4 rounded-xl backdrop-blur-sm ${session?.status === "OPEN"
-                                    ? "bg-white/20"
-                                    : "bg-slate-700/50"
+                                ? "bg-white/20"
+                                : "bg-slate-700/50"
                                 }`}
                         >
                             <div className="flex items-center gap-2 text-white/70 mb-1">
@@ -233,17 +274,77 @@ const AttendanceSessionControl = ({
                         <motion.div
                             whileHover={{ scale: 1.02 }}
                             className={`p-4 rounded-xl backdrop-blur-sm ${session?.status === "OPEN"
-                                    ? "bg-white/20"
-                                    : "bg-slate-700/50"
+                                ? "bg-white/20"
+                                : "bg-slate-700/50"
                                 }`}
                         >
                             <div className="flex items-center gap-2 text-white/70 mb-1">
-                                <Users className="w-4 h-4" />
-                                <span className="text-xs uppercase tracking-wide">Scanned</span>
+                                <UserCheck className="w-4 h-4" />
+                                <span className="text-xs uppercase tracking-wide">Present</span>
                             </div>
                             <p className="text-2xl font-bold text-white">{attendanceCount}</p>
                         </motion.div>
+
+                        {/* Absent counter (only during active session) */}
+                        {session?.status === "OPEN" && totalStudents > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                whileHover={{ scale: 1.02 }}
+                                className="p-4 rounded-xl backdrop-blur-sm bg-red-500/20"
+                            >
+                                <div className="flex items-center gap-2 text-white/70 mb-1">
+                                    <UserX className="w-4 h-4" />
+                                    <span className="text-xs uppercase tracking-wide">Absent</span>
+                                </div>
+                                <p className="text-2xl font-bold text-white">{absentCount}</p>
+                            </motion.div>
+                        )}
                     </div>
+
+                    {/* Live Attendance Feed (only during active session) */}
+                    <AnimatePresence>
+                        {session?.status === "OPEN" && recentAttendees.length > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="mb-6"
+                            >
+                                <div className="flex items-center gap-2 text-white/70 mb-3">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    <span className="text-xs uppercase tracking-wide">Recent Check-ins</span>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {recentAttendees.map((attendee, index) => (
+                                        <motion.div
+                                            key={attendee.id}
+                                            initial={{ opacity: 0, scale: 0.5, x: -20 }}
+                                            animate={{ opacity: 1, scale: 1, x: 0 }}
+                                            transition={{ delay: index * 0.1 }}
+                                            className="flex items-center gap-2 px-3 py-2 bg-white/20 backdrop-blur-sm rounded-full"
+                                        >
+                                            <div className="w-6 h-6 rounded-full bg-white/30 overflow-hidden">
+                                                <Image
+                                                    src={attendee.img || "/noAvatar.png"}
+                                                    alt=""
+                                                    width={24}
+                                                    height={24}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <span className="text-sm text-white font-medium">
+                                                {attendee.name} {attendee.surname.charAt(0)}.
+                                            </span>
+                                            {index === 0 && (
+                                                <span className="text-xs text-emerald-300">Just now</span>
+                                            )}
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     {/* Action Button */}
                     <motion.button
@@ -252,10 +353,10 @@ const AttendanceSessionControl = ({
                         onClick={session?.status === "OPEN" ? endSession : startSession}
                         disabled={loading}
                         className={`w-full py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 ${loading
-                                ? "bg-slate-600 cursor-not-allowed"
-                                : session?.status === "OPEN"
-                                    ? "bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-lg shadow-red-500/30"
-                                    : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/30"
+                            ? "bg-slate-600 cursor-not-allowed"
+                            : session?.status === "OPEN"
+                                ? "bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-lg shadow-red-500/30"
+                                : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/30"
                             }`}
                     >
                         {loading ? (

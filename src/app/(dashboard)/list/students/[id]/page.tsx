@@ -1,17 +1,16 @@
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import FormContainer from "@/components/FormContainer";
-import Performance from "@/components/Performance";
-import StudentAttendanceCard from "@/components/StudentAttendanceCard";
+import StudentPerformance from "@/components/StudentPerformance";
 import AttendanceCalendarContainer from "@/components/AttendanceCalendarContainer";
 import SubjectAttendanceSummary from "@/components/SubjectAttendanceSummary";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { Class, Student } from "@prisma/client";
+import { Class, Student, Grade } from "@prisma/client";
+import { Mail, Phone, Droplets, Calendar, BookOpen, GraduationCap, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 
 const SingleStudentPage = async ({
   params: { id },
@@ -23,12 +22,20 @@ const SingleStudentPage = async ({
 
   const student:
     | (Student & {
-      class: Class & { _count: { lessons: number } };
+      class: Class & {
+        _count: { lessons: number; students: number };
+        grade: Grade;
+      };
     })
     | null = await prisma.student.findUnique({
       where: { id },
       include: {
-        class: { include: { _count: { select: { lessons: true } } } },
+        class: {
+          include: {
+            _count: { select: { lessons: true, students: true } },
+            grade: true,
+          }
+        },
       },
     });
 
@@ -36,166 +43,188 @@ const SingleStudentPage = async ({
     return notFound();
   }
 
+  // Get attendance stats
+  const [totalAttendances, presentAttendances] = await prisma.$transaction([
+    prisma.attendance.count({ where: { studentId: id } }),
+    prisma.attendance.count({ where: { studentId: id, present: true } }),
+  ]);
+
+  const attendanceRate = totalAttendances > 0
+    ? Math.round((presentAttendances / totalAttendances) * 100)
+    : 0;
+
   return (
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
       {/* LEFT */}
-      <div className="w-full xl:w-2/3">
-        {/* TOP */}
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* USER INFO CARD */}
-          <div className="bg-nutoSlate/10 py-6 px-4 rounded-md flex-1 flex gap-4">
-            <div className="w-1/3">
-              <Image
-                src={student.img || "/noAvatar.png"}
-                alt=""
-                width={144}
-                height={144}
-                className="w-36 h-36 rounded-full object-cover"
-              />
+      <div className="w-full xl:w-2/3 flex flex-col gap-4">
+        {/* PROFILE CARD - Modern Nuto Theme */}
+        <div className="bg-gradient-to-br from-nutoSlate to-nutoSlateDark p-6 rounded-2xl shadow-lg">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Avatar */}
+            <div className="flex-shrink-0">
+              <div className="w-28 h-28 rounded-2xl overflow-hidden bg-white/20 p-1">
+                <Image
+                  src={student.img || "/noAvatar.png"}
+                  alt=""
+                  width={112}
+                  height={112}
+                  className="w-full h-full rounded-xl object-cover bg-white"
+                />
+              </div>
             </div>
-            <div className="w-2/3 flex flex-col justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <h1 className="text-xl font-semibold">
-                  {student.name + " " + student.surname}
+
+            {/* Info */}
+            <div className="flex-1 text-white">
+              <div className="flex items-center gap-3 mb-4">
+                <h1 className="text-2xl font-bold">
+                  {student.name} {student.surname}
                 </h1>
                 {role === "admin" && (
                   <FormContainer table="student" type="update" data={student} />
                 )}
               </div>
-              <p className="text-sm text-gray-500">
-                Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-              </p>
-              <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/blood.png" alt="" width={14} height={14} />
-                  <span>{student.bloodType}</span>
+
+              {/* Contact Info Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex items-center gap-2 text-sm text-white/90">
+                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                    <Mail className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="truncate">{student.email || "-"}</span>
                 </div>
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/date.png" alt="" width={14} height={14} />
+                <div className="flex items-center gap-2 text-sm text-white/90">
+                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                    <Phone className="w-4 h-4 text-white" />
+                  </div>
+                  <span>{student.phone || "-"}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-white/90">
+                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                    <Droplets className="w-4 h-4 text-white" />
+                  </div>
+                  <span>{student.bloodType || "-"}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-white/90">
+                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                    <Calendar className="w-4 h-4 text-white" />
+                  </div>
                   <span>
                     {new Intl.DateTimeFormat("en-GB").format(student.birthday)}
                   </span>
                 </div>
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/mail.png" alt="" width={14} height={14} />
-                  <span>{student.email || "-"}</span>
-                </div>
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/phone.png" alt="" width={14} height={14} />
-                  <span>{student.phone || "-"}</span>
-                </div>
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/singleAttendance.png" alt="" width={14} height={14} />
-                  <span>Matric No: {student.username}</span>
-                </div>
               </div>
-            </div>
-          </div>
-          {/* SMALL CARDS */}
-          <div className="flex-1 flex gap-4 justify-between flex-wrap">
-            {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleAttendance.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <Suspense fallback="loading...">
-                <StudentAttendanceCard id={student.id} />
-              </Suspense>
-            </div>
-            {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleBranch.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <div className="">
-                <h1 className="text-xl font-semibold">
-                  {student.class.name.charAt(0)}th
-                </h1>
-                <span className="text-sm text-gray-400">Grade (Internal)</span>
-              </div>
-            </div>
-            {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleLesson.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <div className="">
-                <h1 className="text-xl font-semibold">
-                  {student.class._count.lessons}
-                </h1>
-                <span className="text-sm text-gray-400">Lessons</span>
-              </div>
-            </div>
-            {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleClass.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <div className="">
-                <h1 className="text-xl font-semibold">{student.class.name}</h1>
-                <span className="text-sm text-gray-400">Level</span>
+
+              {/* Matric Number */}
+              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-lg">
+                <GraduationCap className="w-4 h-4" />
+                <span className="text-sm font-medium">Matric No: {student.username}</span>
               </div>
             </div>
           </div>
         </div>
-        {/* BOTTOM */}
-        <div className="mt-4 bg-white rounded-md p-4 h-[800px]">
-          <h1>Student&apos;s Schedule</h1>
+
+        {/* STATS CARDS */}
+        <div className="grid grid-cols-3 gap-4">
+          {/* Attendance Rate Card */}
+          <Link
+            href={`/list/attendance?studentId=${student.id}`}
+            className="bg-gradient-to-br from-nutoSlateLight/20 to-nutoSlate/10 p-5 rounded-2xl border border-nutoSlate/20 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
+          >
+            <div className="w-12 h-12 rounded-xl bg-nutoSlate flex items-center justify-center">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-nutoSlateDark">
+                {attendanceRate}%
+              </h3>
+              <p className="text-sm text-nutoSlate">Attendance</p>
+            </div>
+          </Link>
+
+          {/* Lessons Card */}
+          <Link
+            href={`/list/lessons?classId=${student.class.id}`}
+            className="bg-gradient-to-br from-nutoOrangeLight/20 to-nutoOrange/10 p-5 rounded-2xl border border-nutoOrange/20 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
+          >
+            <div className="w-12 h-12 rounded-xl bg-nutoOrange flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-nutoOrangeDark">
+                {student.class._count.lessons}
+              </h3>
+              <p className="text-sm text-nutoOrange">Lessons</p>
+            </div>
+          </Link>
+
+          {/* Class Card */}
+          <div className="bg-gradient-to-br from-nutoSlate/10 to-nutoSlateLight/10 p-5 rounded-2xl border border-nutoSlate/10 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-nutoSlateLight flex items-center justify-center">
+              <GraduationCap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-nutoSlateDark">
+                {student.class.name}
+              </h3>
+              <p className="text-sm text-nutoSlate">Level {student.class.grade.level}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* SCHEDULE */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 h-[600px]">
+          <h2 className="text-lg font-semibold text-nutoSlateDark mb-4">Schedule</h2>
           <BigCalendarContainer type="classId" id={student.class.id} />
         </div>
       </div>
+
       {/* RIGHT */}
       <div className="w-full xl:w-1/3 flex flex-col gap-4">
-        <div className="bg-white p-4 rounded-md">
-          <h1 className="text-xl font-semibold">Shortcuts</h1>
-          <div className="mt-4 flex gap-4 flex-wrap text-xs text-gray-500">
+        {/* Quick Links */}
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+          <h2 className="text-lg font-semibold text-nutoSlateDark mb-4">Quick Links</h2>
+          <div className="flex flex-wrap gap-2">
             <Link
-              className="p-3 rounded-md bg-nutoSlate/10"
+              className="px-4 py-2 rounded-xl bg-nutoSlate text-white text-sm font-medium hover:bg-nutoSlateDark transition-colors"
               href={`/list/lessons?classId=${student.class.id}`}
             >
-              Student&apos;s Lessons
+              Lessons
             </Link>
             <Link
-              className="p-3 rounded-md bg-nutoOrange/10"
+              className="px-4 py-2 rounded-xl bg-nutoOrange text-white text-sm font-medium hover:bg-nutoOrangeDark transition-colors"
               href={`/list/teachers?classId=${student.class.id}`}
             >
-              Student&apos;s Teachers
+              Teachers
             </Link>
-
             <Link
-              className="p-3 rounded-md bg-nutoSlate/10"
+              className="px-4 py-2 rounded-xl bg-nutoSlateLight text-white text-sm font-medium hover:bg-nutoSlate transition-colors"
               href={`/list/assignments?classId=${student.class.id}`}
             >
-              Student&apos;s Assignments
+              Assignments
             </Link>
+            <Link
+              className="px-4 py-2 rounded-xl bg-nutoOrangeLight text-white text-sm font-medium hover:bg-nutoOrange transition-colors"
+              href={`/list/attendance?studentId=${student.id}`}
+            >
+              Attendance
+            </Link>
+          </div>
+        </div>
 
-          </div>
+        {/* Performance */}
+        <StudentPerformance studentId={student.id} />
+
+        {/* Attendance Calendar */}
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+          <AttendanceCalendarContainer studentId={student.id} />
         </div>
-        <div className="w-full flex flex-col gap-4">
-          <div className="w-full bg-white p-4 rounded-md">
-            <AttendanceCalendarContainer studentId={student.id} />
-          </div>
-          <div className="w-full bg-white p-4 rounded-md">
-            <SubjectAttendanceSummary studentId={student.id} />
-          </div>
+
+        {/* Subject Attendance Summary */}
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+          <SubjectAttendanceSummary studentId={student.id} />
         </div>
-        <Performance />
+
+        {/* Announcements */}
         <Announcements />
       </div>
     </div>

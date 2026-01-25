@@ -2,6 +2,9 @@ import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import FormContainer from "@/components/FormContainer";
 import TeacherPerformance from "@/components/TeacherPerformance";
+import TeacherCoursesTable from "@/components/TeacherCoursesTable";
+import TeacherLessonsTable from "@/components/TeacherLessonsTable";
+import TeachingOverviewTabs from "@/components/TeachingOverviewTabs";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { Teacher } from "@prisma/client";
@@ -12,8 +15,10 @@ import { notFound } from "next/navigation";
 
 const SingleTeacherPage = async ({
   params: { id },
+  searchParams,
 }: {
   params: { id: string };
+  searchParams: { [key: string]: string | undefined };
 }) => {
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
@@ -130,6 +135,26 @@ const SingleTeacherPage = async ({
             </div>
           </Link>
         </div>
+
+        {/* TEACHING OVERVIEW - Courses & Lessons Tables */}
+        <TeachingOverviewTabs
+          coursesCount={teacher._count.subjects}
+          lessonsCount={teacher._count.lessons}
+          coursesContent={
+            <TeacherCoursesTable
+              teacherId={teacher.id}
+              page={searchParams.coursesPage ? parseInt(searchParams.coursesPage) : 1}
+              baseUrl={`/list/lecturers/${teacher.id}`}
+            />
+          }
+          lessonsContent={
+            <TeacherLessonsTable
+              teacherId={teacher.id}
+              page={searchParams.lessonsPage ? parseInt(searchParams.lessonsPage) : 1}
+              baseUrl={`/list/lecturers/${teacher.id}`}
+            />
+          }
+        />
 
         {/* SCHEDULE */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 h-[600px]">

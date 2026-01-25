@@ -19,9 +19,10 @@ interface Lesson {
 interface AttendancePanelProps {
     lessons: Lesson[];
     className: string;
+    totalStudents?: number;
 }
 
-const AttendancePanel = ({ lessons, className }: AttendancePanelProps) => {
+const AttendancePanel = ({ lessons, className, totalStudents = 0 }: AttendancePanelProps) => {
     const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
     return (
@@ -94,8 +95,8 @@ const AttendancePanel = ({ lessons, className }: AttendancePanelProps) => {
                 >
                     <div className="flex items-center gap-2 mb-3">
                         <div className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center ${selectedLesson
-                                ? "bg-slate-800 text-white"
-                                : "bg-slate-300 text-slate-500"
+                            ? "bg-slate-800 text-white"
+                            : "bg-slate-300 text-slate-500"
                             }`}>
                             2
                         </div>
@@ -110,6 +111,7 @@ const AttendancePanel = ({ lessons, className }: AttendancePanelProps) => {
                             lessonId={selectedLesson.id}
                             lessonName={selectedLesson.subject.name}
                             className={className}
+                            totalStudents={totalStudents}
                         />
                     ) : (
                         <div className="bg-slate-100 rounded-2xl p-8 text-center">

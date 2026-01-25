@@ -1,16 +1,22 @@
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
-import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma, Subject, Teacher } from "@prisma/client";
-import Image from "next/image";
+import { BookOpen, Users, Calendar, FileText, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 
-type SubjectList = Subject & { teachers: Teacher[] };
+type SubjectWithCounts = Subject & {
+  teachers: Teacher[];
+  _count: {
+    lessons: number;
+    materials: number;
+  };
+};
 
-const SubjectListPage = async ({
+const CoursesPage = async ({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
@@ -18,56 +24,23 @@ const SubjectListPage = async ({
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 
-  const columns = [
-    {
-      header: "Course Name",
-      accessor: "name",
-    },
-    {
-      header: "Teachers",
-      accessor: "teachers",
-      className: "hidden md:table-cell",
-    },
-    {
-      header: "Actions",
-      accessor: "action",
-    },
-  ];
-
-  const renderRow = (item: SubjectList) => (
-    <tr
-      key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-nutoSlate/10"
-    >
-      <td className="flex items-center gap-4 p-4">{item.name}</td>
-      <td className="hidden md:table-cell">
-        {item.teachers.map((teacher) => teacher.name + " " + teacher.surname).join(",")}
-      </td>
-      <td>
-        <div className="flex items-center gap-2">
-          {role === "admin" && (
-            <>
-              <FormContainer table="subject" type="update" data={item} />
-              <FormContainer table="subject" type="delete" id={item.id} />
-            </>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
-
   const { page, ...queryParams } = searchParams;
-
   const p = page ? parseInt(page) : 1;
 
   // URL PARAMS CONDITION
-
   const query: Prisma.SubjectWhereInput = {};
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined) {
         switch (key) {
+          case "teacherId":
+            query.teachers = {
+              some: {
+                id: value,
+              },
+            };
+            break;
           case "search":
             query.name = { contains: value, mode: "insensitive" };
             break;
@@ -83,6 +56,12 @@ const SubjectListPage = async ({
       where: query,
       include: {
         teachers: true,
+        _count: {
+          select: {
+            lessons: true,
+            materials: true,
+          },
+        },
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
@@ -91,31 +70,101 @@ const SubjectListPage = async ({
   ]);
 
   return (
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP */}
-      <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Courses</h1>
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <TableSearch />
-          <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-nutoOrange">
-              <Image src="/filter.png" alt="" width={14} height={14} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-nutoOrange">
-              <Image src="/sort.png" alt="" width={14} height={14} />
-            </button>
+    <div className="flex-1 p-4 flex flex-col gap-4">
+      {/* HEADER */}
+      <div className="bg-gradient-to-br from-nutoSlate to-nutoSlateDark p-6 rounded-2xl shadow-lg">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
+              <BookOpen className="w-7 h-7 text-white" />
+            </div>
+            <div className="text-white">
+              <h1 className="text-2xl font-bold">Courses</h1>
+              <p className="text-white/80 text-sm">{count} courses available</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="bg-white/10 rounded-xl px-4 py-2">
+              <TableSearch />
+            </div>
             {role === "admin" && (
               <FormContainer table="subject" type="create" />
             )}
           </div>
         </div>
       </div>
-      {/* LIST */}
-      <Table columns={columns} renderRow={renderRow} data={data} />
+
+      {/* COURSES GRID */}
+      {data.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl">
+          <BookOpen className="w-16 h-16 text-gray-300 mb-4" />
+          <h3 className="text-lg font-medium text-gray-500">No courses found</h3>
+          <p className="text-sm text-gray-400">Try adjusting your search</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data.map((course: SubjectWithCounts) => (
+            <div
+              key={course.id}
+              className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-lg transition-all group"
+            >
+              <Link href={`/list/courses/${course.id}`} className="block">
+                {/* Course Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-nutoSlate to-nutoSlateDark flex items-center justify-center">
+                    <BookOpen className="w-6 h-6 text-white" />
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-nutoSlate transition-colors" />
+                </div>
+
+                {/* Course Name */}
+                <h3 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-nutoSlate transition-colors">
+                  {course.name}
+                </h3>
+
+                {/* Lecturers */}
+                <p className="text-sm text-gray-500 mb-4 line-clamp-1">
+                  {course.teachers.length > 0
+                    ? course.teachers.map((t) => `${t.name} ${t.surname}`).join(", ")
+                    : "No lecturers assigned"}
+                </p>
+
+                {/* Stats */}
+                <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                    <Users className="w-4 h-4 text-nutoSlate" />
+                    <span>{course.teachers.length} Lecturers</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                    <Calendar className="w-4 h-4 text-nutoOrange" />
+                    <span>{course._count.lessons} Lessons</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                    <FileText className="w-4 h-4 text-nutoSlateLight" />
+                    <span>{course._count.materials}</span>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Admin Actions - Outside the Link */}
+              {role === "admin" && (
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+                  <FormContainer table="subject" type="update" data={course} />
+                  <FormContainer table="subject" type="delete" id={course.id} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* PAGINATION */}
-      <Pagination page={p} count={count} />
+      <div className="bg-white rounded-2xl p-2">
+        <Pagination page={p} count={count} />
+      </div>
     </div>
   );
 };
 
-export default SubjectListPage;
+export default CoursesPage;

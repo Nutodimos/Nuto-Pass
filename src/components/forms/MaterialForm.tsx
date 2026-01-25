@@ -10,7 +10,7 @@ import { useFormState } from "react-dom";
 import { createMaterial } from "@/lib/actions"; // We only implement create for now as delete is just an action
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { CldUploadWidget } from "next-cloudinary";
+import FirebaseUploadWidget from "../FirebaseUploadWidget";
 
 const MaterialForm = ({
     type,
@@ -65,10 +65,15 @@ const MaterialForm = ({
     const { classes, subjects } = relatedData;
 
     return (
-        <form className="flex flex-col gap-8" onSubmit={onSubmit}>
-            <h1 className="text-xl font-semibold">
-                Upload New Material
-            </h1>
+        <form className="flex flex-col gap-6" onSubmit={onSubmit}>
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-nutoOrange to-nutoOrangeDark flex items-center justify-center">
+                    <span className="text-white font-bold">M</span>
+                </div>
+                <h1 className="text-xl font-bold text-nutoSlateDark">
+                    Upload New Material
+                </h1>
+            </div>
 
             <div className="flex justify-between flex-wrap gap-4">
                 <InputField
@@ -79,9 +84,9 @@ const MaterialForm = ({
                 />
 
                 <div className="flex flex-col gap-2 w-full md:w-1/4">
-                    <label className="text-xs text-gray-500">Level (Class)</label>
+                    <label className="text-sm font-medium text-nutoSlateDark">Level</label>
                     <select
-                        className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+                        className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200"
                         {...register("classId")}
                     >
                         <option value="">Select Level</option>
@@ -99,9 +104,9 @@ const MaterialForm = ({
                 </div>
 
                 <div className="flex flex-col gap-2 w-full md:w-1/4">
-                    <label className="text-xs text-gray-500">Course (Subject)</label>
+                    <label className="text-sm font-medium text-nutoSlateDark">Course</label>
                     <select
-                        className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+                        className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200"
                         {...register("subjectId")}
                     >
                         <option value="">Select Course</option>
@@ -119,21 +124,20 @@ const MaterialForm = ({
                 </div>
 
                 <div className="w-full">
-                    <span className="text-xs text-gray-500 block mb-2">Upload File (PDF, Doc, etc.)</span>
-                    {process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ? (
-                        <CldUploadWidget
-                            uploadPreset="school"
+                    <span className="text-sm font-medium text-nutoSlateDark block mb-2">Upload File</span>
+                    {process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? (
+                        <FirebaseUploadWidget
                             onSuccess={(result, { widget }) => {
                                 setFilePath(result?.info?.secure_url);
-                                setValue("filePath", result?.info?.secure_url); // Update form value
-                                toast.success("File uploaded successfully!");
+                                setValue("filePath", result?.info?.secure_url);
+                                // toast.success("File uploaded successfully!"); // Handled inside widget
                                 widget.close();
                             }}
                         >
                             {({ open }) => {
                                 return (
                                     <div
-                                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-nutoOrange hover:bg-nutoOrange/5 transition-all"
                                         onClick={() => open()}
                                     >
                                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -144,18 +148,20 @@ const MaterialForm = ({
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Image src="/upload.png" alt="" width={32} height={32} className="mb-2 opacity-60" />
-                                                    <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span></p>
-                                                    <p className="text-xs text-gray-500">PDF, DOC, PPT, IMG</p>
+                                                    <div className="w-12 h-12 rounded-xl bg-nutoOrange/10 flex items-center justify-center mb-2">
+                                                        <Image src="/upload.png" alt="" width={24} height={24} />
+                                                    </div>
+                                                    <p className="text-sm font-medium text-gray-700">Click to upload</p>
+                                                    <p className="text-xs text-gray-400">PDF, DOC, PPT, IMG</p>
                                                 </>
                                             )}
                                         </div>
                                     </div>
                                 );
                             }}
-                        </CldUploadWidget>
+                        </FirebaseUploadWidget>
                     ) : (
-                        <div className="text-red-500">Cloudinary key missing!</div>
+                        <div className="text-red-500 text-sm">Firebase config missing!</div>
                     )}
                     {errors.filePath?.message && (
                         <p className="text-xs text-red-400 mt-1">
@@ -165,8 +171,11 @@ const MaterialForm = ({
                 </div>
             </div>
 
-            <button className="bg-blue-400 text-white p-2 rounded-md">
-                {type === "create" ? "Upload" : "Update"}
+            <button
+                type="submit"
+                className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-nutoOrange to-nutoOrangeDark text-white font-semibold text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+            >
+                Upload Material
             </button>
         </form>
     );

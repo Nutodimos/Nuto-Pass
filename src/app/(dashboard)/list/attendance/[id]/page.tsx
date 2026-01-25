@@ -155,20 +155,37 @@ const ClassAttendancePage = async ({
     return (
         <div className="flex flex-col gap-6 p-4">
             {/* Attendance Session Control Panel */}
-            <AttendancePanel lessons={formattedLessons} className={className} />
+            <AttendancePanel lessons={formattedLessons} className={className} totalStudents={count} />
 
             {/* Student List */}
-            <div className="bg-white p-4 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-slate-800">
-                        {className} - Students ({count})
-                    </h2>
-                    <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                        <TableSearch />
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                {/* Header with Class Info and Search */}
+                <div className="bg-gradient-to-r from-nutoSlate/5 to-nutoOrange/5 p-5 border-b border-slate-100">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-nutoSlate to-nutoSlateDark flex items-center justify-center">
+                                <span className="text-white font-bold text-lg">{className.charAt(0)}</span>
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-nutoSlateDark">
+                                    {className}
+                                </h2>
+                                <p className="text-sm text-gray-500">{count} students enrolled</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                            <div className="flex-1 md:flex-none bg-white rounded-xl border border-gray-200 px-4 py-2 shadow-sm">
+                                <TableSearch />
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <Table columns={columns} renderRow={renderRow} data={data} />
-                <Pagination page={p} count={count} />
+
+                {/* Table Content */}
+                <div className="p-4">
+                    <Table columns={columns} renderRow={renderRow} data={data} />
+                    <Pagination page={p} count={count} />
+                </div>
             </div>
         </div>
     );

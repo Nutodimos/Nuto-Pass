@@ -99,6 +99,12 @@ const MaterialListPage = async ({
                     case "classId": // Filter by level
                         query.classId = parseInt(value);
                         break;
+                    case "subjectId": // Filter by course
+                        query.subjectId = parseInt(value);
+                        break;
+                    case "teacherId": // Filter by lecturer
+                        query.teacherId = value;
+                        break;
                     default:
                         break;
                 }

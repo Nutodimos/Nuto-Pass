@@ -5,11 +5,21 @@ import {
     GraduationCap,
     CalendarDays,
     Settings,
-    FileText
+    FileText,
+    Fingerprint
 } from "lucide-react";
 
 const QuickActionsCard = () => {
     const actions = [
+        {
+            label: "Take Attendance",
+            href: "/list/attendance",
+            icon: Fingerprint,
+            color: "text-emerald-600",
+            bg: "bg-emerald-50",
+            hoverBg: "group-hover:bg-emerald-100",
+            highlight: true,
+        },
         {
             label: "New Announcement",
             href: "/list/announcements",
@@ -77,12 +87,15 @@ const QuickActionsCard = () => {
                     <Link
                         key={index}
                         href={action.href}
-                        className="group flex flex-col items-center justify-center p-4 rounded-xl border border-slate-100 hover:border-nutoSlate/30 hover:shadow-md transition-all duration-200 bg-white"
+                        className={`group flex flex-col items-center justify-center p-4 rounded-xl border transition-all duration-200 bg-white ${(action as any).highlight
+                                ? "border-emerald-300 hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-100 ring-2 ring-emerald-100"
+                                : "border-slate-100 hover:border-nutoSlate/30 hover:shadow-md"
+                            }`}
                     >
-                        <div className={`p-3 rounded-full mb-3 ${action.bg} ${action.hoverBg} transition-colors duration-200`}>
+                        <div className={`p-3 rounded-full mb-3 ${action.bg} ${action.hoverBg} transition-colors duration-200 ${(action as any).highlight ? "animate-pulse" : ""}`}>
                             <action.icon className={`w-6 h-6 ${action.color}`} />
                         </div>
-                        <span className="text-sm font-medium text-slate-700 text-center group-hover:text-nutoSlate transition-colors">
+                        <span className={`text-sm font-medium text-center transition-colors ${(action as any).highlight ? "text-emerald-700 group-hover:text-emerald-800 font-semibold" : "text-slate-700 group-hover:text-nutoSlate"}`}>
                             {action.label}
                         </span>
                     </Link>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FieldError } from "react-hook-form";
+import { Eye, EyeOff } from "lucide-react";
 
 type InputFieldProps = {
   label: string;
@@ -35,12 +36,12 @@ const InputField = ({
 
   return (
     <div className={hidden ? "hidden" : "flex flex-col gap-2 w-full md:w-1/4"}>
-      <label className="text-xs text-gray-500">{label}</label>
+      <label className="text-sm font-medium text-nutoSlateDark">{label}</label>
       <div className="relative w-full">
         <input
           type={inputType}
           {...register(name)}
-          className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+          className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200"
           {...inputProps}
           defaultValue={defaultValue}
         />
@@ -48,46 +49,18 @@ const InputField = ({
           <button
             type="button"
             onClick={togglePasswordVisibility}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 focus:outline-none"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-nutoSlate focus:outline-none transition-colors"
           >
             {showPassword ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-                <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-                <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-                <line x1="2" x2="22" y1="2" y2="22" />
-              </svg>
+              <EyeOff className="w-5 h-5" />
             ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
+              <Eye className="w-5 h-5" />
             )}
           </button>
         )}
       </div>
       {error?.message && (
-        <p className="text-xs text-red-400">{error.message.toString()}</p>
+        <p className="text-xs text-red-500 font-medium">{error.message.toString()}</p>
       )}
     </div>
   );

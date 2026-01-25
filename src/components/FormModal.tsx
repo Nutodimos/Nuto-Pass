@@ -9,6 +9,7 @@ import {
   deleteGrade,
   deleteAnnouncement,
   deleteMaterial,
+  deleteLesson,
 } from "@/lib/actions";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -26,7 +27,7 @@ const deleteActionMap = {
   // exam: deleteExam, NO EXAMS
   // TODO: OTHER DELETE ACTIONS
   // parent: deleteSubject, NO PARENTS
-  lesson: deleteSubject,
+  lesson: deleteLesson,
   assignment: deleteAssignment,
   // result: deleteSubject, NO RESULTS
   attendance: deleteSubject,
@@ -71,6 +72,10 @@ const AnnouncementForm = dynamic(() => import("./forms/AnnouncementForm"), {
   loading: () => <h1>Loading...</h1>,
 });
 const MaterialForm = dynamic(() => import("./forms/MaterialForm"), {
+  ssr: false,
+  loading: () => <h1>Loading...</h1>,
+});
+const LessonForm = dynamic(() => import("./forms/LessonForm"), {
   ssr: false,
   loading: () => <h1>Loading...</h1>,
 });
@@ -142,6 +147,14 @@ const forms: {
   ),
   material: (setOpen, type, data, relatedData) => (
     <MaterialForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+  lesson: (setOpen, type, data, relatedData) => (
+    <LessonForm
       type={type}
       data={data}
       setOpen={setOpen}
@@ -223,9 +236,9 @@ const FormModal = ({
         <Image src={`/${type}.png`} alt="" width={type === "create" ? 24 : 16} height={type === "create" ? 24 : 16} />
       </button>
       {open && (
-        <div className="w-screen h-screen fixed left-0 top-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in">
+        <div className="w-screen h-screen fixed left-0 top-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center pt-16 pb-8 overflow-y-auto animate-fade-in">
           <div
-            className="bg-white p-6 rounded-2xl relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in"
+            className="bg-white p-6 rounded-2xl relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] max-h-[calc(100vh-6rem)] overflow-y-auto shadow-2xl animate-scale-in my-auto"
             style={{
               animation: "scale-in 0.3s ease-out"
             }}
