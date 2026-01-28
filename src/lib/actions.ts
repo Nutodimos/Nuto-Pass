@@ -11,9 +11,10 @@ import {
   GradeSchema,
   AnnouncementSchema,
   LessonSchema,
+  MaterialSchema,
 } from "./formValidationSchemas";
 import prisma from "./prisma";
-import { clerkClient } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { handleActionError } from "./utils";
 
 type CurrentState = { success: boolean; error: boolean; messages?: string[] };
@@ -633,22 +634,54 @@ export const createMaterial = async (
   currentState: CurrentState,
   data: MaterialSchema
 ) => {
-  const { userId, sessionClaims } = auth();
+  const { userId, sessionClaims } = await auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
   const currentUserId = userId;
 
   try {
     const teacherId = role === "teacher" ? currentUserId : null;
+    const isGeneral = data.isGeneral || false;
 
-    await prisma.material.create({
+    // Create the material
+    const material = await prisma.material.create({
       data: {
         title: data.title,
         filePath: data.filePath,
         subjectId: data.subjectId,
-        classId: data.classId,
+        classId: isGeneral ? null : data.classId,
         teacherId: teacherId,
+        isGeneral: isGeneral,
+      },
+      include: {
+        subject: true,
+        class: true,
       },
     });
+
+    // Create an announcement to notify users (shows in existing notification bell)
+    if (isGeneral) {
+      // General document - notify all users
+      await prisma.announcement.create({
+        data: {
+          title: `📚 New General Document: ${material.title}`,
+          description: `A new document "${material.title}" has been uploaded in ${material.subject.name}. Check the Materials page to view it.`,
+          date: new Date(),
+          targetAudience: "all",
+          classId: null,
+        },
+      });
+    } else if (data.classId) {
+      // Class-specific material - notify students in that class
+      await prisma.announcement.create({
+        data: {
+          title: `📄 New Course Material: ${material.title}`,
+          description: `New material "${material.title}" for ${material.subject.name} has been uploaded. Check the Materials page to view it.`,
+          date: new Date(),
+          targetAudience: "students",
+          classId: data.classId,
+        },
+      });
+    }
 
     // revalidatePath("/list/materials");
     return { success: true, error: false };
@@ -657,6 +690,8 @@ export const createMaterial = async (
     return { success: false, error: true };
   }
 };
+
+
 
 export const deleteMaterial = async (
   currentState: CurrentState,

@@ -112,8 +112,9 @@ export const materialSchema = z.object({
   id: z.coerce.number().optional(),
   title: z.string().min(1, { message: "Title is required!" }),
   subjectId: z.coerce.number().min(1, { message: "Subject is required!" }),
-  classId: z.coerce.number().min(1, { message: "Level is required!" }),
+  classId: z.coerce.number().optional(), // Optional for general documents
   filePath: z.string().min(1, { message: "File is required!" }),
+  isGeneral: z.boolean().optional().default(false),
 });
 
 export type MaterialSchema = z.infer<typeof materialSchema>;

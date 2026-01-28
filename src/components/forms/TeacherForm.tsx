@@ -10,7 +10,7 @@ import { useFormState } from "react-dom";
 import { createTeacher, updateTeacher } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import FirebaseUploadWidget from "../FirebaseUploadWidget";
+import { CldUploadWidget } from "next-cloudinary";
 
 const TeacherForm = ({
   type,
@@ -195,8 +195,9 @@ const TeacherForm = ({
             </p>
           )}
         </div>
-        {process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? (
-          <FirebaseUploadWidget
+        {process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ? (
+          <CldUploadWidget
+            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_PRESET || "school"}
             onSuccess={(result, { widget }) => {
               setImg(result.info);
               widget.close();
@@ -218,7 +219,7 @@ const TeacherForm = ({
                 </div>
               );
             }}
-          </FirebaseUploadWidget>
+          </CldUploadWidget>
         ) : (
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed" title="Missing Cloudinary Key">
             <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">

@@ -201,11 +201,25 @@ model Material {
   title     String
   filePath  String
   createdAt DateTime @default(now())
+  isGeneral Boolean  @default(false)
 
   teacherId String?
   teacher   Teacher? @relation(fields: [teacherId], references: [id])
   subjectId Int
   subject   Subject  @relation(fields: [subjectId], references: [id])
-  classId   Int
-  class     Class    @relation(fields: [classId], references: [id])
+  classId   Int?
+  class     Class?   @relation(fields: [classId], references: [id])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, isRead])
 }

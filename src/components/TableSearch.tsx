@@ -1,14 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 const TableSearch = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [value, setValue] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
 
   // Sync input with URL search param
   useEffect(() => {
@@ -40,24 +40,38 @@ const TableSearch = () => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full md:w-auto flex items-center gap-2 text-xs rounded-full ring-[1.5px] ring-gray-300 px-2"
+      className={`
+        w-full md:w-auto flex items-center gap-2 
+        rounded-xl px-4 py-2.5
+        bg-white/80 backdrop-blur-sm
+        border-2 transition-all duration-300
+        ${isFocused
+          ? 'border-nutoOrange shadow-lg shadow-nutoOrange/10'
+          : 'border-gray-200 hover:border-gray-300'
+        }
+      `}
     >
-      <Image src="/search.png" alt="" width={14} height={14} />
+      <Search
+        className={`w-4 h-4 transition-colors duration-300 ${isFocused ? 'text-nutoOrange' : 'text-gray-400'
+          }`}
+      />
       <input
         type="text"
         placeholder="Search..."
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="w-[200px] p-2 bg-transparent outline-none"
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        className="w-[180px] md:w-[220px] bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-400"
       />
       {hasSearch && (
         <button
           type="button"
           onClick={handleClear}
-          className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
+          className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-nutoOrange/20 hover:text-nutoOrange transition-all"
           title="Clear search"
         >
-          <X className="w-3 h-3 text-gray-600" />
+          <X className="w-3 h-3" />
         </button>
       )}
     </form>

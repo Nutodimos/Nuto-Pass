@@ -1,93 +1,31 @@
 import FormContainer from "@/components/FormContainer";
-import Pagination from "@/components/Pagination";
-import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
+import Pagination from "@/components/Pagination";
+import MaterialCard from "@/components/MaterialCard";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Material, Prisma, Subject, Class, Teacher } from "@prisma/client";
-import Image from "next/image";
-import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
+import { FileText, BookOpen, GraduationCap, Library } from "lucide-react";
 
-type MaterialList = Material & { subject: Subject } & { class: Class } & { teacher: Teacher | null };
+type MaterialList = Material & { subject: Subject } & { class: Class | null } & { teacher: Teacher | null };
 
 const MaterialListPage = async ({
     searchParams,
 }: {
     searchParams: { [key: string]: string | undefined };
 }) => {
-    const { userId, sessionClaims } = auth();
+    const { userId, sessionClaims } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = userId;
 
-    const columns = [
-        {
-            header: "Title",
-            accessor: "title",
-        },
-        {
-            header: "Course",
-            accessor: "subject",
-            className: "hidden md:table-cell",
-        },
-        {
-            header: "Level",
-            accessor: "class",
-            className: "hidden md:table-cell",
-        },
-        {
-            header: "Uploader",
-            accessor: "teacher",
-            className: "hidden md:table-cell",
-        },
-        {
-            header: "Date",
-            accessor: "createdAt",
-            className: "hidden lg:table-cell",
-        },
-        {
-            header: "Actions",
-            accessor: "action",
-        },
-    ];
-
-    const renderRow = (item: MaterialList) => (
-        <tr
-            key={item.id}
-            className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-nutoSlate/10"
-        >
-            <td className="flex items-center gap-4 p-4">
-                <div className="flex flex-col">
-                    <h3 className="font-semibold">{item.title}</h3>
-                </div>
-            </td>
-            <td className="hidden md:table-cell">{item.subject.name}</td>
-            <td className="hidden md:table-cell">{item.class.name}</td>
-            <td className="hidden md:table-cell">{item.teacher?.name + " " + item.teacher?.surname}</td>
-            <td className="hidden lg:table-cell">{new Intl.DateTimeFormat("en-US").format(item.createdAt)}</td>
-            <td>
-                <div className="flex items-center gap-2">
-                    <Link href={item.filePath} target="_blank" className="w-7 h-7 flex items-center justify-center rounded-full bg-nutoSlate/20" title="View/Download">
-                        <Image src="/view.png" alt="" width={16} height={16} />
-                    </Link>
-                    {(role === "admin" || (role === "teacher" && item.teacherId === currentUserId)) && (
-                        <>
-                            {/* No update for materials yet, just delete */}
-                            <FormContainer table="material" type="delete" id={item.id} />
-                        </>
-                    )}
-                </div>
-            </td>
-        </tr>
-    );
-
     const { page, ...queryParams } = searchParams;
-
     const p = page ? parseInt(page) : 1;
 
-    // URL PARAMS CONDITION
-
-    const query: Prisma.MaterialWhereInput = {};
+    // URL PARAMS CONDITION for class-specific materials
+    const query: Prisma.MaterialWhereInput = {
+        isGeneral: false, // Only class-specific materials in main query
+    };
 
     if (queryParams) {
         for (const [key, value] of Object.entries(queryParams)) {
@@ -96,13 +34,13 @@ const MaterialListPage = async ({
                     case "search":
                         query.title = { contains: value, mode: "insensitive" };
                         break;
-                    case "classId": // Filter by level
+                    case "classId":
                         query.classId = parseInt(value);
                         break;
-                    case "subjectId": // Filter by course
+                    case "subjectId":
                         query.subjectId = parseInt(value);
                         break;
-                    case "teacherId": // Filter by lecturer
+                    case "teacherId":
                         query.teacherId = value;
                         break;
                     default:
@@ -112,33 +50,36 @@ const MaterialListPage = async ({
         }
     }
 
-    // RBAC LOGIC
+    // RBAC LOGIC for class-specific materials
     if (role === "student" && currentUserId) {
-        // Student can only see materials for their class
         const student = await prisma.student.findUnique({
             where: { id: currentUserId },
             select: { classId: true },
         });
-
         if (student) {
             query.classId = student.classId;
         } else {
-            // Fallback if student record not found
-            query.classId = -1; // Impossible ID to show nothing
+            query.classId = -1;
         }
     } else if (role === "teacher" && currentUserId) {
-        // Teacher can only see their own materials? 
-        // User said: "lecturer teaching one course cannot see another lecturer materials"
-        // This implies they see materials THEY uploaded.
-        // Or materials for subject they teach?
-        // "cannot see another lecturer materials" -> strict ownership or subject-based.
-        // Let's assume strict ownership for now as it's safer.
-        // Wait, if they teach the SAME subject as someone else?
-        // "another lecturer materials" -> ownership.
         query.teacherId = currentUserId;
     }
-    // Admin sees all (query remains as is)
 
+    // Fetch general materials (available to everyone)
+    const generalMaterials = await prisma.material.findMany({
+        where: {
+            isGeneral: true,
+            ...(queryParams.search ? { title: { contains: queryParams.search, mode: "insensitive" } } : {}),
+        },
+        include: {
+            subject: true,
+            class: true,
+            teacher: true,
+        },
+        orderBy: { createdAt: "desc" },
+    });
+
+    // Fetch class-specific materials with pagination
     const [data, count] = await prisma.$transaction([
         prisma.material.findMany({
             where: query,
@@ -154,30 +95,145 @@ const MaterialListPage = async ({
         prisma.material.count({ where: query }),
     ]);
 
+    // Group class materials by subject for better organization
+    const groupedBySubject = data.reduce((acc, item) => {
+        const subjectName = item.subject.name;
+        if (!acc[subjectName]) {
+            acc[subjectName] = [];
+        }
+        acc[subjectName].push(item);
+        return acc;
+    }, {} as Record<string, MaterialList[]>);
+
+    const totalCount = count + generalMaterials.length;
+
     return (
-        <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-            {/* TOP */}
-            <div className="flex items-center justify-between">
-                <h1 className="hidden md:block text-lg font-semibold">Course Materials</h1>
-                <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                    <TableSearch />
-                    <div className="flex items-center gap-4 self-end">
-                        <button className="w-8 h-8 flex items-center justify-center rounded-full bg-nutoOrange">
-                            <Image src="/filter.png" alt="" width={14} height={14} />
-                        </button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-full bg-nutoOrange">
-                            <Image src="/sort.png" alt="" width={14} height={14} />
-                        </button>
+        <div className="flex-1 m-4 mt-0">
+            {/* HEADER */}
+            <div className="bg-gradient-to-r from-nutoOrange via-nutoOrangeDark to-nutoOrange rounded-2xl p-6 mb-6 shadow-lg">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                            <BookOpen className="w-8 h-8 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-white">Course Materials</h1>
+                            <p className="text-white/80 text-sm">{totalCount} resources available</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <div className="flex-1 md:flex-none bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2">
+                            <TableSearch />
+                        </div>
                         {(role === "admin" || role === "teacher") && (
-                            <FormContainer table="material" type="create" />
+                            <div className="bg-white/20 p-1 rounded-full hover:bg-white/30 transition-colors">
+                                <FormContainer table="material" type="create" />
+                            </div>
                         )}
                     </div>
                 </div>
             </div>
-            {/* LIST */}
-            <Table columns={columns} renderRow={renderRow} data={data} />
+
+            {/* GENERAL RESOURCES SECTION */}
+            {generalMaterials.length > 0 && (
+                <div className="mb-8">
+                    {/* General Section Header */}
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-amber-100 rounded-lg">
+                            <Library className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <h2 className="text-lg font-bold text-gray-800">📚 General Resources</h2>
+                        <span className="px-2 py-0.5 bg-amber-100 rounded-full text-xs font-medium text-amber-700">
+                            Available to all
+                        </span>
+                        <div className="h-px bg-amber-200 flex-1"></div>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-4">
+                        Important documents and resources for all students and teachers
+                    </p>
+
+                    {/* General Materials Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {generalMaterials.map((item) => (
+                            <MaterialCard
+                                key={item.id}
+                                id={item.id}
+                                title={item.title}
+                                filePath={item.filePath}
+                                className="General"
+                                teacherName={item.teacher ? `${item.teacher.name} ${item.teacher.surname}` : 'Admin'}
+                                createdAt={item.createdAt}
+                                canDelete={role === "admin"}
+                                isGeneral={true}
+                                deleteForm={
+                                    role === "admin"
+                                        ? <FormContainer table="material" type="delete" id={item.id} />
+                                        : undefined
+                                }
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* CLASS-SPECIFIC MATERIALS */}
+            {data.length === 0 && generalMaterials.length === 0 ? (
+                <div className="bg-white rounded-2xl p-12 text-center border border-dashed border-gray-200">
+                    <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <FileText className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">No materials found</h3>
+                    <p className="text-gray-500 text-sm">
+                        {role === "teacher" ? "Upload your first course material to get started!" : "Check back later for course materials."}
+                    </p>
+                </div>
+            ) : data.length > 0 && (
+                <div className="space-y-8">
+                    {Object.entries(groupedBySubject).map(([subjectName, materials]) => (
+                        <div key={subjectName}>
+                            {/* Subject Header */}
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 bg-nutoOrange/10 rounded-lg">
+                                    <GraduationCap className="w-5 h-5 text-nutoOrange" />
+                                </div>
+                                <h2 className="text-lg font-bold text-gray-800">{subjectName}</h2>
+                                <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs font-medium text-gray-600">
+                                    {materials.length} {materials.length === 1 ? 'file' : 'files'}
+                                </span>
+                                <div className="h-px bg-gray-200 flex-1"></div>
+                            </div>
+
+                            {/* Materials Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                {materials.map((item) => (
+                                    <MaterialCard
+                                        key={item.id}
+                                        id={item.id}
+                                        title={item.title}
+                                        filePath={item.filePath}
+                                        className={item.class?.name || 'N/A'}
+                                        teacherName={`${item.teacher?.name || ''} ${item.teacher?.surname || ''}`}
+                                        createdAt={item.createdAt}
+                                        canDelete={role === "admin" || (role === "teacher" && item.teacherId === currentUserId)}
+                                        deleteForm={
+                                            (role === "admin" || (role === "teacher" && item.teacherId === currentUserId))
+                                                ? <FormContainer table="material" type="delete" id={item.id} />
+                                                : undefined
+                                        }
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* PAGINATION */}
-            <Pagination page={p} count={count} />
+            {count > ITEM_PER_PAGE && (
+                <div className="mt-6 bg-white rounded-xl p-4">
+                    <Pagination page={p} count={count} />
+                </div>
+            )}
         </div>
     );
 };
