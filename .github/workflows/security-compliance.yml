@@ -1,0 +1,43 @@
+name: Security & Compliance Guard
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  security-audit:
+    name: 🛡️ Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # 1. Dependency Check (Native NPM Audit)
+      - name: Check for Vulnerable Dependencies
+        run: npm audit --audit-level=high
+        continue-on-error: false # Fails the build if high risks are found
+
+      # 2. Static Code Analysis (using ESLint with security plugins)
+      # Ensure you have eslint-plugin-security installed in your project
+      - name: Run Static Analysis (SAST)
+        run: npx eslint . --ext .js,.jsx,.ts,.tsx
+        
+      # 3. Secret Scanning (TruffleHog)
+      # Scans commit history for keys/passwords
+      - name: Scan for Leaked Secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: ${{ github.head_ref }}

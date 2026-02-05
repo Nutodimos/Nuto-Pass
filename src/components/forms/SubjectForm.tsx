@@ -107,6 +107,22 @@ const SubjectForm = ({
             </p>
           )}
         </div>
+        <div className="flex flex-col gap-2 w-full md:w-1/4">
+          <label className="text-sm font-medium text-nutoSlateDark">Semester</label>
+          <select
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200"
+            {...register("semester")}
+            defaultValue={data?.semester ?? "1"}
+          >
+            <option value="1">Harmattan Semester</option>
+            <option value="2">Rain Semester</option>
+          </select>
+          {errors.semester?.message && (
+            <p className="text-xs text-red-400">
+              {errors.semester.message.toString()}
+            </p>
+          )}
+        </div>
       </div>
       {state.error && (
         <span className="text-red-500">Something went wrong!</span>

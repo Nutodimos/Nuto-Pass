@@ -4,6 +4,7 @@ export const subjectSchema = z.object({
   id: z.coerce.number().optional(),
   name: z.string().min(1, { message: "Subject name is required!" }),
   teachers: z.array(z.string()), //teacher ids
+  semester: z.coerce.number().optional().or(z.literal("")), // 1 = first, 2 = second, empty = both
 });
 
 export type SubjectSchema = z.infer<typeof subjectSchema>;

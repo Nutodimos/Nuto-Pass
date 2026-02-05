@@ -5,8 +5,14 @@ import { useFormState } from "react-dom";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { Calendar, BookOpen, Settings } from "lucide-react";
 
-const SettingsForm = ({ currentSession }: { currentSession: string }) => {
+interface SettingsFormProps {
+    currentSession: string;
+    currentSemester: string;
+}
+
+const SettingsForm = ({ currentSession, currentSemester }: SettingsFormProps) => {
     const [state, formAction] = useFormState(updateSchoolConfig, {
         success: false,
         error: false,
@@ -24,18 +30,57 @@ const SettingsForm = ({ currentSession }: { currentSession: string }) => {
     }, [state, router]);
 
     return (
-        <form action={formAction} className="flex flex-col gap-4">
-            <label className="flex flex-col gap-2">
-                <span className="text-sm font-medium text-gray-700">Current Session Year</span>
+        <form action={formAction} className="space-y-6">
+            {/* Session Year Card */}
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-5 border border-slate-200">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-nutoSlate/10 rounded-lg">
+                        <Calendar className="w-5 h-5 text-nutoSlate" />
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-gray-800">Academic Session</h3>
+                        <p className="text-xs text-gray-500">Set the current school year</p>
+                    </div>
+                </div>
                 <input
                     type="text"
                     name="sessionYear"
                     defaultValue={currentSession}
                     placeholder="e.g. 2024/25"
-                    className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-nutoSlate w-full"
+                    className="w-full p-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-nutoSlate focus:border-transparent transition-all"
                 />
-            </label>
-            <button type="submit" className="bg-nutoSlate text-white p-2 rounded-md hover:bg-nutoSlateDark transition-colors w-full sm:w-auto">
+            </div>
+
+            {/* Semester Card */}
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-amber-200">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-amber-100 rounded-lg">
+                        <BookOpen className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-gray-800">Current Semester</h3>
+                        <p className="text-xs text-gray-500">Determines which courses are active</p>
+                    </div>
+                </div>
+                <select
+                    name="currentSemester"
+                    defaultValue={currentSemester}
+                    className="w-full p-3 border border-amber-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all cursor-pointer"
+                >
+                    <option value="1">Harmattan Semester</option>
+                    <option value="2">Rain Semester</option>
+                </select>
+                <p className="text-xs text-amber-600 mt-2">
+                    Courses assigned to this semester will be shown in the courses list.
+                </p>
+            </div>
+
+            {/* Submit Button */}
+            <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-nutoSlate to-nutoSlateDark text-white p-3 rounded-xl font-semibold hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+            >
+                <Settings className="w-4 h-4" />
                 Update Settings
             </button>
         </form>

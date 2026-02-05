@@ -20,6 +20,7 @@ const SingleStudentPage = async ({
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 
+  // Look up by matric number (username) for cleaner URLs
   const student:
     | (Student & {
       class: Class & {
@@ -28,7 +29,7 @@ const SingleStudentPage = async ({
       };
     })
     | null = await prisma.student.findUnique({
-      where: { id },
+      where: { username: id },
       include: {
         class: {
           include: {
@@ -43,10 +44,10 @@ const SingleStudentPage = async ({
     return notFound();
   }
 
-  // Get attendance stats
+  // Get attendance stats using the actual student ID
   const [totalAttendances, presentAttendances] = await prisma.$transaction([
-    prisma.attendance.count({ where: { studentId: id } }),
-    prisma.attendance.count({ where: { studentId: id, present: true } }),
+    prisma.attendance.count({ where: { studentId: student.id } }),
+    prisma.attendance.count({ where: { studentId: student.id, present: true } }),
   ]);
 
   const attendanceRate = totalAttendances > 0

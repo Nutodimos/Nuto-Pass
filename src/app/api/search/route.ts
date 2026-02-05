@@ -125,7 +125,7 @@ export const GET = async (req: NextRequest) => {
                 title: `${s.name} ${s.surname}`,
                 subtitle: s.class?.name || "No class",
                 img: s.img,
-                route: `/list/students/${s.id}`,
+                route: `/list/students/${s.username}`,
             })),
             ...teachers.map((t) => ({
                 type: "lecturer" as const,
@@ -133,7 +133,7 @@ export const GET = async (req: NextRequest) => {
                 title: `${t.name} ${t.surname}`,
                 subtitle: "Lecturer",
                 img: t.img,
-                route: `/list/lecturers/${t.id}`,
+                route: `/list/teachers/${t.username}`,
             })),
             ...subjects.map((s) => ({
                 type: "subject" as const,

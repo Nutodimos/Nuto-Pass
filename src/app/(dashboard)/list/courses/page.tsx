@@ -27,8 +27,22 @@ const CoursesPage = async ({
   const { page, ...queryParams } = searchParams;
   const p = page ? parseInt(page) : 1;
 
+  // Fetch current semester setting
+  const semesterConfig = await prisma.schoolConfig.findUnique({
+    where: { key: "currentSemester" },
+  });
+  const currentSemester = semesterConfig?.value ? parseInt(semesterConfig.value) : null;
+
   // URL PARAMS CONDITION
   const query: Prisma.SubjectWhereInput = {};
+
+  // Filter by semester: show courses for current semester OR courses marked for both (null)
+  if (currentSemester && currentSemester !== 0) {
+    query.OR = [
+      { semester: currentSemester },
+      { semester: null }, // Both/Full year courses always show
+    ];
+  }
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {

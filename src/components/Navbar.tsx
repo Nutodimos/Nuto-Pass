@@ -102,6 +102,7 @@ const Navbar = () => {
   // Get user role
   const userRole = (user?.publicMetadata?.role as string) || "guest";
   const userId = user?.id || "";
+  const userUsername = user?.username || "";  // Matric/Staff ID for routing
 
   // Build categories based on role - Attendance is prioritized first
   const searchCategories: SearchCategory[] = useMemo(() => {
@@ -110,7 +111,7 @@ const Navbar = () => {
     let attendanceDesc = "View all class attendance";
 
     if (userRole === "student") {
-      attendanceRoute = `/list/students/${userId}`; // Student sees their own record
+      attendanceRoute = `/list/students/${userUsername}`; // Student sees their own record
       attendanceDesc = "View your attendance record";
     } else if (userRole === "teacher") {
       attendanceRoute = "/list/attendance"; // Lecturer sees their classes

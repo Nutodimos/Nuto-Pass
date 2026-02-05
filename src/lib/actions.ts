@@ -27,6 +27,7 @@ export const createSubject = async (
     await prisma.subject.create({
       data: {
         name: data.name,
+        semester: data.semester === "" ? null : data.semester,
         teachers: {
           connect: data.teachers.map((teacherId) => ({ id: teacherId })),
         },
@@ -51,6 +52,7 @@ export const updateSubject = async (
       },
       data: {
         name: data.name,
+        semester: data.semester === "" ? null : data.semester,
         teachers: {
           set: data.teachers.map((teacherId) => ({ id: teacherId })),
         },
@@ -543,20 +545,32 @@ export const updateSchoolConfig = async (
   formData: FormData
 ) => {
   const sessionYear = formData.get("sessionYear") as string;
+  const currentSemester = formData.get("currentSemester") as string;
 
   if (!sessionYear) {
     return { success: false, error: true, messages: ["Session year is required"] };
   }
 
   try {
+    // Update session year
     await prisma.schoolConfig.upsert({
       where: { key: "sessionYear" },
       update: { value: sessionYear },
       create: { key: "sessionYear", value: sessionYear },
     });
 
+    // Update current semester
+    if (currentSemester) {
+      await prisma.schoolConfig.upsert({
+        where: { key: "currentSemester" },
+        update: { value: currentSemester },
+        create: { key: "currentSemester", value: currentSemester },
+      });
+    }
+
     revalidatePath("/admin");
     revalidatePath("/settings");
+    revalidatePath("/list/courses");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);

@@ -18,12 +18,13 @@ const SingleTeacherPage = async ({
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 
+  // Look up by staff ID (username) for cleaner URLs
   const teacher:
     | (Teacher & {
       _count: { subjects: number; lessons: number; classes: number };
     })
     | null = await prisma.teacher.findUnique({
-      where: { id },
+      where: { username: id },
       include: {
         _count: {
           select: {
