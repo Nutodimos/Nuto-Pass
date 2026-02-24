@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Home, Users, GraduationCap, BookOpen, Calendar, ClipboardList, Fingerprint, MessageSquare, Megaphone, Settings, LogOut, Layers } from "lucide-react";
+import { Menu, X, Home, Users, GraduationCap, BookOpen, Calendar, ClipboardList, Fingerprint, MessageSquare, Megaphone, Settings, LogOut, Layers, Presentation } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton, useUser } from "@clerk/nextjs";
@@ -30,7 +30,7 @@ const menuItems: MenuSection[] = [
             { icon: GraduationCap, label: "Students", href: "/list/students", visible: ["admin", "teacher"] },
             { icon: BookOpen, label: "Courses", href: "/list/courses", visible: ["admin"] },
             { icon: Layers, label: "Levels", href: "/list/levels", visible: ["admin", "teacher"] },
-            { icon: Calendar, label: "Lessons", href: "/list/lessons", visible: ["admin", "teacher"] },
+            { icon: Presentation, label: "Lessons", href: "/list/lessons", visible: ["admin", "teacher"] },
             { icon: ClipboardList, label: "Assignments", href: "/list/assignments", visible: ["admin", "teacher", "student", "parent"] },
             { icon: Calendar, label: "Events", href: "/list/events", visible: ["admin", "teacher", "student", "parent"] },
             { icon: MessageSquare, label: "Messages", href: "/list/messages", visible: ["admin", "teacher", "student", "parent"] },
@@ -147,8 +147,8 @@ const MobileMenu = () => {
                                                                 href={item.href}
                                                                 onClick={() => setIsOpen(false)}
                                                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${active
-                                                                        ? "bg-nutoSlate text-white shadow-lg shadow-nutoSlate/30"
-                                                                        : "text-slate-600 hover:bg-nutoSlate/10 hover:text-nutoSlate"
+                                                                    ? "bg-nutoSlate text-white shadow-lg shadow-nutoSlate/30"
+                                                                    : "text-slate-600 hover:bg-nutoSlate/10 hover:text-nutoSlate"
                                                                     }`}
                                                             >
                                                                 <Icon className="w-5 h-5" />

@@ -6,7 +6,6 @@ import {
   deleteSubject,
   deleteTeacher,
   deleteAssignment,
-  deleteGrade,
   deleteAnnouncement,
   deleteMaterial,
   deleteLesson,
@@ -31,10 +30,10 @@ const deleteActionMap = {
   lesson: deleteLesson,
   assignment: deleteAssignment,
   // result: deleteSubject, NO RESULTS
-  attendance: deleteSubject,
-  event: deleteSubject,
+  // attendance: deleteAttendance, TODO: IMPL
+  // event: deleteEvent, TODO: IMPL
   announcement: deleteAnnouncement,
-  grade: deleteGrade,
+
   material: deleteMaterial,
 };
 
@@ -64,10 +63,7 @@ const AssignmentForm = dynamic(() => import("./forms/AssignmentForm"), {
   ssr: false,
   loading: () => <h1>Loading...</h1>,
 });
-const GradeForm = dynamic(() => import("./forms/GradeForm"), {
-  ssr: false,
-  loading: () => <h1>Loading...</h1>,
-});
+
 const AnnouncementForm = dynamic(() => import("./forms/AnnouncementForm"), {
   ssr: false,
   loading: () => <h1>Loading...</h1>,
@@ -130,14 +126,7 @@ const forms: {
       relatedData={relatedData}
     />
   ),
-  grade: (setOpen, type, data, relatedData) => (
-    <GradeForm
-      type={type}
-      data={data}
-      setOpen={setOpen}
-      relatedData={relatedData}
-    />
-  ),
+
   announcement: (setOpen, type, data, relatedData) => (
     <AnnouncementForm
       type={type}
@@ -182,7 +171,8 @@ const FormModal = ({
   const [open, setOpen] = useState(false);
 
   const Form = () => {
-    const [state, formAction] = useFormState(deleteActionMap[table], {
+    const deleteAction = (deleteActionMap as Record<string, any>)[table];
+    const [state, formAction] = useFormState(deleteAction, {
       success: false,
       error: false,
     });
@@ -191,7 +181,7 @@ const FormModal = ({
 
     useEffect(() => {
       if (state.success) {
-        toast(`${table} has been deleted!`);
+        toast(`${table === "teacher" ? "lecturer" : table} has been deleted!`);
         setOpen(false);
         router.refresh();
       } else if (state.error) {
@@ -203,7 +193,7 @@ const FormModal = ({
       <form action={formAction} className="p-4 flex flex-col gap-4">
         <input type="text" name="id" value={id} hidden />
         <span className="text-center font-medium">
-          All data will be lost. Are you sure you want to delete this {table}?
+          All data will be lost. Are you sure you want to delete this {table === "teacher" ? "lecturer" : table}?
         </span>
         <button className="bg-red-600 text-white py-2 px-4 rounded-md border-none w-max self-center btn-nuto hover:bg-red-700">
           Delete
@@ -216,7 +206,7 @@ const FormModal = ({
         <div className="p-4 text-center">
           <p className="text-slate-600 font-medium mb-2">Form not available</p>
           <p className="text-sm text-slate-500">
-            The form for "{table}" has not been implemented yet.
+            The form for &ldquo;{table}&rdquo; has not been implemented yet.
           </p>
         </div>
       )

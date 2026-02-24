@@ -33,7 +33,9 @@ const LecturersPage = async ({
   const p = page ? parseInt(page) : 1;
 
   // URL PARAMS CONDITION
-  const query: Prisma.TeacherWhereInput = {};
+  const query: Prisma.TeacherWhereInput = {
+    isActive: true, // Hide soft-deleted teachers
+  };
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {

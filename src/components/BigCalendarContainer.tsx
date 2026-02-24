@@ -14,6 +14,7 @@ const BigCalendarContainer = async ({
       ...(type === "teacherId"
         ? { teacherId: id as string }
         : { classId: id as number }),
+      isActive: true,
     },
   });
 

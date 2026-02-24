@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 const TeacherPerformance = async ({ teacherId }: { teacherId: string }) => {
     // Get lessons count for this teacher
     const lessonsCount = await prisma.lesson.count({
-        where: { teacherId },
+        where: { teacherId, isActive: true },
     });
 
     // Get attendance sessions count (sessions started by this teacher's lessons)

@@ -164,6 +164,7 @@ const ClassAttendancePage = async ({
         prisma.lesson.findMany({
             where: {
                 classId: parseInt(id),
+                isActive: true,
             },
             include: {
                 subject: { select: { name: true } },

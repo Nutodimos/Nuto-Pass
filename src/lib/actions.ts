@@ -3,18 +3,17 @@
 import { revalidatePath } from "next/cache";
 import {
   ClassSchema,
-
   StudentSchema,
   SubjectSchema,
   TeacherSchema,
   AssignmentSchema,
-  GradeSchema,
   AnnouncementSchema,
   LessonSchema,
   MaterialSchema,
 } from "./formValidationSchemas";
 import prisma from "./prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { Day } from "@prisma/client";
 import { handleActionError } from "./utils";
 
 type CurrentState = { success: boolean; error: boolean; messages?: string[] };
@@ -34,7 +33,7 @@ export const createSubject = async (
       },
     });
 
-    // revalidatePath("/list/subjects");
+    revalidatePath("/list/courses");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -59,7 +58,7 @@ export const updateSubject = async (
       },
     });
 
-    // revalidatePath("/list/subjects");
+    revalidatePath("/list/courses");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -71,14 +70,18 @@ export const deleteSubject = async (
   data: FormData
 ) => {
   const id = data.get("id") as string;
+  console.log("Triggering Soft Delete for Subject ID:", id); // Next.js cache break
   try {
-    await prisma.subject.delete({
+    await prisma.subject.update({
       where: {
         id: parseInt(id),
       },
+      data: {
+        isActive: false,
+      }
     });
 
-    // revalidatePath("/list/subjects");
+    revalidatePath("/list/courses");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -94,7 +97,7 @@ export const createClass = async (
       data,
     });
 
-    // revalidatePath("/list/class");
+    revalidatePath("/list/levels");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -113,7 +116,7 @@ export const updateClass = async (
       data,
     });
 
-    // revalidatePath("/list/class");
+    revalidatePath("/list/levels");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -126,13 +129,16 @@ export const deleteClass = async (
 ) => {
   const id = data.get("id") as string;
   try {
-    await prisma.class.delete({
+    await prisma.class.update({
       where: {
         id: parseInt(id),
       },
+      data: {
+        isActive: false,
+      }
     });
 
-    // revalidatePath("/list/class");
+    revalidatePath("/list/levels");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -174,7 +180,7 @@ export const createTeacher = async (
       },
     });
 
-    // revalidatePath("/list/teachers");
+    revalidatePath("/list/lecturers");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -222,7 +228,7 @@ export const updateTeacher = async (
         },
       },
     });
-    // revalidatePath("/list/teachers");
+    revalidatePath("/list/lecturers");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -242,13 +248,16 @@ export const deleteTeacher = async (
       console.log("Clerk user delete failed (ignorable if user missing):", e);
     }
 
-    await prisma.teacher.delete({
+    await prisma.teacher.update({
       where: {
         id: id,
       },
+      data: {
+        isActive: false,
+      }
     });
 
-    // revalidatePath("/list/teachers");
+    revalidatePath("/list/lecturers");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -296,7 +305,7 @@ export const createStudent = async (
       },
     });
 
-    // revalidatePath("/list/students");
+    revalidatePath("/list/students");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -341,7 +350,7 @@ export const updateStudent = async (
         classId: data.classId,
       },
     });
-    // revalidatePath("/list/students");
+    revalidatePath("/list/students");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -360,13 +369,16 @@ export const deleteStudent = async (
       console.log("Clerk user delete failed (ignorable if user missing):", e);
     }
 
-    await prisma.student.delete({
+    await prisma.student.update({
       where: {
         id: id,
       },
+      data: {
+        isActive: false,
+      }
     });
 
-    // revalidatePath("/list/students");
+    revalidatePath("/list/students");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -388,7 +400,7 @@ export const createAssignment = async (
       },
     });
 
-    // revalidatePath("/list/assignments");
+    revalidatePath("/list/assignments");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -412,7 +424,7 @@ export const updateAssignment = async (
       },
     });
 
-    // revalidatePath("/list/assignments");
+    revalidatePath("/list/assignments");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -431,7 +443,7 @@ export const deleteAssignment = async (
       },
     });
 
-    // revalidatePath("/list/assignments");
+    revalidatePath("/list/assignments");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -495,63 +507,7 @@ export const updateAttendance = async (
   }
 };
 
-export const createGrade = async (
-  currentState: CurrentState,
-  data: GradeSchema
-) => {
-  try {
-    await prisma.grade.create({
-      data: {
-        level: data.level,
-      },
-    });
 
-    // revalidatePath("/list/levels");
-    return { success: true, error: false };
-  } catch (err) {
-    return handleActionError(err);
-  }
-};
-
-export const updateGrade = async (
-  currentState: CurrentState,
-  data: GradeSchema
-) => {
-  try {
-    await prisma.grade.update({
-      where: {
-        id: data.id,
-      },
-      data: {
-        level: data.level,
-      },
-    });
-
-    // revalidatePath("/list/levels");
-    return { success: true, error: false };
-  } catch (err) {
-    return handleActionError(err);
-  }
-};
-
-export const deleteGrade = async (
-  currentState: CurrentState,
-  data: FormData
-) => {
-  const id = data.get("id") as string;
-  try {
-    await prisma.grade.delete({
-      where: {
-        id: parseInt(id),
-      },
-    });
-
-    // revalidatePath("/list/levels");
-    return { success: true, error: false };
-  } catch (err) {
-    return handleActionError(err);
-  }
-};
 
 export const updateSchoolConfig = async (
   currentState: CurrentState,
@@ -606,7 +562,7 @@ export const createAnnouncement = async (
       },
     });
 
-    // revalidatePath("/list/announcements");
+    revalidatePath("/list/announcements");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -650,7 +606,7 @@ export const deleteAnnouncement = async (
       },
     });
 
-    // revalidatePath("/list/announcements");
+    revalidatePath("/list/announcements");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -710,7 +666,7 @@ export const createMaterial = async (
       });
     }
 
-    // revalidatePath("/list/materials");
+    revalidatePath("/list/materials");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
@@ -732,7 +688,7 @@ export const deleteMaterial = async (
       },
     });
 
-    // revalidatePath("/list/materials");
+    revalidatePath("/list/materials");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
@@ -748,7 +704,7 @@ export const createLesson = async (
     await prisma.lesson.create({
       data: {
         name: data.name,
-        day: data.day,
+        day: data.day as Day,
         startTime: data.startTime,
         endTime: data.endTime,
         subjectId: data.subjectId,
@@ -757,7 +713,7 @@ export const createLesson = async (
       },
     });
 
-    // revalidatePath("/list/lessons");
+    revalidatePath("/list/lessons");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -775,7 +731,7 @@ export const updateLesson = async (
       },
       data: {
         name: data.name,
-        day: data.day,
+        day: data.day as Day,
         startTime: data.startTime,
         endTime: data.endTime,
         subjectId: data.subjectId,
@@ -784,7 +740,7 @@ export const updateLesson = async (
       },
     });
 
-    // revalidatePath("/list/lessons");
+    revalidatePath("/list/lessons");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -797,13 +753,16 @@ export const deleteLesson = async (
 ) => {
   const id = data.get("id") as string;
   try {
-    await prisma.lesson.delete({
+    await prisma.lesson.update({
       where: {
         id: parseInt(id),
       },
+      data: {
+        isActive: false,
+      }
     });
 
-    // revalidatePath("/list/lessons");
+    revalidatePath("/list/lessons");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);

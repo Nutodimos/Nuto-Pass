@@ -139,7 +139,7 @@ const LessonSelector = ({
                 >
                     <div className="flex items-center gap-2 text-emerald-700 text-sm font-medium mb-2">
                         <Zap className="w-4 h-4" />
-                        <span>Today's Lessons ({todayLessons.length})</span>
+                        <span>Today&apos;s Lessons ({todayLessons.length})</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {todayLessons.map(lesson => (
@@ -147,8 +147,8 @@ const LessonSelector = ({
                                 key={lesson.id}
                                 onClick={() => onSelectLesson(lesson)}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isCurrentlyActive(lesson)
-                                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
-                                        : "bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50"
+                                    ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
+                                    : "bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50"
                                     }`}
                             >
                                 {lesson.subject.name}
@@ -248,10 +248,10 @@ const LessonSelector = ({
                                             setIsOpen(false);
                                         }}
                                         className={`w-full p-4 flex items-center gap-4 transition-all duration-200 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 ${selectedLesson?.id === lesson.id
-                                                ? "bg-emerald-50"
-                                                : isCurrentlyActive(lesson)
-                                                    ? "bg-amber-50"
-                                                    : ""
+                                            ? "bg-emerald-50"
+                                            : isCurrentlyActive(lesson)
+                                                ? "bg-amber-50"
+                                                : ""
                                             }`}
                                     >
                                         {/* Day Badge */}

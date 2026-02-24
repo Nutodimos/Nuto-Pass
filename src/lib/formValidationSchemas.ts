@@ -89,12 +89,7 @@ export const assignmentSchema = z.object({
 
 export type AssignmentSchema = z.infer<typeof assignmentSchema>;
 
-export const gradeSchema = z.object({
-  id: z.coerce.number().optional(),
-  level: z.coerce.number().min(1, { message: "Level is required!" }),
-});
 
-export type GradeSchema = z.infer<typeof gradeSchema>;
 
 export const announcementSchema = z.object({
   id: z.coerce.number().optional(),

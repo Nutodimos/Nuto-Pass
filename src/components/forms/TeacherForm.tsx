@@ -54,7 +54,7 @@ const TeacherForm = ({
       setOpen(false);
       router.refresh();
     } else if (state.error) {
-      toast.error(state.messages ? state.messages.join("\n") : "Something went wrong!");
+      toast.error((state as any).messages ? (state as any).messages.join("\n") : "Something went wrong!");
     }
   }, [state, router, type, setOpen]);
 
@@ -235,7 +235,7 @@ const TeacherForm = ({
       {
         state.error && (
           <span className="text-red-500">
-            {state.messages ? state.messages.join(", ") : "Something went wrong!"}
+            {(state as any).messages ? (state as any).messages.join(", ") : "Something went wrong!"}
           </span>
         )
       }

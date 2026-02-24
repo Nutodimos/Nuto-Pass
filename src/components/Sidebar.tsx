@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     Menu, X, Home, Users, GraduationCap, BookOpen, Calendar,
     ClipboardList, Fingerprint, MessageSquare, Megaphone,
-    Settings, LogOut, Layers, ChevronLeft
+    Settings, LogOut, Layers, ChevronLeft, Presentation
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,7 +35,7 @@ const menuItems: MenuSection[] = [
             { icon: GraduationCap, label: "Students", href: "/list/students", visible: ["admin", "teacher"] },
             { icon: BookOpen, label: "Courses", href: "/list/courses", visible: ["admin"] },
             { icon: Layers, label: "Levels", href: "/list/levels", visible: ["admin", "teacher"] },
-            { icon: Calendar, label: "Lessons", href: "/list/lessons", visible: ["admin", "teacher"] },
+            { icon: Presentation, label: "Lessons", href: "/list/lessons", visible: ["admin", "teacher"] },
             { icon: BookOpen, label: "Materials", href: "/list/materials", visible: ["admin", "teacher", "student"] },
             { icon: ClipboardList, label: "Assignments", href: "/list/assignments", visible: ["admin", "teacher", "student", "parent"] },
             { icon: Calendar, label: "Events", href: "/list/events", visible: ["admin", "teacher", "student", "parent"] },

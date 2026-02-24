@@ -34,7 +34,9 @@ const CoursesPage = async ({
   const currentSemester = semesterConfig?.value ? parseInt(semesterConfig.value) : null;
 
   // URL PARAMS CONDITION
-  const query: Prisma.SubjectWhereInput = {};
+  const query: Prisma.SubjectWhereInput = {
+    isActive: true, // Hide archived courses
+  };
 
   // Filter by semester: show courses for current semester OR courses marked for both (null)
   if (currentSemester && currentSemester !== 0) {

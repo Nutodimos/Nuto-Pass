@@ -115,9 +115,9 @@ const SingleLessonPage = async ({
 
                         {/* Badges row */}
                         <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 w-full">
-                            <Link href={`/list/classes/${lesson.classId}`} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-nutoSlate transition-colors rounded-lg border border-slate-200 font-semibold text-sm">
+                            <Link href={`/list/levels/${lesson.classId}`} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-nutoSlate transition-colors rounded-lg border border-slate-200 font-semibold text-sm">
                                 <Users className="w-4 h-4 text-nutoSlate" />
-                                Class {lesson.class.name}
+                                Level {lesson.class.name}
                             </Link>
                             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-slate-700 rounded-lg border border-slate-200 font-semibold text-sm">
                                 <Clock className="w-4 h-4 text-nutoOrange" />
@@ -169,7 +169,7 @@ const SingleLessonPage = async ({
                         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                             <div>
                                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">Attendance Roster</h2>
-                                <p className="text-sm text-slate-500 font-medium mt-1">Mark student presence for today's session</p>
+                                <p className="text-sm text-slate-500 font-medium mt-1">Mark student presence for today&apos;s session</p>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center border border-emerald-100 shadow-sm shrink-0">
                                 <Users className="w-6 h-6" />
@@ -201,25 +201,25 @@ const SingleLessonPage = async ({
                     </h3>
                     <div className="flex flex-col gap-3">
                         <Link
-                            href={`/list/teachers/${lesson.teacherId}`}
+                            href={`/list/lecturers/${lesson.teacherId}`}
                             className="flex justify-between items-center p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-colors group"
                         >
                             <span className="font-semibold text-slate-700 text-sm">Lecturer Profile</span>
                             <User className="w-4 h-4 text-slate-400 group-hover:text-nutoSlate" />
                         </Link>
                         <Link
-                            href={`/list/classes/${lesson.classId}`}
+                            href={`/list/levels/${lesson.classId}`}
                             className="flex justify-between items-center p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-colors group"
                         >
-                            <span className="font-semibold text-slate-700 text-sm">Full Class Roster</span>
+                            <span className="font-semibold text-slate-700 text-sm">Full Level Roster</span>
                             <Users className="w-4 h-4 text-slate-400 group-hover:text-nutoSlate" />
                         </Link>
                         <Link
-                            href={`/list/subjects/${lesson.subjectId}`}
+                            href={`/list/courses/${lesson.subjectId}`}
                             className="flex justify-between items-center p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-colors group relative pointer-events-none opacity-60"
                             title="Feature coming soon"
                         >
-                            <span className="font-semibold text-slate-700 text-sm">Subject Syllabus</span>
+                            <span className="font-semibold text-slate-700 text-sm">Course Syllabus</span>
                             <BookOpen className="w-4 h-4 text-slate-400 group-hover:text-nutoSlate" />
                             <span className="absolute -top-2 -right-2 text-[10px] font-bold bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full">Soon</span>
                         </Link>

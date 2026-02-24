@@ -3,7 +3,7 @@ import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { Class, Lesson, Prisma, Subject, Teacher } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
-import { BookOpen, Calendar, Clock, User, Users } from "lucide-react";
+import { BookOpen, Calendar, Clock, User, Users, Presentation } from "lucide-react";
 import Link from "next/link";
 
 type LessonList = Lesson & {
@@ -24,6 +24,7 @@ const LessonListPage = async ({
 
   // QUERY GENERATION
   const query: Prisma.LessonWhereInput = {};
+  query.isActive = true;
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
@@ -93,7 +94,7 @@ const LessonListPage = async ({
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-white/20 rounded-xl">
-              <BookOpen className="w-8 h-8 text-white" />
+              <Presentation className="w-8 h-8 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">Lesson Schedule</h1>

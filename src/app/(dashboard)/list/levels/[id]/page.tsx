@@ -224,7 +224,7 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
                     <div className="bg-white rounded-3xl p-12 text-center shadow-sm border border-slate-100 flex flex-col items-center justify-center">
                         <Calendar className="w-16 h-16 text-slate-200 mb-4" />
                         <h3 className="text-xl font-bold text-slate-700 mb-2">No Courses Scheduled</h3>
-                        <p className="text-slate-500 max-w-md mx-auto">There are no lessons currently assigned to this level's timetable. Administrators can add lessons from the curriculum settings.</p>
+                        <p className="text-slate-500 max-w-md mx-auto">There are no lessons currently assigned to this level&apos;s timetable. Administrators can add lessons from the curriculum settings.</p>
                     </div>
                 )}
             </div>

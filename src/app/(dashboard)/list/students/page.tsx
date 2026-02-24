@@ -33,7 +33,9 @@ const StudentListPage = async ({
   const p = page ? parseInt(page) : 1;
 
   // URL PARAMS CONDITION
-  const query: Prisma.StudentWhereInput = {};
+  const query: Prisma.StudentWhereInput = {
+    isActive: true, // Hide soft-deleted students
+  };
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {

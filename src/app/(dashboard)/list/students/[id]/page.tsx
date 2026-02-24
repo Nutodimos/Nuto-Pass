@@ -197,9 +197,9 @@ const SingleStudentPage = async ({
             </Link>
             <Link
               className="px-4 py-2 rounded-xl bg-nutoOrange text-white text-sm font-medium hover:bg-nutoOrangeDark transition-colors"
-              href={`/list/teachers?classId=${student.class.id}`}
+              href={`/list/lecturers?classId=${student.class.id}`}
             >
-              Teachers
+              Lecturers
             </Link>
             <Link
               className="px-4 py-2 rounded-xl bg-nutoSlateLight text-white text-sm font-medium hover:bg-nutoSlate transition-colors"

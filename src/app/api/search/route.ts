@@ -84,6 +84,7 @@ export const GET = async (req: NextRequest) => {
             // Search Lessons (all roles)
             prisma.lesson.findMany({
                 where: {
+                    isActive: true,
                     OR: [
                         { name: { contains: searchQuery, mode: "insensitive" } },
                         { subject: { name: { contains: searchQuery, mode: "insensitive" } } },
@@ -133,7 +134,7 @@ export const GET = async (req: NextRequest) => {
                 title: `${t.name} ${t.surname}`,
                 subtitle: "Lecturer",
                 img: t.img,
-                route: `/list/teachers/${t.username}`,
+                route: `/list/lecturers/${t.username}`,
             })),
             ...subjects.map((s) => ({
                 type: "subject" as const,

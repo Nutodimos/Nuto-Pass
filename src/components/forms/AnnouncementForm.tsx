@@ -91,7 +91,6 @@ const AnnouncementForm = ({
                     defaultValue={data?.title}
                     register={register}
                     error={errors?.title}
-                    className="md:w-full"
                 />
             </div>
 
@@ -120,7 +119,6 @@ const AnnouncementForm = ({
                     }
                     register={register}
                     error={errors?.date}
-                    className="md:w-[48%]"
                 />
 
                 <div className="flex flex-col gap-2 w-full md:w-[48%]">

@@ -8,7 +8,7 @@ const MessagesPage = () => {
             </div>
             <h1 className="text-2xl font-bold text-slate-800 mb-2">Messages</h1>
             <p className="text-slate-500 max-w-md">
-                The messaging system is currently under development. Soon you'll be able to chat with teachers and students directly here.
+                The messaging system is currently under development. Soon you&apos;ll be able to chat with teachers and students directly here.
             </p>
         </div>
     );

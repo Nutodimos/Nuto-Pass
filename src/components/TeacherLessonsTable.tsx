@@ -33,6 +33,7 @@ const TeacherLessonsTable = async ({
         prisma.lesson.findMany({
             where: {
                 teacherId: teacherId,
+                isActive: true,
             },
             include: {
                 subject: { select: { name: true, id: true } },
@@ -48,6 +49,7 @@ const TeacherLessonsTable = async ({
         prisma.lesson.count({
             where: {
                 teacherId: teacherId,
+                isActive: true,
             },
         }),
     ]);

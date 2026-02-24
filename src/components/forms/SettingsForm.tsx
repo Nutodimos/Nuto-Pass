@@ -25,7 +25,7 @@ const SettingsForm = ({ currentSession, currentSemester }: SettingsFormProps) =>
             toast.success("Settings updated successfully!");
             router.refresh();
         } else if (state.error) {
-            toast.error(state.messages ? state.messages.join("\n") : "Something went wrong!");
+            toast.error((state as any).messages ? (state as any).messages.join("\n") : "Something went wrong!");
         }
     }, [state, router]);
 

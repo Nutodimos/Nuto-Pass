@@ -24,6 +24,7 @@ import {
   Megaphone,
   Fingerprint,
   Loader2,
+  Presentation,
 } from "lucide-react";
 
 interface SearchCategory {
@@ -48,7 +49,7 @@ const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   student: GraduationCap,
   lecturer: Users,
   subject: BookOpen,
-  lesson: Calendar,
+  lesson: Presentation,
   class: Building2,
 };
 
@@ -131,7 +132,7 @@ const Navbar = () => {
       { name: "Lecturers", route: "/list/lecturers", icon: Users, keywords: ["lecturer", "teacher", "instructor", "professor"], roles: ["admin"] },
       { name: "Classes", route: "/list/attendance", icon: Building2, keywords: ["class", "level", "grade"] },
       { name: "Subjects", route: "/list/courses", icon: BookOpen, keywords: ["subject", "course", "module"] },
-      { name: "Lessons", route: "/list/lessons", icon: Calendar, keywords: ["lesson", "schedule", "timetable"] },
+      { name: "Lessons", route: "/list/lessons", icon: Presentation, keywords: ["lesson", "schedule", "timetable"] },
       { name: "Assignments", route: "/list/assignments", icon: ClipboardList, keywords: ["assignment", "homework", "task"] },
       { name: "Announcements", route: "/list/announcements", icon: Megaphone, keywords: ["announcement", "notice", "news"] },
       { name: "Events", route: "/list/events", icon: Calendar, keywords: ["event", "activity", "meeting"] },

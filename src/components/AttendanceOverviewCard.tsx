@@ -8,37 +8,29 @@ const AttendanceOverviewCard = async () => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Fetch today's attendance
-    const todayAttendance = await prisma.attendance.findMany({
-        where: {
-            date: {
-                gte: today,
-                lt: tomorrow,
-            },
-        },
-    });
-
-    const totalToday = todayAttendance.length;
-    const presentToday = todayAttendance.filter((a) => a.present).length;
-    const absentToday = totalToday - presentToday;
-    const percentageToday = totalToday > 0 ? Math.round((presentToday / totalToday) * 100) : 0;
-
-    // Get yesterday's attendance for comparison
+    // Get yesterday's date range
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayEnd = new Date(today);
 
-    const yesterdayAttendance = await prisma.attendance.findMany({
-        where: {
-            date: {
-                gte: yesterday,
-                lt: yesterdayEnd,
-            },
-        },
-    });
+    // Use count() instead of findMany() - much more efficient
+    const [totalToday, presentToday, totalYesterday, presentYesterday] =
+        await prisma.$transaction([
+            prisma.attendance.count({
+                where: { date: { gte: today, lt: tomorrow } },
+            }),
+            prisma.attendance.count({
+                where: { date: { gte: today, lt: tomorrow }, present: true },
+            }),
+            prisma.attendance.count({
+                where: { date: { gte: yesterday, lt: today } },
+            }),
+            prisma.attendance.count({
+                where: { date: { gte: yesterday, lt: today }, present: true },
+            }),
+        ]);
 
-    const totalYesterday = yesterdayAttendance.length;
-    const presentYesterday = yesterdayAttendance.filter((a) => a.present).length;
+    const absentToday = totalToday - presentToday;
+    const percentageToday = totalToday > 0 ? Math.round((presentToday / totalToday) * 100) : 0;
     const percentageYesterday = totalYesterday > 0 ? Math.round((presentYesterday / totalYesterday) * 100) : 0;
 
     const percentageChange = percentageToday - percentageYesterday;
@@ -50,7 +42,7 @@ const AttendanceOverviewCard = async () => {
             {/* Header */}
             <div className="flex items-center justify-between mb-6 relative z-10">
                 <div>
-                    <h3 className="text-lg font-bold text-slate-800">Today's Attendance</h3>
+                    <h3 className="text-lg font-bold text-slate-800">Today&apos;s Attendance</h3>
                     <p className="text-sm text-slate-500">
                         {today.toLocaleDateString("en-US", {
                             weekday: "long",

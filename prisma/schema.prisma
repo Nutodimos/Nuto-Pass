@@ -23,6 +23,7 @@ model Student {
   img         String?
   bloodType   String?
   sex         UserSex
+  isActive    Boolean      @default(true)
   createdAt   DateTime     @default(now())
   classId     Int
   class       Class        @relation(fields: [classId], references: [id])
@@ -31,6 +32,9 @@ model Student {
   attendances Attendance[]
   birthday    DateTime
   biometricId String?      @unique
+
+  @@index([classId])
+  @@index([gradeId])
 }
 
 model Teacher {
@@ -44,6 +48,7 @@ model Teacher {
   img       String?
   bloodType String?
   sex       UserSex
+  isActive  Boolean   @default(true)
   createdAt DateTime  @default(now())
   subjects  Subject[]
   lessons   Lesson[]
@@ -63,8 +68,9 @@ model Grade {
 }
 
 model Class {
-  id       Int    @id @default(autoincrement())
-  name     String @unique
+  id       Int      @id @default(autoincrement())
+  name     String   @unique
+  isActive Boolean  @default(true)
 
   supervisorId  String?
   supervisor    Teacher?       @relation(fields: [supervisorId], references: [id], onDelete: SetNull)
@@ -80,6 +86,7 @@ model Class {
 model Subject {
   id        Int       @id @default(autoincrement())
   name      String    @unique
+  isActive  Boolean   @default(true)
   semester  Int?      // 1 = First semester, 2 = Second semester, null = both/full year
   teachers  Teacher[]
   lessons   Lesson[]
@@ -92,6 +99,7 @@ model Lesson {
   day       Day
   startTime DateTime
   endTime   DateTime
+  isActive  Boolean  @default(true)
 
   subjectId   Int
   subject     Subject      @relation(fields: [subjectId], references: [id])
@@ -102,6 +110,10 @@ model Lesson {
   assignments Assignment[]
   attendances Attendance[]
   attendanceSessions AttendanceSession[]
+
+  @@index([teacherId])
+  @@index([classId])
+  @@index([subjectId])
 }
 
 
@@ -114,6 +126,8 @@ model Assignment {
 
   lessonId Int
   lesson   Lesson   @relation(fields: [lessonId], references: [id])
+
+  @@index([lessonId])
 }
 
 
@@ -124,9 +138,13 @@ model Attendance {
   present Boolean
 
   studentId String
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   Student @relation(fields: [studentId], references: [id])
   lessonId  Int
   lesson    Lesson  @relation(fields: [lessonId], references: [id])
+
+  @@index([studentId, date])
+  @@index([lessonId, date])
+  @@index([date])
 }
 
 model Event {
@@ -138,6 +156,8 @@ model Event {
 
   classId Int?
   class   Class? @relation(fields: [classId], references: [id])
+
+  @@index([classId])
 }
 
 model Announcement {
@@ -210,6 +230,9 @@ model Material {
   subject   Subject  @relation(fields: [subjectId], references: [id])
   classId   Int?
   class     Class?   @relation(fields: [classId], references: [id])
+
+  @@index([subjectId])
+  @@index([classId])
 }
 
 model Notification {

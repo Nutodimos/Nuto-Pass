@@ -30,7 +30,9 @@ const ClassListPage = async ({
   const { page, ...queryParams } = searchParams;
   const p = page ? parseInt(page) : 1;
 
-  const query: Prisma.ClassWhereInput = {};
+  const query: Prisma.ClassWhereInput = {
+    isActive: true, // Hide archived classes
+  };
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
