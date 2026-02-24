@@ -74,9 +74,10 @@ const RecentActivitiesCard = async () => {
     ].slice(0, 5);
 
     return (
-        <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow h-full flex flex-col">
+        <div className="group nuto-card p-6 h-full flex flex-col">
+            <div className="group nuto-card-indicator"></div>
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 relative z-10">
                 <div>
                     <h3 className="text-lg font-bold text-slate-800">Recent Activities</h3>
                     <p className="text-sm text-slate-500">Latest system events</p>

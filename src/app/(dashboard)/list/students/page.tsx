@@ -109,10 +109,11 @@ const StudentListPage = async ({
           {data.map((student: StudentList) => (
             <div
               key={student.id}
-              className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-lg transition-all group"
+              className="group nuto-card flex flex-col"
             >
+              <div className="group nuto-card-indicator"></div>
               {/* Clickable Card Content */}
-              <Link href={`/list/students/${student.username}`} className="block">
+              <Link href={`/list/students/${student.username}`} className="block flex-1 relative z-10">
                 {/* Card Header with Avatar */}
                 <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-4 flex items-center gap-4">
                   <div className="relative">
@@ -188,7 +189,7 @@ const StudentListPage = async ({
 
               {/* Card Footer - Actions (outside the link) */}
               {role === "admin" && (
-                <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2 relative z-10">
                   <FormContainer table="student" type="update" data={student} />
                   <FormContainer table="student" type="delete" id={student.id} />
                   <BiometricRegistrationButton studentId={student.id} />

@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { Class, Lesson, Prisma, Subject, Teacher } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { BookOpen, Calendar, Clock, User, Users } from "lucide-react";
+import Link from "next/link";
 
 type LessonList = Lesson & {
   subject: { name: string };
@@ -131,23 +132,35 @@ const LessonListPage = async ({
                 {lessons.map((lesson) => (
                   <div
                     key={lesson.id}
-                    className="group bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-nutoSlate/30 transition-all duration-300 relative overflow-hidden"
+                    className="group nuto-card flex flex-col relative"
                   >
-                    <div className="h-1 w-full absolute top-0 left-0 bg-slate-200 group-hover:bg-nutoSlate transition-colors duration-300"></div>
+                    <div className="group nuto-card-indicator z-0"></div>
 
-                    <div className="p-5">
+                    {/* The Full Card Link Layer - sits underneath actions */}
+                    <Link
+                      href={`/list/lessons/${lesson.id}`}
+                      className="absolute inset-0 z-10"
+                      aria-label={`View details for ${lesson.subject.name}`}
+                    />
+
+                    <div className="p-5 flex-1 flex flex-col relative z-20 pointer-events-none">
                       {/* HEADER: Subject & Time */}
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-bold text-slate-800 text-lg leading-tight mb-1">{lesson.subject.name}</h3>
+                      <div className="flex justify-between items-start mb-3 pointer-events-auto">
+                        <div className="flex-1 pointer-events-none">
+                          <h3 className="font-bold text-slate-800 text-lg leading-tight mb-1 group-hover:text-nutoSlate transition-colors">
+                            {lesson.subject.name}
+                          </h3>
+                          <p className="text-sm text-slate-500 font-medium capitalize mb-2">
+                            {lesson.name?.toLowerCase().startsWith('lesson') ? lesson.name.replace(/lesson/i, 'Lesson ') : lesson.name}
+                          </p>
                           <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
                             <Clock className="w-3.5 h-3.5" />
                             {formatTime(lesson.startTime)} - {formatTime(lesson.endTime)}
                           </div>
                         </div>
-                        {/* ACTIONS */}
+                        {/* ACTIONS - Higher z-index, pointer events enabled */}
                         {role === "admin" && (
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 relative z-30 pointer-events-auto">
                             <FormContainer table="lesson" type="update" data={lesson} />
                             <FormContainer table="lesson" type="delete" id={lesson.id} />
                           </div>
@@ -155,15 +168,15 @@ const LessonListPage = async ({
                       </div>
 
                       {/* DETAILS: Class & Teacher */}
-                      <div className="space-y-2 pt-3 border-t border-slate-50">
+                      <div className="space-y-2 pt-3 mt-auto border-t border-slate-50 block pointer-events-none">
                         <div className="flex items-center gap-2 text-sm text-slate-600">
-                          <div className="p-1.5 bg-slate-100 rounded-md text-slate-500">
+                          <div className="p-1.5 bg-slate-100 rounded-md text-slate-500 group-hover:bg-slate-200 transition-colors">
                             <Users className="w-4 h-4" />
                           </div>
                           <span className="font-medium">{lesson.class.name}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-slate-600">
-                          <div className="p-1.5 bg-slate-100 rounded-md text-slate-500">
+                          <div className="p-1.5 bg-slate-100 rounded-md text-slate-500 group-hover:bg-slate-200 transition-colors">
                             <User className="w-4 h-4" />
                           </div>
                           <span>{lesson.teacher.name} {lesson.teacher.surname}</span>

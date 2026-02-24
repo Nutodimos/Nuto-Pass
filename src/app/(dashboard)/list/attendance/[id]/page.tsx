@@ -7,6 +7,8 @@ import { Student, Class, Attendance } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { ITEM_PER_PAGE } from "@/lib/settings";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 type StudentList = Student & { class: Class } & { attendances: Attendance[] };
 
@@ -17,6 +19,45 @@ const ClassAttendancePage = async ({
     params: { id: string };
     searchParams: { [key: string]: string | undefined };
 }) => {
+    const { sessionClaims, userId } = auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+    const currentUserId = userId;
+
+    if (!currentUserId) {
+        return redirect("/");
+    }
+
+    // Access control: Only admin and teacher can access this page
+    if (!role || (role !== "admin" && role !== "teacher")) {
+        // If student, redirect to their profile
+        if (role === "student" && currentUserId) {
+            const student = await prisma.student.findUnique({
+                where: { id: currentUserId },
+                select: { username: true }
+            });
+            if (student?.username) {
+                redirect(`/list/students/${student.username}`);
+            }
+        }
+        redirect("/");
+    }
+
+    // For teachers, verify they have access to this class
+    if (role === "teacher") {
+        const hasAccess = await prisma.class.findFirst({
+            where: {
+                id: parseInt(id),
+                OR: [
+                    { supervisorId: currentUserId },
+                    { lessons: { some: { teacherId: currentUserId } } },
+                ],
+            },
+        });
+        if (!hasAccess) {
+            redirect("/list/attendance");
+        }
+    }
+
     const columns = [
         {
             header: "Info",

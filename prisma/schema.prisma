@@ -67,7 +67,7 @@ model Class {
   name     String @unique
 
   supervisorId  String?
-  supervisor    Teacher?       @relation(fields: [supervisorId], references: [id])
+  supervisor    Teacher?       @relation(fields: [supervisorId], references: [id], onDelete: SetNull)
   lessons       Lesson[]
   students      Student[]
   gradeId       Int
@@ -98,7 +98,7 @@ model Lesson {
   classId     Int
   class       Class        @relation(fields: [classId], references: [id])
   teacherId   String
-  teacher     Teacher      @relation(fields: [teacherId], references: [id])
+  teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   assignments Assignment[]
   attendances Attendance[]
   attendanceSessions AttendanceSession[]
@@ -124,7 +124,7 @@ model Attendance {
   present Boolean
 
   studentId String
-  student   Student @relation(fields: [studentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   lessonId  Int
   lesson    Lesson  @relation(fields: [lessonId], references: [id])
 }
@@ -205,7 +205,7 @@ model Material {
   isGeneral Boolean  @default(false)
 
   teacherId String?
-  teacher   Teacher? @relation(fields: [teacherId], references: [id])
+  teacher   Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
   subjectId Int
   subject   Subject  @relation(fields: [subjectId], references: [id])
   classId   Int?

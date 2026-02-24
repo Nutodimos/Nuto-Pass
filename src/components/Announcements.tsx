@@ -24,8 +24,9 @@ const Announcements = async () => {
   });
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
-      <div className="flex items-center justify-between mb-6">
+    <div className="group nuto-card p-6">
+      <div className="group nuto-card-indicator"></div>
+      <div className="flex items-center justify-between mb-6 relative z-10">
         <h1 className="text-xl font-bold text-slate-800">Announcements</h1>
         <a href="/list/announcements" className="text-sm font-medium text-nutoSlate hover:text-nutoSlateDark hover:underline">
           View All

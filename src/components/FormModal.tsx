@@ -15,6 +15,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useFormState } from "react-dom";
 import { toast } from "react-toastify";
 import { FormContainerProps } from "./FormContainer";
@@ -235,7 +236,7 @@ const FormModal = ({
       >
         <Image src={`/${type}.png`} alt="" width={type === "create" ? 24 : 16} height={type === "create" ? 24 : 16} />
       </button>
-      {open && (
+      {open && typeof document !== "undefined" && createPortal(
         <div className="w-screen h-screen fixed left-0 top-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center pt-16 pb-8 overflow-y-auto animate-fade-in">
           <div
             className="bg-white p-6 rounded-2xl relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] max-h-[calc(100vh-6rem)] overflow-y-auto shadow-2xl animate-scale-in my-auto"
@@ -277,7 +278,8 @@ const FormModal = ({
               animation: fade-in 0.2s ease-out;
             }
           `}</style>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

@@ -22,11 +22,15 @@ const UserCard = async ({
 
   const data = await modelMap[type].count();
 
-  // Fetch session year (with fallback)
-  const config = await prisma.schoolConfig.findUnique({
-    where: { key: "sessionYear" },
-  });
-  const sessionYear = config?.value || new Date().toLocaleDateString('en-GB');
+  // Fetch session year and semester
+  const [sessionConfig, semesterConfig] = await Promise.all([
+    prisma.schoolConfig.findUnique({ where: { key: "sessionYear" } }),
+    prisma.schoolConfig.findUnique({ where: { key: "currentSemester" } }),
+  ]);
+
+  const sessionYear = sessionConfig?.value || "2024/25";
+  const currentSemester = semesterConfig?.value || "1";
+  const semesterText = currentSemester === "1" ? "Harmattan" : "Rain";
 
   // Card styling based on type
   const cardStyles = {
@@ -94,10 +98,13 @@ const UserCard = async ({
           </h2>
         </div>
 
-        {/* Session Year Badge */}
-        <div className="flex items-center gap-2">
+        {/* Session & Semester Badges */}
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[10px] bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white font-medium">
             {sessionYear}
+          </span>
+          <span className="text-[10px] bg-white/30 backdrop-blur-sm px-3 py-1 rounded-full text-white font-medium">
+            {semesterText} Semester
           </span>
         </div>
       </div>

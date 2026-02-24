@@ -65,11 +65,12 @@ const MaterialCard = ({ id, title, filePath, className, teacherName, createdAt, 
 
     return (
         <>
-            <div className={`group bg-white rounded-xl border ${isGeneral ? 'border-amber-200' : 'border-gray-100'} shadow-sm hover:shadow-md hover:border-nutoOrange/30 transition-all duration-300 overflow-hidden`}>
+            <div className={`group nuto-card flex flex-col ${isGeneral ? 'border-amber-200' : ''}`}>
+                <div className="group nuto-card-indicator"></div>
                 {/* Card Header with file type indicator */}
-                <div className={`h-2 ${isGeneral ? 'bg-gradient-to-r from-amber-400/40 to-amber-200/20' : 'bg-gradient-to-r from-nutoOrange/20 to-nutoOrange/5'}`}></div>
+                <div className={`h-2 shrink-0 ${isGeneral ? 'bg-gradient-to-r from-amber-400/40 to-amber-200/20' : 'bg-gradient-to-r from-nutoOrange/20 to-nutoOrange/5'}`}></div>
 
-                <div className="p-4">
+                <div className="p-4 flex-1 flex flex-col">
                     {/* File Icon & Type Badge */}
                     <div className="flex items-start justify-between mb-3">
                         <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-nutoOrange/10 transition-colors">

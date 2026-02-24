@@ -121,9 +121,10 @@ const CoursesPage = async ({
           {data.map((course: SubjectWithCounts) => (
             <div
               key={course.id}
-              className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-lg transition-all group"
+              className="group nuto-card p-5 flex flex-col"
             >
-              <Link href={`/list/courses/${course.id}`} className="block">
+              <div className="group nuto-card-indicator"></div>
+              <Link href={`/list/courses/${course.id}`} className="block flex-1 relative z-10">
                 {/* Course Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-nutoSlate to-nutoSlateDark flex items-center justify-center">
@@ -163,7 +164,7 @@ const CoursesPage = async ({
 
               {/* Admin Actions - Outside the Link */}
               {role === "admin" && (
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100 relative z-10">
                   <FormContainer table="subject" type="update" data={course} />
                   <FormContainer table="subject" type="delete" id={course.id} />
                 </div>

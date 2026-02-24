@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 type ClassWithDetails = Class & {
     supervisor: Teacher | null;
@@ -25,6 +26,21 @@ const AttendanceClassListPage = async ({
     const { sessionClaims, userId } = auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = userId;
+
+    // Access control: Only admin and teacher can access this page
+    if (!role || (role !== "admin" && role !== "teacher")) {
+        // If student, get their username and redirect to their profile
+        if (role === "student" && currentUserId) {
+            const student = await prisma.student.findUnique({
+                where: { id: currentUserId },
+                select: { username: true }
+            });
+            if (student?.username) {
+                redirect(`/list/students/${student.username}`);
+            }
+        }
+        redirect("/");
+    }
 
     const query: any = {};
 
@@ -97,8 +113,9 @@ const AttendanceClassListPage = async ({
                         <Link
                             key={classItem.id}
                             href={`/list/attendance/${classItem.id}`}
-                            className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-lg transition-all hover:scale-[1.02] group"
+                            className="group nuto-card p-5 block"
                         >
+                            <div className="group nuto-card-indicator"></div>
                             {/* Header */}
                             <div className="flex items-start justify-between mb-4">
                                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-nutoOrange to-nutoOrangeDark flex items-center justify-center">

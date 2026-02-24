@@ -45,9 +45,10 @@ const AttendanceOverviewCard = async () => {
     const isPositive = percentageChange >= 0;
 
     return (
-        <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+        <div className="group nuto-card p-6">
+            <div className="group nuto-card-indicator"></div>
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 relative z-10">
                 <div>
                     <h3 className="text-lg font-bold text-slate-800">Today's Attendance</h3>
                     <p className="text-sm text-slate-500">

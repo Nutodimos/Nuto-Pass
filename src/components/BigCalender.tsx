@@ -7,12 +7,15 @@ import { useState } from "react";
 
 const localizer = momentLocalizer(moment);
 
+import { useRouter } from "next/navigation";
+
 const BigCalendar = ({
   data,
 }: {
-  data: { title: string; start: Date; end: Date }[];
+  data: { id?: number; title: string; start: Date; end: Date }[];
 }) => {
   const [view, setView] = useState<View>(Views.WORK_WEEK);
+  const router = useRouter();
 
   const handleOnChangeView = (selectedView: View) => {
     setView(selectedView);
@@ -180,6 +183,18 @@ const BigCalendar = ({
         max={new Date(2025, 1, 0, 17, 0, 0)}
         eventPropGetter={eventStyleGetter}
         dayPropGetter={dayPropGetter}
+        onSelectEvent={(event) => {
+          if (event.id) {
+            router.push(`/list/lessons/${event.id}`);
+          }
+        }}
+        components={{
+          event: (props) => (
+            <div className="cursor-pointer" title="Click to view lesson details">
+              {props.title}
+            </div>
+          ),
+        }}
       />
     </div>
   );

@@ -127,8 +127,9 @@ const SingleCoursePage = async ({
                 </div>
 
                 {/* LESSONS SECTION */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                    <div className="flex items-center justify-between mb-4">
+                <div className="group nuto-card p-6">
+                    <div className="group nuto-card-indicator"></div>
+                    <div className="flex items-center justify-between mb-4 relative z-10">
                         <h2 className="text-lg font-semibold text-nutoSlateDark">Lessons</h2>
                         <Link
                             href={`/list/lessons?subjectId=${course.id}`}
@@ -139,12 +140,12 @@ const SingleCoursePage = async ({
                     </div>
 
                     {course.lessons.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                        <div className="flex flex-col items-center justify-center py-8 text-gray-400 relative z-10">
                             <Calendar className="w-10 h-10 mb-2 opacity-50" />
                             <p className="text-sm">No lessons scheduled</p>
                         </div>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-3 relative z-10">
                             {course.lessons.map((lesson) => (
                                 <div
                                     key={lesson.id}
@@ -155,7 +156,9 @@ const SingleCoursePage = async ({
                                             <BookOpen className="w-5 h-5 text-nutoOrange" />
                                         </div>
                                         <div>
-                                            <h3 className="font-medium text-gray-800">{lesson.name}</h3>
+                                            <h3 className="font-medium text-gray-800 capitalize">
+                                                {lesson.name.toLowerCase().startsWith('lesson') ? lesson.name.replace(/lesson/i, 'Lesson ') : lesson.name}
+                                            </h3>
                                             <p className="text-xs text-gray-500">{lesson.class.name}</p>
                                         </div>
                                     </div>
@@ -169,8 +172,9 @@ const SingleCoursePage = async ({
                 </div>
 
                 {/* MATERIALS SECTION */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                    <div className="flex items-center justify-between mb-4">
+                <div className="group nuto-card p-6">
+                    <div className="group nuto-card-indicator"></div>
+                    <div className="flex items-center justify-between mb-4 relative z-10">
                         <h2 className="text-lg font-semibold text-nutoSlateDark">Course Materials</h2>
                         <Link
                             href={`/list/materials?subjectId=${course.id}`}
@@ -181,12 +185,12 @@ const SingleCoursePage = async ({
                     </div>
 
                     {course.materials.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                        <div className="flex flex-col items-center justify-center py-8 text-gray-400 relative z-10">
                             <FileText className="w-10 h-10 mb-2 opacity-50" />
                             <p className="text-sm">No materials uploaded</p>
                         </div>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-3 relative z-10">
                             {course.materials.map((material) => (
                                 <div
                                     key={material.id}
@@ -199,7 +203,7 @@ const SingleCoursePage = async ({
                                         <div>
                                             <h3 className="font-medium text-gray-800">{material.title}</h3>
                                             <p className="text-xs text-gray-500">
-                                                {material.teacher?.name} {material.teacher?.surname} • {material.class.name}
+                                                {material.teacher?.name} {material.teacher?.surname} • {material.class?.name}
                                             </p>
                                         </div>
                                     </div>
@@ -221,9 +225,10 @@ const SingleCoursePage = async ({
             {/* RIGHT */}
             <div className="w-full xl:w-1/3 flex flex-col gap-4">
                 {/* Quick Links */}
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                    <h2 className="text-lg font-semibold text-nutoSlateDark mb-4">Quick Links</h2>
-                    <div className="flex flex-wrap gap-2">
+                <div className="group nuto-card p-5">
+                    <div className="group nuto-card-indicator"></div>
+                    <h2 className="text-lg font-semibold text-nutoSlateDark mb-4 relative z-10">Quick Links</h2>
+                    <div className="flex flex-wrap gap-2 relative z-10">
                         <Link
                             className="px-4 py-2 rounded-xl bg-nutoSlate text-white text-sm font-medium hover:bg-nutoSlateDark transition-colors"
                             href={`/list/lessons?subjectId=${course.id}`}
@@ -240,16 +245,17 @@ const SingleCoursePage = async ({
                 </div>
 
                 {/* Lecturers */}
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                    <h2 className="text-lg font-semibold text-nutoSlateDark mb-4">Lecturers</h2>
+                <div className="group nuto-card p-5">
+                    <div className="group nuto-card-indicator"></div>
+                    <h2 className="text-lg font-semibold text-nutoSlateDark mb-4 relative z-10">Lecturers</h2>
 
                     {course.teachers.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-6 text-gray-400">
+                        <div className="flex flex-col items-center justify-center py-6 text-gray-400 relative z-10">
                             <Users className="w-8 h-8 mb-2 opacity-50" />
                             <p className="text-sm">No lecturers assigned</p>
                         </div>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-3 relative z-10">
                             {course.teachers.map((teacher) => (
                                 <Link
                                     key={teacher.id}

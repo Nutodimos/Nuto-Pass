@@ -441,7 +441,8 @@ export const deleteAssignment = async (
 export const updateAttendance = async (
   lessonId: number,
   studentId: string,
-  present: boolean
+  present: boolean,
+  dateStr?: string // Optional parameter for historical updates
 ) => {
   try {
     const lesson = await prisma.lesson.findUnique({
@@ -452,10 +453,21 @@ export const updateAttendance = async (
       return { success: false, error: true };
     }
 
+    // Use provided date or default to today
+    const targetDate = dateStr ? new Date(dateStr) : new Date();
+
+    // Create start and end of day bounds for the target date
+    const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+
     const attendance = await prisma.attendance.findFirst({
       where: {
         lessonId: lessonId,
         studentId: studentId,
+        date: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
       },
     });
 
@@ -470,7 +482,8 @@ export const updateAttendance = async (
           lessonId,
           studentId,
           present,
-          date: new Date(),
+          // Reset targetDate to avoid saving 23:59:59 if it hit the endOfDay logic
+          date: dateStr ? new Date(dateStr) : new Date(),
         },
       });
     }

@@ -71,8 +71,9 @@ const QuickActionsCard = () => {
     ];
 
     return (
-        <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow w-full">
-            <div className="flex items-center gap-3 mb-6">
+        <div className="group nuto-card p-6 w-full">
+            <div className="group nuto-card-indicator"></div>
+            <div className="flex items-center justify-between mb-6 relative z-10">
                 <div className="p-3 bg-gradient-to-br from-nutoSlate to-nutoSlateDark rounded-xl">
                     <Settings className="w-6 h-6 text-white" />
                 </div>
@@ -88,8 +89,8 @@ const QuickActionsCard = () => {
                         key={index}
                         href={action.href}
                         className={`group flex flex-col items-center justify-center p-4 rounded-xl border transition-all duration-200 bg-white ${(action as any).highlight
-                                ? "border-emerald-300 hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-100 ring-2 ring-emerald-100"
-                                : "border-slate-100 hover:border-nutoSlate/30 hover:shadow-md"
+                            ? "border-emerald-300 hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-100 ring-2 ring-emerald-100"
+                            : "border-slate-100 hover:border-nutoSlate/30 hover:shadow-md"
                             }`}
                     >
                         <div className={`p-3 rounded-full mb-3 ${action.bg} ${action.hoverBg} transition-colors duration-200 ${(action as any).highlight ? "animate-pulse" : ""}`}>

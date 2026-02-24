@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import NavigationProgress from "@/components/NavigationProgress";
+import { Suspense } from "react";
 
 import {
   ClerkProvider,
@@ -24,6 +26,9 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className={`${inter.variable} antialiased`}>
+          <Suspense fallback={null}>
+            <NavigationProgress />
+          </Suspense>
           {children}
 
           <ToastContainer position="bottom-right" theme="dark" />

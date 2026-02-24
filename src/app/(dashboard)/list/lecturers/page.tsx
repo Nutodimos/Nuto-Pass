@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 type TeacherWithDetails = Teacher & {
   subjects: Subject[];
@@ -22,6 +23,11 @@ const LecturersPage = async ({
 }) => {
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  // Access control: Only admin can access this page
+  if (role !== "admin") {
+    redirect("/");
+  }
 
   const { page, ...queryParams } = searchParams;
   const p = page ? parseInt(page) : 1;
@@ -109,9 +115,10 @@ const LecturersPage = async ({
           {data.map((lecturer: TeacherWithDetails) => (
             <div
               key={lecturer.id}
-              className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-lg transition-all group"
+              className="group nuto-card p-5 flex flex-col"
             >
-              <Link href={`/list/lecturers/${lecturer.id}`} className="block">
+              <div className="group nuto-card-indicator"></div>
+              <Link href={`/list/lecturers/${lecturer.id}`} className="block flex-1 relative z-10">
                 {/* Header with Avatar */}
                 <div className="flex items-start gap-4 mb-4">
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100">
@@ -188,7 +195,7 @@ const LecturersPage = async ({
 
               {/* Admin Actions - Outside the Link */}
               {role === "admin" && (
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100 relative z-10">
                   <FormContainer table="teacher" type="update" data={lecturer} />
                   <FormContainer table="teacher" type="delete" id={lecturer.id} />
                 </div>

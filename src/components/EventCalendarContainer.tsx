@@ -9,9 +9,12 @@ const EventCalendarContainer = async ({
 }) => {
   const { date } = searchParams;
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
-      <EventCalendar />
-      <div className="flex items-center justify-between mt-6 mb-4">
+    <div className="group nuto-card p-6">
+      <div className="group nuto-card-indicator"></div>
+      <div className="relative z-10">
+        <EventCalendar />
+      </div>
+      <div className="flex items-center justify-between mt-6 mb-4 relative z-10">
         <h1 className="text-xl font-bold text-slate-800">Events</h1>
         <Image src="/moreDark.png" alt="" width={20} height={20} className="opacity-50 hover:opacity-100 cursor-pointer" />
       </div>

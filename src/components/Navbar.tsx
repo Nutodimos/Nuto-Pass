@@ -564,11 +564,19 @@ const Navbar = () => {
                 transition={{ duration: 0.2 }}
                 className="absolute top-16 right-4 md:right-6 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50"
               >
-                <div className="px-4 py-3 bg-gradient-to-r from-nutoSlate to-nutoSlateDark">
-                  <h3 className="text-white font-semibold">Notifications</h3>
-                  <p className="text-white/70 text-xs">
-                    {unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'No unread notifications'}
-                  </p>
+                <div className="px-4 py-3 bg-gradient-to-r from-nutoSlate to-nutoSlateDark flex items-center justify-between">
+                  <div>
+                    <h3 className="text-white font-semibold">Notifications</h3>
+                    <p className="text-white/70 text-xs">
+                      {unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'No unread notifications'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowNotifications(false)}
+                    className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5 text-white" />
+                  </button>
                 </div>
                 <div className="max-h-80 overflow-y-auto">
                   {announcements.length === 0 ? (

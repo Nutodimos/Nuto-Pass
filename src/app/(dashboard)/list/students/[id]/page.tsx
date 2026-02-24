@@ -173,18 +173,22 @@ const SingleStudentPage = async ({
         </div>
 
         {/* SCHEDULE */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 h-[600px]">
-          <h2 className="text-lg font-semibold text-nutoSlateDark mb-4">Schedule</h2>
-          <BigCalendarContainer type="classId" id={student.class.id} />
+        <div className="group nuto-card p-6 h-[600px] flex flex-col">
+          <div className="group nuto-card-indicator"></div>
+          <h2 className="text-lg font-semibold text-nutoSlateDark mb-4 relative z-10">Schedule</h2>
+          <div className="relative z-10 flex-1">
+            <BigCalendarContainer type="classId" id={student.class.id} />
+          </div>
         </div>
       </div>
 
       {/* RIGHT */}
       <div className="w-full xl:w-1/3 flex flex-col gap-4">
         {/* Quick Links */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-          <h2 className="text-lg font-semibold text-nutoSlateDark mb-4">Quick Links</h2>
-          <div className="flex flex-wrap gap-2">
+        <div className="group nuto-card p-5">
+          <div className="group nuto-card-indicator"></div>
+          <h2 className="text-lg font-semibold text-nutoSlateDark mb-4 relative z-10">Quick Links</h2>
+          <div className="flex flex-wrap gap-2 relative z-10">
             <Link
               className="px-4 py-2 rounded-xl bg-nutoSlate text-white text-sm font-medium hover:bg-nutoSlateDark transition-colors"
               href={`/list/lessons?classId=${student.class.id}`}
@@ -216,13 +220,19 @@ const SingleStudentPage = async ({
         <StudentPerformance studentId={student.id} />
 
         {/* Attendance Calendar */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-          <AttendanceCalendarContainer studentId={student.id} />
+        <div className="group nuto-card p-5">
+          <div className="group nuto-card-indicator"></div>
+          <div className="relative z-10">
+            <AttendanceCalendarContainer studentId={student.id} />
+          </div>
         </div>
 
         {/* Subject Attendance Summary */}
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-          <SubjectAttendanceSummary studentId={student.id} />
+        <div className="group nuto-card p-5">
+          <div className="group nuto-card-indicator"></div>
+          <div className="relative z-10">
+            <SubjectAttendanceSummary studentId={student.id} />
+          </div>
         </div>
 
         {/* Announcements */}

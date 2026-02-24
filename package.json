@@ -27,6 +27,7 @@
     "react-hook-form": "^7.52.2",
     "react-toastify": "^10.0.5",
     "recharts": "^2.12.7",
+    "svix": "^1.84.1",
     "uuid": "^13.0.0",
     "zod": "^3.23.8"
   },
@@ -36,6 +37,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/supertest": "^6.0.3",
+    "dotenv": "^17.3.1",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "jest": "^30.2.0",
