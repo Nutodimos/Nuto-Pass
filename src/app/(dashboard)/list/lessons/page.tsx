@@ -159,13 +159,6 @@ const LessonListPage = async ({
                             {formatTime(lesson.startTime)} - {formatTime(lesson.endTime)}
                           </div>
                         </div>
-                        {/* ACTIONS - Higher z-index, pointer events enabled */}
-                        {role === "admin" && (
-                          <div className="flex gap-2 relative z-30 pointer-events-auto">
-                            <FormContainer table="lesson" type="update" data={lesson} />
-                            <FormContainer table="lesson" type="delete" id={lesson.id} />
-                          </div>
-                        )}
                       </div>
 
                       {/* DETAILS: Class & Teacher */}

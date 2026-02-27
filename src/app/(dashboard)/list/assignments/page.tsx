@@ -103,10 +103,10 @@ const AssignmentListPage = async ({
 
 
   return (
-    <div className="flex-1 p-6 flex flex-col gap-6 bg-[#F7F8FA] min-h-full">
+    <div className="flex-1 p-6 flex flex-col gap-6 min-h-full" style={{ backgroundColor: 'var(--bg-primary)' }}>
 
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-nutoOrange to-nutoOrangeDark p-6 rounded-2xl shadow-lg">
+      <div className="bg-gradient-to-r from-nutoSlate to-nutoSlateDark p-6 rounded-2xl shadow-lg">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">

@@ -2,6 +2,555 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+   NUTO THEME SYSTEM — CSS Custom Properties
+   ======================================== */
+
+/* Light Theme (Default) — the current NutoPass look */
+:root,
+[data-theme="light"] {
+  --bg-primary: #F7F8FA;
+  --bg-secondary: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F8FAFC;
+  --bg-input: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
+  --bg-navbar: rgba(255, 255, 255, 0.8);
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --bg-subtle: #F1F5F9;
+  --bg-accent-soft: rgba(67, 98, 117, 0.05);
+
+  --text-primary: #1E293B;
+  --text-secondary: #475569;
+  --text-tertiary: #94A3B8;
+  --text-inverse: #FFFFFF;
+
+  --border-primary: #E2E8F0;
+  --border-secondary: rgba(226, 232, 240, 0.6);
+  --border-hover: rgba(67, 98, 117, 0.3);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+  --nuto-slate-rgb: 67, 98, 117;
+  --nuto-orange-rgb: 255, 127, 80;
+
+  --scrollbar-track: #F1F5F9;
+  --scrollbar-thumb: #CBD5E1;
+}
+
+/* Dark Theme — Rich charcoal with warm Nuto accents */
+[data-theme="dark"] {
+  --bg-primary: #0F1419;
+  --bg-secondary: #1A2332;
+  --bg-card: #1E2A3A;
+  --bg-card-hover: #253446;
+  --bg-input: #1A2332;
+  --bg-sidebar: #111927;
+  --bg-navbar: rgba(17, 25, 39, 0.85);
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+  --bg-subtle: #1A2332;
+  --bg-accent-soft: rgba(112, 150, 171, 0.1);
+
+  --text-primary: #E8EDF2;
+  --text-secondary: #94A3B8;
+  --text-tertiary: #64748B;
+  --text-inverse: #0F1419;
+
+  --border-primary: #2A3A4E;
+  --border-secondary: rgba(42, 58, 78, 0.6);
+  --border-hover: rgba(112, 150, 171, 0.4);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+
+  --nuto-slate-rgb: 112, 150, 171;
+  --nuto-orange-rgb: 255, 140, 100;
+
+  --scrollbar-track: #1A2332;
+  --scrollbar-thumb: #2A3A4E;
+}
+
+/* Midnight Theme — Pure OLED black with vivid neon Nuto accents */
+[data-theme="midnight"] {
+  --bg-primary: #000000;
+  --bg-secondary: #0A0E14;
+  --bg-card: #0D1117;
+  --bg-card-hover: #161B22;
+  --bg-input: #0D1117;
+  --bg-sidebar: #010409;
+  --bg-navbar: rgba(1, 4, 9, 0.9);
+  --bg-overlay: rgba(0, 0, 0, 0.85);
+  --bg-subtle: #0D1117;
+  --bg-accent-soft: rgba(112, 150, 171, 0.08);
+
+  --text-primary: #F0F6FC;
+  --text-secondary: #8B949E;
+  --text-tertiary: #484F58;
+  --text-inverse: #000000;
+
+  --border-primary: #1C2128;
+  --border-secondary: rgba(28, 33, 40, 0.6);
+  --border-hover: rgba(139, 148, 158, 0.3);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
+
+  --nuto-slate-rgb: 126, 166, 190;
+  --nuto-orange-rgb: 255, 150, 110;
+
+  --scrollbar-track: #0D1117;
+  --scrollbar-thumb: #1C2128;
+}
+
+/* ========================================
+   GLOBAL THEME-AWARE OVERRIDES
+   ======================================== */
+
+/* Make the base document theme-aware */
+html {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom scrollbar for themed pages */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* Theme overrides for common Tailwind classes used across pages */
+[data-theme="dark"] .bg-white,
+[data-theme="midnight"] .bg-white {
+  background-color: var(--bg-card) !important;
+}
+
+[data-theme="dark"] .bg-\[\\#F7F8FA\],
+[data-theme="midnight"] .bg-\[\\#F7F8FA\] {
+  background-color: var(--bg-primary) !important;
+}
+
+[data-theme="dark"] .bg-slate-50,
+[data-theme="midnight"] .bg-slate-50 {
+  background-color: var(--bg-subtle) !important;
+}
+
+[data-theme="dark"] .bg-gray-50,
+[data-theme="midnight"] .bg-gray-50 {
+  background-color: var(--bg-subtle) !important;
+}
+
+[data-theme="dark"] .text-gray-800,
+[data-theme="dark"] .text-slate-800,
+[data-theme="dark"] .text-gray-900,
+[data-theme="dark"] .text-slate-900,
+[data-theme="dark"] .text-slate-700,
+[data-theme="dark"] .text-gray-700 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="midnight"] .text-gray-800,
+[data-theme="midnight"] .text-slate-800,
+[data-theme="midnight"] .text-gray-900,
+[data-theme="midnight"] .text-slate-900,
+[data-theme="midnight"] .text-slate-700,
+[data-theme="midnight"] .text-gray-700 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-slate-500,
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-slate-600 {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="midnight"] .text-gray-500,
+[data-theme="midnight"] .text-slate-500,
+[data-theme="midnight"] .text-gray-600,
+[data-theme="midnight"] .text-slate-600 {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .text-gray-400,
+[data-theme="dark"] .text-slate-400 {
+  color: var(--text-tertiary) !important;
+}
+
+[data-theme="midnight"] .text-gray-400,
+[data-theme="midnight"] .text-slate-400 {
+  color: var(--text-tertiary) !important;
+}
+
+[data-theme="dark"] .border-gray-100,
+[data-theme="dark"] .border-slate-100,
+[data-theme="dark"] .border-gray-200,
+[data-theme="dark"] .border-slate-200 {
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="midnight"] .border-gray-100,
+[data-theme="midnight"] .border-slate-100,
+[data-theme="midnight"] .border-gray-200,
+[data-theme="midnight"] .border-slate-200 {
+  border-color: var(--border-primary) !important;
+}
+
+/* Card shadows */
+[data-theme="dark"] .shadow-sm {
+  box-shadow: var(--shadow-sm) !important;
+}
+
+[data-theme="midnight"] .shadow-sm {
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* Input and form fields */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="midnight"] input,
+[data-theme="midnight"] select,
+[data-theme="midnight"] textarea {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-primary) !important;
+}
+
+/* Sidebar & Navbar theme awareness */
+[data-theme="dark"] .bg-white\/80 {
+  background-color: var(--bg-navbar) !important;
+}
+
+[data-theme="midnight"] .bg-white\/80 {
+  background-color: var(--bg-navbar) !important;
+}
+
+/* Table rows */
+[data-theme="dark"] tr:hover,
+[data-theme="midnight"] tr:hover {
+  background-color: var(--bg-card-hover) !important;
+}
+
+[data-theme="dark"] th {
+  background-color: var(--bg-subtle) !important;
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="midnight"] th {
+  background-color: var(--bg-subtle) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Gradient cards — subtle adjustments */
+[data-theme="dark"] .bg-gradient-to-br.from-slate-50,
+[data-theme="dark"] .bg-gradient-to-br.from-amber-50 {
+  background: var(--bg-card) !important;
+}
+
+[data-theme="midnight"] .bg-gradient-to-br.from-slate-50,
+[data-theme="midnight"] .bg-gradient-to-br.from-amber-50 {
+  background: var(--bg-card) !important;
+}
+
+/* Logo: remove mix-blend-multiply on dark themes so it stays visible */
+[data-theme="dark"] .mix-blend-multiply {
+  mix-blend-mode: normal !important;
+}
+
+[data-theme="midnight"] .mix-blend-multiply {
+  mix-blend-mode: normal !important;
+}
+
+/* Nuto Card theme awareness */
+[data-theme="dark"] .nuto-card {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="dark"] .nuto-card:hover {
+  background-color: var(--bg-card-hover) !important;
+}
+
+[data-theme="midnight"] .nuto-card {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="midnight"] .nuto-card:hover {
+  background-color: var(--bg-card-hover) !important;
+}
+
+/* Small colored badges — subtle dark-friendly versions */
+[data-theme="dark"] .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+[data-theme="dark"] .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+[data-theme="dark"] .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+[data-theme="dark"] .bg-gray-100 {
+  background-color: var(--bg-subtle) !important;
+}
+
+[data-theme="dark"] .bg-slate-200 {
+  background-color: var(--border-primary) !important;
+}
+
+[data-theme="dark"] .ring-slate-50 {
+  --tw-ring-color: var(--bg-card) !important;
+}
+
+[data-theme="dark"] .bg-slate-200\/50 {
+  background-color: var(--bg-subtle) !important;
+}
+
+[data-theme="dark"] .border-slate-200\/60 {
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="midnight"] .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+}
+
+[data-theme="midnight"] .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.08) !important;
+}
+
+[data-theme="midnight"] .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.08) !important;
+}
+
+[data-theme="midnight"] .bg-gray-100 {
+  background-color: var(--bg-subtle) !important;
+}
+
+[data-theme="midnight"] .bg-slate-200 {
+  background-color: var(--border-primary) !important;
+}
+
+[data-theme="midnight"] .ring-slate-50 {
+  --tw-ring-color: var(--bg-card) !important;
+}
+
+[data-theme="midnight"] .bg-slate-200\/50 {
+  background-color: var(--bg-subtle) !important;
+}
+
+[data-theme="midnight"] .border-slate-200\/60 {
+  border-color: var(--border-primary) !important;
+}
+
+/* Border dashed on empty states */
+[data-theme="dark"] .border-dashed {
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="midnight"] .border-dashed {
+  border-color: var(--border-primary) !important;
+}
+
+/* ============================================
+   COMPREHENSIVE BACKGROUND OVERRIDES
+   ============================================ */
+
+/* bg-white — cards, panels, containers */
+[data-theme="dark"] .bg-white {
+  background-color: var(--bg-card) !important;
+}
+
+[data-theme="midnight"] .bg-white {
+  background-color: var(--bg-card) !important;
+}
+
+/* bg-slate-50 and bg-slate-50/50 — page backgrounds, alternating rows */
+[data-theme="dark"] .bg-slate-50,
+[data-theme="dark"] .bg-slate-50\/50 {
+  background-color: var(--bg-primary) !important;
+}
+
+[data-theme="midnight"] .bg-slate-50,
+[data-theme="midnight"] .bg-slate-50\/50 {
+  background-color: var(--bg-primary) !important;
+}
+
+/* bg-slate-100 — subtle badges, icon backgrounds */
+[data-theme="dark"] .bg-slate-100 {
+  background-color: var(--bg-subtle) !important;
+}
+
+[data-theme="midnight"] .bg-slate-100 {
+  background-color: var(--bg-subtle) !important;
+}
+
+/* hover:bg-slate-50 — hover states on rows/items */
+[data-theme="dark"] .hover\:bg-slate-50:hover {
+  background-color: var(--bg-card-hover) !important;
+}
+
+[data-theme="midnight"] .hover\:bg-slate-50:hover {
+  background-color: var(--bg-card-hover) !important;
+}
+
+/* hover:bg-slate-200 — stronger hover states */
+[data-theme="dark"] .hover\:bg-slate-200:hover {
+  background-color: var(--bg-subtle) !important;
+}
+
+[data-theme="midnight"] .hover\:bg-slate-200:hover {
+  background-color: var(--bg-subtle) !important;
+}
+
+/* ============================================
+   COMPREHENSIVE TEXT OVERRIDES
+   ============================================ */
+
+/* text-slate-800 & text-gray-800 — primary headings */
+[data-theme="dark"] .text-slate-800,
+[data-theme="dark"] .text-gray-800 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="midnight"] .text-slate-800,
+[data-theme="midnight"] .text-gray-800 {
+  color: var(--text-primary) !important;
+}
+
+/* text-slate-700 & text-gray-700 — secondary headings, labels */
+[data-theme="dark"] .text-slate-700,
+[data-theme="dark"] .text-gray-700 {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="midnight"] .text-slate-700,
+[data-theme="midnight"] .text-gray-700 {
+  color: var(--text-secondary) !important;
+}
+
+/* text-slate-600 & text-gray-600 — body text */
+[data-theme="dark"] .text-slate-600,
+[data-theme="dark"] .text-gray-600 {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="midnight"] .text-slate-600,
+[data-theme="midnight"] .text-gray-600 {
+  color: var(--text-secondary) !important;
+}
+
+/* text-slate-500 & text-gray-500 — muted text */
+[data-theme="dark"] .text-slate-500,
+[data-theme="dark"] .text-gray-500 {
+  color: var(--text-tertiary) !important;
+}
+
+[data-theme="midnight"] .text-slate-500,
+[data-theme="midnight"] .text-gray-500 {
+  color: var(--text-tertiary) !important;
+}
+
+/* ============================================
+   BORDER & SHADOW OVERRIDES
+   ============================================ */
+
+/* border-slate-50 — very subtle card separators */
+[data-theme="dark"] .border-slate-50 {
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="midnight"] .border-slate-50 {
+  border-color: var(--border-primary) !important;
+}
+
+/* border-white — used on some inner card elements */
+[data-theme="dark"] .border-white {
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="midnight"] .border-white {
+  border-color: var(--border-primary) !important;
+}
+
+/* shadow-lg and shadow-xl — reduce intensity for dark themes */
+[data-theme="dark"] .shadow-lg {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .shadow-xl {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="midnight"] .shadow-lg {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="midnight"] .shadow-xl {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ============================================
+   PAGE-LEVEL BACKGROUND CATCH-ALLS
+   ============================================ */
+
+/* Catch-all for any remaining hardcoded page backgrounds */
+[data-theme="dark"] .bg-\[\#F7F8FA\] {
+  background-color: var(--bg-primary) !important;
+}
+
+[data-theme="midnight"] .bg-\[\#F7F8FA\] {
+  background-color: var(--bg-primary) !important;
+}
+
+/* bg-white/60 and bg-white/80 — glassmorphism panels */
+[data-theme="dark"] .bg-white\/60 {
+  background-color: var(--bg-card) !important;
+}
+
+[data-theme="midnight"] .bg-white\/60 {
+  background-color: var(--bg-card) !important;
+}
+
+/* Backdrop/overlay elements in cards */
+[data-theme="dark"] .bg-white\/10,
+[data-theme="dark"] .bg-white\/20,
+[data-theme="dark"] .bg-white\/30 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="midnight"] .bg-white\/10,
+[data-theme="midnight"] .bg-white\/20,
+[data-theme="midnight"] .bg-white\/30 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+
 /* Calendar Wrapper */
 .react-calendar {
   width: 100% !important;

@@ -14,9 +14,9 @@ const config: Config = {
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
       colors: {
-        nutoSlate: "#436275", // User selected Teal
-        nutoSlateLight: "#7096AB", // Generated light variant
-        nutoSlateDark: "#2A404E",  // Generated dark variant
+        nutoSlate: "#436275",
+        nutoSlateLight: "#7096AB",
+        nutoSlateDark: "#2A404E",
         nutoOrange: "#FF7F50",
         nutoOrangeLight: "#FFB399",
         nutoOrangeDark: "#E5673D",

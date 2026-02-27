@@ -4,7 +4,7 @@ import { useState, useRef, ReactNode } from "react";
 import { toast } from "react-toastify";
 
 interface LocalUploadWidgetProps {
-    category: "materials" | "assignments";
+    category: "materials" | "assignments" | "avatars";
     onSuccess: (result: { info: { secure_url: string } }, { widget }: { widget: { close: () => void } }) => void;
     children: (props: { open: () => void }) => ReactNode;
     accept?: string;

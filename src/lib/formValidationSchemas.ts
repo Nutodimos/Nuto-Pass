@@ -37,11 +37,11 @@ export const teacherSchema = z.object({
     .optional()
     .or(z.literal("")),
   phone: z.string().optional(),
-  address: z.string(),
+  address: z.string().optional().or(z.literal("")),
   img: z.string().optional(),
-  bloodType: z.string().min(1, { message: "Blood Type is required!" }).optional().or(z.literal("")),
-  birthday: z.coerce.date({ message: "Birthday is required!" }),
-  sex: z.enum(["MALE", "FEMALE"], { message: "Sex is required!" }),
+  bloodType: z.string().optional().or(z.literal("")),
+  birthday: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().optional()),
+  sex: z.enum(["MALE", "FEMALE"]).optional().or(z.literal("").transform(() => undefined)),
   subjects: z.array(z.string()).optional(), // subject ids
 });
 
@@ -117,7 +117,6 @@ export type MaterialSchema = z.infer<typeof materialSchema>;
 
 export const lessonSchema = z.object({
   id: z.coerce.number().optional(),
-  name: z.string().min(1, { message: "Lesson name is required!" }),
   day: z.enum(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"], { message: "Day is required!" }),
   startTime: z.coerce.date({ message: "Start time is required!" }),
   endTime: z.coerce.date({ message: "End time is required!" }),

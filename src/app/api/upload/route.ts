@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 const ALLOWED_TYPES: Record<string, string[]> = {
     materials: [".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".jpg", ".jpeg", ".png"],
     assignments: [".pdf", ".doc", ".docx", ".zip", ".jpg", ".jpeg", ".png"],
+    avatars: [".jpg", ".jpeg", ".png", ".webp"],
 };
 
 // Max file size: 10MB
@@ -44,17 +45,20 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (!category || !["materials", "assignments"].includes(category)) {
+        if (!category || !["materials", "assignments", "avatars"].includes(category)) {
             return NextResponse.json(
-                { error: "Invalid category. Must be 'materials' or 'assignments'" },
+                { error: "Invalid category. Must be 'materials', 'assignments', or 'avatars'" },
                 { status: 400 }
             );
         }
 
+        // Avatar-specific max size: 5MB
+        const maxSize = category === "avatars" ? 5 * 1024 * 1024 : MAX_SIZE;
+
         // Check file size
-        if (file.size > MAX_SIZE) {
+        if (file.size > maxSize) {
             return NextResponse.json(
-                { error: "File too large. Maximum size is 10MB" },
+                { error: `File too large. Maximum size is ${category === "avatars" ? "5MB" : "10MB"}` },
                 { status: 400 }
             );
         }

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Users, BookOpen, User, Calendar, Clock, Check } from "lucide-react";
 import { auth } from "@clerk/nextjs/server";
+import FormContainer from "@/components/FormContainer";
 
 const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
     // 1. Fetch Class Data & Relations
@@ -94,14 +95,22 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
                     <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none group-hover:bg-white/20 transition-all duration-700" />
 
                     <div className="relative z-10 flex flex-col h-full justify-between gap-6">
-                        <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl font-bold shadow-inner border border-white/10">
-                                {level.name.charAt(0)}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl font-bold shadow-inner border border-white/10">
+                                    {level.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl font-black tracking-tight">{level.name}</h1>
+                                    <p className="text-white/80 font-medium">{level.grade.level} Level &bull; {level._count.students} Students Enrolled</p>
+                                </div>
                             </div>
-                            <div>
-                                <h1 className="text-3xl font-black tracking-tight">{level.name}</h1>
-                                <p className="text-white/80 font-medium">{level.grade.level} Level &bull; {level._count.students} Students Enrolled</p>
-                            </div>
+                            {role === "admin" && (
+                                <div className="flex gap-2">
+                                    <FormContainer table="class" type="update" data={level} />
+                                    <FormContainer table="class" type="delete" id={level.id} />
+                                </div>
+                            )}
                         </div>
 
                         {/* Level Adviser Row */}

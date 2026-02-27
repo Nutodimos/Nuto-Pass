@@ -547,6 +547,65 @@ export const updateSchoolConfig = async (
   }
 };
 
+export const updateProfile = async (
+  currentState: CurrentState,
+  formData: FormData
+) => {
+  const { userId, sessionClaims } = auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  if (!userId) {
+    return { success: false, error: true, messages: ["Not authenticated"] };
+  }
+
+  const email = (formData.get("email") as string) || null;
+  const phone = (formData.get("phone") as string) || null;
+  const address = (formData.get("address") as string) || null;
+  const bloodType = (formData.get("bloodType") as string) || null;
+  const sex = formData.get("sex") as string;
+  const birthdayStr = formData.get("birthday") as string;
+  const birthday = birthdayStr ? new Date(birthdayStr) : undefined;
+  const img = formData.get("img") as string | null;
+
+  try {
+    if (role === "teacher") {
+      await prisma.teacher.update({
+        where: { id: userId },
+        data: {
+          email,
+          phone,
+          address,
+          bloodType,
+          sex: sex ? (sex as any) : undefined,
+          ...(birthday ? { birthday } : {}),
+          ...(img !== null ? { img } : {}),
+        },
+      });
+    } else if (role === "student") {
+      await prisma.student.update({
+        where: { id: userId },
+        data: {
+          email,
+          phone,
+          address: address || "",
+          bloodType,
+          sex: sex ? (sex as any) : undefined,
+          ...(birthday ? { birthday } : {}),
+          ...(img !== null ? { img } : {}),
+        },
+      });
+    } else {
+      return { success: false, error: true, messages: ["Admin profiles cannot be updated here"] };
+    }
+
+    revalidatePath("/settings");
+    return { success: true, error: false };
+  } catch (err) {
+    console.log(err);
+    return { success: false, error: true, messages: ["Failed to update profile"] };
+  }
+};
+
 export const createAnnouncement = async (
   currentState: CurrentState,
   data: AnnouncementSchema
@@ -701,9 +760,15 @@ export const createLesson = async (
   data: LessonSchema
 ) => {
   try {
+    // Auto-generate lesson name from subject and class
+    const [subject, classData] = await prisma.$transaction([
+      prisma.subject.findUnique({ where: { id: data.subjectId }, select: { name: true } }),
+      prisma.class.findUnique({ where: { id: data.classId }, select: { name: true } }),
+    ]);
+
     await prisma.lesson.create({
       data: {
-        name: data.name,
+        name: `${subject?.name || "Lesson"} - ${classData?.name || "Class"}`,
         day: data.day as Day,
         startTime: data.startTime,
         endTime: data.endTime,
@@ -725,12 +790,18 @@ export const updateLesson = async (
   data: LessonSchema
 ) => {
   try {
+    // Auto-generate lesson name from subject and class
+    const [subject, classData] = await prisma.$transaction([
+      prisma.subject.findUnique({ where: { id: data.subjectId }, select: { name: true } }),
+      prisma.class.findUnique({ where: { id: data.classId }, select: { name: true } }),
+    ]);
+
     await prisma.lesson.update({
       where: {
         id: data.id,
       },
       data: {
-        name: data.name,
+        name: `${subject?.name || "Lesson"} - ${classData?.name || "Class"}`,
         day: data.day as Day,
         startTime: data.startTime,
         endTime: data.endTime,

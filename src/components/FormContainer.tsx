@@ -71,12 +71,17 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
         break;
 
       case "lesson":
-        const [lessonClasses, lessonSubjects, lessonTeachers] = await prisma.$transaction([
+        const [lessonClasses, lessonSubjects] = await prisma.$transaction([
           prisma.class.findMany({ select: { id: true, name: true } }),
-          prisma.subject.findMany({ select: { id: true, name: true } }),
-          prisma.teacher.findMany({ select: { id: true, name: true, surname: true } }),
+          prisma.subject.findMany({
+            select: {
+              id: true,
+              name: true,
+              teachers: { select: { id: true, name: true, surname: true } },
+            },
+          }),
         ]);
-        relatedData = { classes: lessonClasses, subjects: lessonSubjects, teachers: lessonTeachers };
+        relatedData = { classes: lessonClasses, subjects: lessonSubjects };
         break;
 
       default:

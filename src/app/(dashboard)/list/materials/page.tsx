@@ -110,7 +110,7 @@ const MaterialListPage = async ({
     return (
         <div className="flex-1 m-4 mt-0">
             {/* HEADER */}
-            <div className="bg-gradient-to-r from-nutoOrange via-nutoOrangeDark to-nutoOrange rounded-2xl p-6 mb-6 shadow-lg">
+            <div className="bg-gradient-to-r from-nutoSlate to-nutoSlateDark rounded-2xl p-6 mb-6 shadow-lg">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">

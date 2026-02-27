@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
+import Select from "react-select";
 import InputField from "../InputField";
 import Image from "next/image";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
@@ -11,6 +12,7 @@ import { createTeacher, updateTeacher } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { CldUploadWidget } from "next-cloudinary";
+import { AlertCircle } from "lucide-react";
 
 const TeacherForm = ({
   type,
@@ -26,6 +28,7 @@ const TeacherForm = ({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<TeacherSchema>({
     resolver: zodResolver(teacherSchema),
@@ -119,28 +122,28 @@ const TeacherForm = ({
           error={errors.surname}
         />
         <InputField
-          label="Phone"
+          label="Phone (Optional)"
           name="phone"
           defaultValue={data?.phone}
           register={register}
           error={errors.phone}
         />
         <InputField
-          label="Address"
+          label="Address (Optional)"
           name="address"
           defaultValue={data?.address}
           register={register}
           error={errors.address}
         />
         <InputField
-          label="Blood Type"
+          label="Blood Type (Optional)"
           name="bloodType"
           defaultValue={data?.bloodType}
           register={register}
           error={errors.bloodType}
         />
         <InputField
-          label="Birthday"
+          label="Birthday (Optional)"
           name="birthday"
           defaultValue={data?.birthday.toISOString().split("T")[0]}
           register={register}
@@ -158,12 +161,13 @@ const TeacherForm = ({
           />
         )}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-sm font-medium text-nutoSlateDark">Sex</label>
+          <label className="text-sm font-medium text-nutoSlateDark">Sex (Optional)</label>
           <select
             className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200"
             {...register("sex")}
-            defaultValue={data?.sex}
+            defaultValue={data?.sex || ""}
           >
+            <option value="">Not specified</option>
             <option value="MALE">Male</option>
             <option value="FEMALE">Female</option>
           </select>
@@ -176,19 +180,34 @@ const TeacherForm = ({
 
 
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-sm font-medium text-nutoSlateDark">Courses</label>
-          <select
-            multiple
-            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200 min-h-[100px]"
-            {...register("subjects")}
-            defaultValue={data?.subjects}
-          >
-            {subjects.map((subject: { id: number; name: string }) => (
-              <option value={subject.id} key={subject.id}>
-                {subject.name}
-              </option>
-            ))}
-          </select>
+          <label className="text-sm font-medium text-nutoSlateDark">Courses (Optional)</label>
+          <Controller
+            name="subjects"
+            control={control}
+            defaultValue={data?.subjects || []}
+            render={({ field }) => (
+              <Select
+                {...field}
+                isMulti
+                options={subjects.map((subject: { id: number; name: string }) => ({
+                  value: subject.id.toString(),
+                  label: subject.name,
+                }))}
+                className="text-sm text-gray-800"
+                classNamePrefix="react-select"
+                onChange={(selectedOptions) => {
+                  field.onChange(selectedOptions ? selectedOptions.map((opt) => opt.value) : []);
+                }}
+                value={
+                  field.value
+                    ? subjects
+                      .filter((s: any) => field.value.includes(s.id.toString()))
+                      .map((s: any) => ({ value: s.id.toString(), label: s.name }))
+                    : []
+                }
+              />
+            )}
+          />
           {errors.subjects?.message && (
             <p className="text-xs text-red-400">
               {errors.subjects.message.toString()}
@@ -232,13 +251,23 @@ const TeacherForm = ({
           </div>
         )}
       </div>
-      {
-        state.error && (
-          <span className="text-red-500">
-            {(state as any).messages ? (state as any).messages.join(", ") : "Something went wrong!"}
-          </span>
-        )
-      }
+      {state.error && (
+        <div className="flex flex-col gap-2 p-4 rounded-xl bg-red-50 border border-red-200">
+          <div className="flex items-center gap-2 font-semibold text-red-700 text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span>Please fix the following errors:</span>
+          </div>
+          <ul className="list-disc list-inside ml-7 text-sm text-red-600 space-y-1">
+            {(state as any).messages ? (
+              (state as any).messages.map((msg: string, i: number) => (
+                <li key={i}>{msg}</li>
+              ))
+            ) : (
+              <li>Something went wrong!</li>
+            )}
+          </ul>
+        </div>
+      )}
       <button
         type="submit"
         className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-nutoSlate to-nutoSlateDark text-white font-semibold text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200"

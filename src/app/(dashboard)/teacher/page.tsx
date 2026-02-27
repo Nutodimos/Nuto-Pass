@@ -1,20 +1,228 @@
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import { Day, Prisma } from "@prisma/client";
+import Image from "next/image";
+import { Clock, BookOpen, ClipboardList, CalendarDays, ArrowRight, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
 
-const TeacherPage = () => {
+const TeacherPage = async () => {
   const { userId } = auth();
+
+  const teacher = await prisma.teacher.findUnique({
+    where: { id: userId! },
+    include: {
+      _count: {
+        select: {
+          subjects: { where: { isActive: true } },
+          classes: { where: { isActive: true } },
+        },
+      },
+      classes: {
+        where: { isActive: true },
+        take: 1,
+        select: { id: true }
+      }
+    },
+  });
+
+  const activeAssignments = await prisma.assignment.count({
+    where: {
+      lesson: {
+        teacherId: userId!,
+        isActive: true,
+      },
+      dueDate: {
+        gte: new Date(),
+      },
+    },
+  });
+
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday, etc.
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const days: Day[] = [Day.MONDAY, Day.MONDAY, Day.TUESDAY, Day.WEDNESDAY, Day.THURSDAY, Day.FRIDAY, Day.MONDAY]; // 0 and 6 are dummy padded
+  const currentDayName = days[dayOfWeek];
+
+  // Fetch today's lessons for this teacher
+  type LessonWithRelations = Prisma.LessonGetPayload<{
+    include: { subject: true; class: true };
+  }>;
+
+  const todaysLessons: LessonWithRelations[] = isWeekend ? [] : await prisma.lesson.findMany({
+    where: {
+      teacherId: userId!,
+      day: currentDayName,
+      isActive: true,
+    },
+    include: {
+      subject: true,
+      class: true,
+    },
+    orderBy: {
+      startTime: 'asc',
+    },
+  });
+
+
   return (
-    <div className="flex-1 p-4 flex gap-4 flex-col xl:flex-row">
-      {/* LEFT */}
-      <div className="w-full xl:w-2/3">
-        <div className="h-full bg-white p-4 rounded-md">
-          <h1 className="text-xl font-semibold">Schedule</h1>
+    <div className="flex-1 p-4 flex gap-8 flex-col xl:flex-row bg-nutoSlate/5 min-h-screen">
+      {/* LEFT COLUMN */}
+      <div className="w-full xl:w-2/3 flex flex-col gap-8">
+
+        {/* HERO SECTION */}
+        <div className="relative shrink-0 overflow-hidden rounded-3xl bg-gradient-to-br from-nutoSlate to-nutoSlateDark p-8 shadow-xl shadow-nutoSlate/10 border border-nutoSlate/20">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full pointer-events-none filter blur-2xl transform translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-nutoOrange/20 rounded-full pointer-events-none filter blur-2xl transform -translate-x-1/2 translate-y-1/2"></div>
+
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 rounded-2xl bg-white/10 p-1 flex items-center justify-center backdrop-blur-sm border border-white/20">
+                <div className="w-full h-full rounded-xl overflow-hidden relative">
+                  <Image
+                    src={teacher?.img || "/noAvatar.png"}
+                    alt="Teacher Profile"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+              <div className="text-white">
+                <p className="text-white/80 text-sm font-medium mb-1 uppercase tracking-wider">Welcome back,</p>
+                <h1 className="text-3xl font-bold tracking-tight">{teacher?.name} {teacher?.surname}</h1>
+              </div>
+            </div>
+
+            <div className="flex bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 items-center gap-4">
+              <div className="p-3 bg-white/20 rounded-xl">
+                <CalendarDays className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-white/80 font-medium">Today is</p>
+                <p className="text-lg font-bold text-white">
+                  {today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* QUICK STATS */}
+        <div className="flex flex-col md:flex-row gap-6 shrink-0">
+          <Link href={`/list/courses?teacherId=${userId}`} className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-nutoOrange/30 hover:-translate-y-1 transition-all group">
+            <div>
+              <p className="text-sm font-semibold text-gray-500 mb-1">Total Subjects</p>
+              <h2 className="text-3xl font-bold text-nutoSlateDark group-hover:text-nutoOrange transition-colors">{teacher?._count.subjects}</h2>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-nutoOrange/10 flex items-center justify-center group-hover:bg-nutoOrange/20 transition-colors">
+              <BookOpen className="w-6 h-6 text-nutoOrange" />
+            </div>
+          </Link>
+          {teacher && teacher.classes.length > 0 && (
+            <Link href={`/list/levels/${teacher.classes[0].id}`} className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-nutoSlate/30 hover:-translate-y-1 transition-all group">
+              <div>
+                <p className="text-sm font-semibold text-gray-500 mb-1">Level Advising</p>
+                <h2 className="text-3xl font-bold text-nutoSlateDark group-hover:text-nutoSlate transition-colors">{teacher._count.classes}</h2>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-nutoSlate/10 flex items-center justify-center group-hover:bg-nutoSlate/20 transition-colors">
+                <Clock className="w-6 h-6 text-nutoSlate" />
+              </div>
+            </Link>
+          )}
+          <Link href={`/list/assignments?teacherId=${userId}`} className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-green-300 hover:-translate-y-1 transition-all group">
+            <div>
+              <p className="text-sm font-semibold text-gray-500 mb-1">Active Assignments</p>
+              <h2 className="text-3xl font-bold text-nutoSlateDark group-hover:text-green-600 transition-colors">{activeAssignments}</h2>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">
+              <ClipboardList className="w-6 h-6 text-green-500" />
+            </div>
+          </Link>
+        </div>
+
+        {/* CALENDAR SECTION */}
+        <div className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 min-h-[500px]">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl font-bold text-nutoSlateDark">Your Schedule</h1>
+            <Link href="/list/lessons" className="text-sm font-medium text-nutoSlate hover:underline flex items-center gap-1">
+              View All Lessons <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
           <BigCalendarContainer type="teacherId" id={userId!} />
         </div>
       </div>
-      {/* RIGHT */}
+
+      {/* RIGHT COLUMN */}
       <div className="w-full xl:w-1/3 flex flex-col gap-8">
+
+        {/* TODAY'S LESSONS WIDGET */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-lg font-bold text-nutoSlateDark">Today's Classes</h1>
+            <div className="w-8 h-8 rounded-full bg-nutoSlate/10 flex items-center justify-center text-nutoSlate font-bold text-sm">
+              {todaysLessons.length}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            {todaysLessons.length > 0 ? (
+              todaysLessons.map((lesson) => (
+                <div key={lesson.id} className="flex gap-4 items-start p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:border-nutoSlate/30 transition-all group">
+                  <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-white border border-gray-200 shrink-0 shadow-sm group-hover:shadow group-hover:border-nutoSlate/30 transition-all">
+                    <span className="text-xs font-bold text-gray-500">
+                      {lesson.startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })}
+                    </span>
+                  </div>
+                  <div className="flex flex-col flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h2 className="font-bold text-gray-800 text-sm">{lesson.subject.name}</h2>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-nutoSlate/10 text-nutoSlate">
+                        {lesson.class.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>
+                        {lesson.startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                        {" - "}
+                        {lesson.endTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-3">
+                  <CheckCircle2 className="w-8 h-8 text-green-500" />
+                </div>
+                <h3 className="text-gray-800 font-bold mb-1">No classes today!</h3>
+                <p className="text-sm text-gray-500">Enjoy your free time or use it for planning.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* QUICK ACTIONS WIDGET */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+          <h1 className="text-lg font-bold text-nutoSlateDark mb-4">Quick Actions</h1>
+          <div className="grid grid-cols-2 gap-4">
+            <Link href="/list/attendance" className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all text-center">
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-blue-600" />
+              </div>
+              <span className="text-sm font-semibold text-blue-900">Take Attendance</span>
+            </Link>
+            <Link href="/list/assignments" className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-gradient-to-br from-orange-50 to-red-50 border border-orange-100 hover:border-orange-300 hover:shadow-md transition-all text-center">
+              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                <ClipboardList className="w-5 h-5 text-orange-600" />
+              </div>
+              <span className="text-sm font-semibold text-orange-900">New Assignment</span>
+            </Link>
+          </div>
+        </div>
+
         <Announcements />
       </div>
     </div>

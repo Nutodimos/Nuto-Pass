@@ -12,7 +12,7 @@ export default function DashboardLayout({
       <Sidebar />
 
       {/* RIGHT - Main Content */}
-      <div className="flex-1 bg-[#F7F8FA] overflow-y-auto overflow-x-hidden flex flex-col">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <Navbar />
         {children}
       </div>

@@ -4,6 +4,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import NavigationProgress from "@/components/NavigationProgress";
 import { Suspense } from "react";
+import ThemeProvider from "@/components/ThemeProvider";
 
 import {
   ClerkProvider,
@@ -24,14 +25,16 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body className={`${inter.variable} antialiased`}>
-          <Suspense fallback={null}>
-            <NavigationProgress />
-          </Suspense>
-          {children}
+          <ThemeProvider>
+            <Suspense fallback={null}>
+              <NavigationProgress />
+            </Suspense>
+            {children}
 
-          <ToastContainer position="bottom-right" theme="dark" />
+            <ToastContainer position="bottom-right" theme="dark" />
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

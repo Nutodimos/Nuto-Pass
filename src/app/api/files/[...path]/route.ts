@@ -16,6 +16,7 @@ const MIME_TYPES: Record<string, string> = {
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
     ".png": "image/png",
+    ".webp": "image/webp",
     ".zip": "application/zip",
 };
 
@@ -47,7 +48,7 @@ export async function GET(
 
         // Validate category
         const category = pathSegments[0];
-        if (!["materials", "assignments"].includes(category)) {
+        if (!["materials", "assignments", "avatars"].includes(category)) {
             return NextResponse.json(
                 { error: "Invalid category" },
                 { status: 400 }
@@ -119,6 +120,7 @@ export async function GET(
         }
 
         // TODO: Add access control for assignments category as needed
+        // Avatars are publicly accessible to any authenticated user (profile pictures)
 
         // Check if file exists on disk
         try {

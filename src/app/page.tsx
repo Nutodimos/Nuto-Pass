@@ -14,7 +14,7 @@ export default function Homepage() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#F7F8FA] overflow-x-hidden selection:bg-nutoOrange/20 selection:text-nutoOrangeDark">
+        <div data-theme="light" className="flex flex-col min-h-screen bg-[#F7F8FA] overflow-x-hidden selection:bg-nutoOrange/20 selection:text-nutoOrangeDark">
             <LandingNavbar />
 
             <main className="flex-1 flex flex-col relative">

@@ -47,7 +47,7 @@ const menuItems: MenuSection[] = [
     {
         title: "OTHER",
         items: [
-            { icon: Settings, label: "Settings", href: "/settings", visible: ["admin"] },
+            { icon: Settings, label: "Settings", href: "/settings", visible: ["admin", "teacher", "student"] },
         ],
     },
 ];
@@ -68,7 +68,7 @@ const SidebarContent = ({
     const { user } = useUser();
 
     const isActive = (href: string) => {
-        if (href === "/") return pathname === "/";
+        if (href === "/") return pathname === "/" || pathname === `/${role}`;
         return pathname.startsWith(href);
     };
 
@@ -93,7 +93,9 @@ const SidebarContent = ({
                             <p className="font-semibold text-slate-700 text-sm">
                                 {user.firstName || user.username || "User"}
                             </p>
-                            <p className="text-xs text-nutoSlate capitalize">{role}</p>
+                            <p className="text-xs text-nutoSlate capitalize">
+                                {role === "teacher" ? "lecturer" : role}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -192,8 +194,8 @@ const MobileDrawer = ({
                         animate={{ x: 0 }}
                         exit={{ x: "-100%" }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="fixed top-0 left-0 bottom-0 w-[280px] bg-white shadow-2xl"
-                        style={{ zIndex: 9999 }}
+                        className="fixed top-0 left-0 bottom-0 w-[280px] shadow-2xl"
+                        style={{ backgroundColor: 'var(--bg-sidebar)', zIndex: 9999 }}
                     >
                         {/* Close Button */}
                         <button
@@ -249,13 +251,14 @@ const Sidebar = () => {
 
     // Prevent hydration mismatch by protecting client-dependent content
     if (!mounted) {
-        return <div className="hidden md:flex flex-col h-full bg-white border-r border-slate-100 w-[240px]" />;
+        return <div className="hidden md:flex flex-col h-full border-r border-slate-100 w-[240px]" style={{ backgroundColor: 'var(--bg-sidebar)' }} />;
     }
 
     return (
         <div
-            className={`hidden md:flex flex-col h-full bg-white border-r border-slate-100 transition-all duration-300 relative ${isCollapsed ? "w-[70px]" : "w-[240px]"
+            className={`hidden md:flex flex-col h-full border-r border-slate-100 transition-all duration-300 relative ${isCollapsed ? "w-[70px]" : "w-[240px]"
                 }`}
+            style={{ backgroundColor: 'var(--bg-sidebar)' }}
         >
             {/* Collapse Toggle */}
             <button

@@ -2,13 +2,18 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import InputField from "../InputField";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { lessonSchema, LessonSchema } from "@/lib/formValidationSchemas";
 import { useFormState } from "react-dom";
 import { createLesson, updateLesson } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+
+type SubjectWithTeachers = {
+    id: number;
+    name: string;
+    teachers: { id: string; name: string; surname: string }[];
+};
 
 const LessonForm = ({
     type,
@@ -24,6 +29,8 @@ const LessonForm = ({
     const {
         register,
         handleSubmit,
+        watch,
+        setValue,
         formState: { errors },
     } = useForm<LessonSchema>({
         resolver: zodResolver(lessonSchema),
@@ -39,11 +46,8 @@ const LessonForm = ({
     );
 
     const onSubmit = handleSubmit((formData) => {
-        // Transform time strings to ISO dates
-        // We use a dummy date for time storage, or today's date
-        const dateBase = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const dateBase = new Date().toISOString().split('T')[0];
 
-        // Check if input is "HH:mm" string
         const formatDateTime = (timeInput: any) => {
             if (typeof timeInput === 'string' && timeInput.includes(':')) {
                 return new Date(`${dateBase}T${timeInput}:00`);
@@ -72,13 +76,39 @@ const LessonForm = ({
         }
     }, [state, router, setOpen, type]);
 
-    const { subjects, classes, teachers } = relatedData;
+    const { subjects, classes } = relatedData;
+
+    // Watch the selected subject and auto-set the lecturer
+    const selectedSubjectId = watch("subjectId");
+
+    useEffect(() => {
+        if (selectedSubjectId && subjects) {
+            const subject = subjects.find(
+                (s: SubjectWithTeachers) => s.id === Number(selectedSubjectId)
+            );
+            if (subject && subject.teachers.length > 0) {
+                setValue("teacherId", subject.teachers[0].id);
+            }
+        }
+    }, [selectedSubjectId, subjects, setValue]);
+
+    // Get the currently resolved lecturer name for display
+    const resolvedTeacher = (() => {
+        if (!selectedSubjectId || !subjects) return null;
+        const subject = subjects.find(
+            (s: SubjectWithTeachers) => s.id === Number(selectedSubjectId)
+        );
+        if (subject && subject.teachers.length > 0) {
+            const t = subject.teachers[0];
+            return `${t.name} ${t.surname}`;
+        }
+        return null;
+    })();
 
     // Helper to get default time string if data exists
     const getDefaultTime = (date?: Date | string) => {
         if (!date) return "";
         const d = new Date(date);
-        // Helper to pad
         const pad = (n: number) => n < 10 ? '0' + n : n;
         return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
     };
@@ -95,12 +125,6 @@ const LessonForm = ({
             </div>
 
             <div className="flex justify-between flex-wrap gap-4">
-                <InputField
-                    label="Lesson Name"
-                    name="name"
-                    register={register}
-                    error={errors.name}
-                />
 
                 <div className="flex flex-col gap-2 w-full md:w-1/4">
                     <label className="text-sm font-medium text-nutoSlateDark">Day</label>
@@ -145,7 +169,6 @@ const LessonForm = ({
                     )}
                 </div>
 
-
                 <div className="flex flex-col gap-2 w-full md:w-1/4">
                     <label className="text-sm font-medium text-nutoSlateDark">Subject</label>
                     <select
@@ -154,7 +177,7 @@ const LessonForm = ({
                         defaultValue={data?.subjectId || ""}
                     >
                         <option value="" disabled>Select Subject</option>
-                        {subjects?.map((item: { id: number; name: string }) => (
+                        {subjects?.map((item: SubjectWithTeachers) => (
                             <option value={item.id} key={item.id}>
                                 {item.name}
                             </option>
@@ -188,20 +211,15 @@ const LessonForm = ({
                     )}
                 </div>
 
+                {/* Lecturer — auto-selected from the chosen subject */}
                 <div className="flex flex-col gap-2 w-full md:w-1/4">
-                    <label className="text-sm font-medium text-nutoSlateDark">Teacher</label>
-                    <select
-                        className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200"
-                        {...register("teacherId")}
-                        defaultValue={data?.teacherId || ""}
-                    >
-                        <option value="" disabled>Select Teacher</option>
-                        {teachers?.map((item: { id: string; name: string; surname: string }) => (
-                            <option value={item.id} key={item.id}>
-                                {item.name} {item.surname}
-                            </option>
-                        ))}
-                    </select>
+                    <label className="text-sm font-medium text-nutoSlateDark">Lecturer</label>
+                    <input type="hidden" {...register("teacherId")} />
+                    <div className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-100 text-sm text-gray-600 cursor-not-allowed">
+                        {resolvedTeacher || (
+                            <span className="text-gray-400 italic">Select a subject first</span>
+                        )}
+                    </div>
                     {errors.teacherId?.message && (
                         <p className="text-xs text-red-400">
                             {errors.teacherId.message.toString()}

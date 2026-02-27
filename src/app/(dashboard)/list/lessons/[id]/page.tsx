@@ -99,6 +99,7 @@ const SingleLessonPage = async ({
                             {role === "admin" && (
                                 <div className="flex gap-2 isolate z-50">
                                     <FormContainer table="lesson" type="update" data={lesson} />
+                                    <FormContainer table="lesson" type="delete" id={lesson.id} />
                                 </div>
                             )}
                         </div>

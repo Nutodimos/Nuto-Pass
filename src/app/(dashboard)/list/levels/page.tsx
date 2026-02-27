@@ -171,14 +171,6 @@ const ClassListPage = async ({
                     <p className="text-xs text-slate-500">Lessons</p>
                   </div>
                 </div>
-
-                {/* Actions */}
-                {role === "admin" && (
-                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                    <FormContainer table="class" type="update" data={level} />
-                    <FormContainer table="class" type="delete" id={level.id} />
-                  </div>
-                )}
               </div>
             </div>
           </Link>

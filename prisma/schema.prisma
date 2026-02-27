@@ -44,16 +44,16 @@ model Teacher {
   surname   String
   email     String?   @unique
   phone     String?   @unique
-  address   String
+  address   String?
   img       String?
   bloodType String?
-  sex       UserSex
+  sex       UserSex?
   isActive  Boolean   @default(true)
   createdAt DateTime  @default(now())
   subjects  Subject[]
   lessons   Lesson[]
   classes   Class[]
-  birthday  DateTime
+  birthday  DateTime?
   materials Material[]
 }
 

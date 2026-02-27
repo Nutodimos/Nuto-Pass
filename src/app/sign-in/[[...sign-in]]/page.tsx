@@ -51,7 +51,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA] p-4 relative overflow-hidden selection:bg-nutoOrange/20 selection:text-nutoOrangeDark">
+    <div data-theme="light" className="min-h-screen flex items-center justify-center bg-[#F7F8FA] p-4 relative overflow-hidden selection:bg-nutoOrange/20 selection:text-nutoOrangeDark">
 
       {/* Background Decorative Elements */}
       <div className="absolute top-0 inset-x-0 h-[500px] bg-gradient-to-b from-nutoSlate/5 via-[#F7F8FA] to-transparent pointer-events-none" />
