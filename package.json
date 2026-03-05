@@ -11,6 +11,7 @@
   "dependencies": {
     "@clerk/elements": "^0.14.6",
     "@clerk/nextjs": "^5.4.1",
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^5.19.1",
     "@types/papaparse": "^5.5.2",

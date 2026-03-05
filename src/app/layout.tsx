@@ -14,8 +14,20 @@ import { Inter } from "next/font/google";
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Nutodimos Bio-Attendance",
-  description: "Advanced Biometric Attendance System powered by AI",
+  title: "CPE Automation",
+  description: "CPE Biometric attendance system / school management",
+  manifest: "/manifest.json",
+  themeColor: "#0d9488",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "CPE Automation",
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
 };
 
 export default function RootLayout({
