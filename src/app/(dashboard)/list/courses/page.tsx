@@ -1,6 +1,7 @@
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
+import CsvImportModal from "@/components/CsvImportModal";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma, Subject, Teacher } from "@prisma/client";
@@ -13,6 +14,7 @@ type SubjectWithCounts = Subject & {
   _count: {
     lessons: number;
     materials: number;
+    enrollments: number;
   };
 };
 
@@ -23,6 +25,7 @@ const CoursesPage = async ({
 }) => {
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
+  const userId = sessionClaims?.sub;
 
   const { page, ...queryParams } = searchParams;
   const p = page ? parseInt(page) : 1;
@@ -67,6 +70,20 @@ const CoursesPage = async ({
     }
   }
 
+  // ROLE CONDITIONS
+  if (role === "teacher") {
+    query.teachers = { some: { id: userId! } };
+  } else if (role === "student") {
+    const enrollments = await prisma.courseEnrollment.findMany({
+      where: { studentId: userId! },
+      select: { subjectId: true }
+    });
+    const enrolledIds = enrollments.map((e: { subjectId: number }) => e.subjectId);
+
+    query.id = { in: enrolledIds };
+  }
+
+
   const [data, count] = await prisma.$transaction([
     prisma.subject.findMany({
       where: query,
@@ -76,6 +93,7 @@ const CoursesPage = async ({
           select: {
             lessons: true,
             materials: true,
+            enrollments: true,
           },
         },
       },
@@ -85,10 +103,19 @@ const CoursesPage = async ({
     prisma.subject.count({ where: query }),
   ]);
 
+  let allStudents: any[] = [];
+  if (role === "admin" || role === "teacher") {
+    allStudents = await prisma.student.findMany({
+      select: { id: true, name: true, surname: true, username: true },
+      where: { isActive: true },
+      orderBy: { name: "asc" }
+    });
+  }
+
   return (
     <div className="flex-1 p-4 flex flex-col gap-4">
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-nutoSlate to-nutoSlateDark p-6 rounded-2xl shadow-lg">
+      <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
@@ -123,20 +150,20 @@ const CoursesPage = async ({
           {data.map((course: SubjectWithCounts) => (
             <div
               key={course.id}
-              className="group nuto-card p-5 flex flex-col"
+              className="group cpe-card p-5 flex flex-col"
             >
-              <div className="group nuto-card-indicator"></div>
+              <div className="group cpe-card-indicator"></div>
               <Link href={`/list/courses/${course.id}`} className="block flex-1 relative z-10">
                 {/* Course Header */}
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-nutoSlate to-nutoSlateDark flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-CPENavy to-CPENavyDark flex items-center justify-center">
                     <BookOpen className="w-6 h-6 text-white" />
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-nutoSlate transition-colors" />
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-CPENavy transition-colors" />
                 </div>
 
                 {/* Course Name */}
-                <h3 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-nutoSlate transition-colors">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-CPENavy transition-colors">
                   {course.name}
                 </h3>
 
@@ -150,27 +177,40 @@ const CoursesPage = async ({
                 {/* Stats */}
                 <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                    <Users className="w-4 h-4 text-nutoSlate" />
-                    <span>{course.teachers.length} Lecturers</span>
+                    <Users className="w-4 h-4 text-CPENavy" />
+                    <span>{course._count.enrollments} Enrolled</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                    <Calendar className="w-4 h-4 text-nutoOrange" />
+                    <Calendar className="w-4 h-4 text-CPEGold" />
                     <span>{course._count.lessons} Lessons</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                    <FileText className="w-4 h-4 text-nutoSlateLight" />
+                    <FileText className="w-4 h-4 text-CPESlate" />
                     <span>{course._count.materials}</span>
                   </div>
                 </div>
               </Link>
 
-              {/* Admin Actions - Outside the Link */}
-              {role === "admin" && (
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100 relative z-10">
-                  <FormContainer table="subject" type="update" data={course} />
-                  <FormContainer table="subject" type="delete" id={course.id} />
-                </div>
-              )}
+              {/* Actions — Outside the Link */}
+              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100 relative z-10">
+                {/* CSV Enroll for admins OR lecturers who teach this course */}
+                {(role === "admin" || (role === "teacher" && course.teachers.some((t: Teacher) => t.id === userId))) && (
+                  <>
+                    <CsvImportModal
+                      mode="enroll-students"
+                      targetId={course.id}
+                      targetName={course.name}
+                      students={allStudents}
+                    />
+                  </>
+                )}
+                {role === "admin" && (
+                  <>
+                    <FormContainer table="subject" type="update" data={course} />
+                    <FormContainer table="subject" type="delete" id={course.id} />
+                  </>
+                )}
+              </div>
             </div>
           ))}
         </div>

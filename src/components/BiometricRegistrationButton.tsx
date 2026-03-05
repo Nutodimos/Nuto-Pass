@@ -43,7 +43,7 @@ const BiometricRegistrationButton = ({ studentId }: { studentId: string }) => {
         <>
             <button
                 onClick={() => setOpen(true)}
-                className="w-7 h-7 flex items-center justify-center rounded-full bg-nutoOrange"
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-CPEGold"
                 title="Register Biometric ID"
             >
                 {/* Using a generic icon or the sort icon as placeholder if fingerprint not available */}
@@ -69,7 +69,7 @@ const BiometricRegistrationButton = ({ studentId }: { studentId: string }) => {
                                     type="text"
                                     value={biometricId}
                                     onChange={(e) => setBiometricId(e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-nutoSlate focus:border-transparent"
+                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-CPENavy focus:border-transparent"
                                     placeholder="Scan or enter ID..."
                                     autoFocus
                                     required
@@ -90,7 +90,7 @@ const BiometricRegistrationButton = ({ studentId }: { studentId: string }) => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 text-sm text-white bg-nutoSlate rounded-md hover:opacity-90 disabled:opacity-50 btn-nuto"
+                                    className="px-4 py-2 text-sm text-white bg-CPENavy rounded-md hover:opacity-90 disabled:opacity-50 btn-cpe"
                                     disabled={loading}
                                 >
                                     {loading ? "Registering..." : "Register"}

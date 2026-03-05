@@ -3,10 +3,10 @@
 @tailwind utilities;
 
 /* ========================================
-   NUTO THEME SYSTEM — CSS Custom Properties
+   CPE THEME SYSTEM — CSS Custom Properties
    ======================================== */
 
-/* Light Theme (Default) — the current NutoPass look */
+/* Light Theme (Default) — the current CPE Automation look */
 :root,
 [data-theme="light"] {
   --bg-primary: #F7F8FA;
@@ -33,14 +33,14 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
-  --nuto-slate-rgb: 67, 98, 117;
-  --nuto-orange-rgb: 255, 127, 80;
+  --cpe-slate-rgb: 67, 98, 117;
+  --cpe-orange-rgb: 255, 127, 80;
 
   --scrollbar-track: #F1F5F9;
   --scrollbar-thumb: #CBD5E1;
 }
 
-/* Dark Theme — Rich charcoal with warm Nuto accents */
+/* Dark Theme — Rich charcoal with warm CPE accents */
 [data-theme="dark"] {
   --bg-primary: #0F1419;
   --bg-secondary: #1A2332;
@@ -66,14 +66,14 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 
-  --nuto-slate-rgb: 112, 150, 171;
-  --nuto-orange-rgb: 255, 140, 100;
+  --cpe-slate-rgb: 112, 150, 171;
+  --cpe-orange-rgb: 255, 140, 100;
 
   --scrollbar-track: #1A2332;
   --scrollbar-thumb: #2A3A4E;
 }
 
-/* Midnight Theme — Pure OLED black with vivid neon Nuto accents */
+/* Midnight Theme — Pure OLED black with vivid neon CPE accents */
 [data-theme="midnight"] {
   --bg-primary: #000000;
   --bg-secondary: #0A0E14;
@@ -99,8 +99,8 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
 
-  --nuto-slate-rgb: 126, 166, 190;
-  --nuto-orange-rgb: 255, 150, 110;
+  --cpe-slate-rgb: 126, 166, 190;
+  --cpe-orange-rgb: 255, 150, 110;
 
   --scrollbar-track: #0D1117;
   --scrollbar-thumb: #1C2128;
@@ -284,22 +284,22 @@ html {
   mix-blend-mode: normal !important;
 }
 
-/* Nuto Card theme awareness */
-[data-theme="dark"] .nuto-card {
+/* CPE Card theme awareness */
+[data-theme="dark"] .cpe-card {
   background-color: var(--bg-card) !important;
   border-color: var(--border-primary) !important;
 }
 
-[data-theme="dark"] .nuto-card:hover {
+[data-theme="dark"] .cpe-card:hover {
   background-color: var(--bg-card-hover) !important;
 }
 
-[data-theme="midnight"] .nuto-card {
+[data-theme="midnight"] .cpe-card {
   background-color: var(--bg-card) !important;
   border-color: var(--border-primary) !important;
 }
 
-[data-theme="midnight"] .nuto-card:hover {
+[data-theme="midnight"] .cpe-card:hover {
   background-color: var(--bg-card-hover) !important;
 }
 
@@ -572,7 +572,7 @@ html {
   font-size: 16px;
   font-weight: 700;
   color: #436275;
-  /* nutoSlate */
+  /* CPENavy */
   border-radius: 12px;
   transition: all 0.2s ease;
 }
@@ -629,7 +629,7 @@ html {
 .react-calendar__tile--now {
   background: transparent !important;
   border: 2px solid #FF7F50 !important;
-  /* nutoOrange */
+  /* CPEGold */
   color: #FF7F50 !important;
 }
 
@@ -641,7 +641,7 @@ html {
 /* Active (Selected) */
 .react-calendar__tile--active {
   background: #436275 !important;
-  /* nutoSlate */
+  /* CPENavy */
   color: white !important;
   box-shadow: 0 4px 12px -2px rgba(67, 98, 117, 0.4);
 }
@@ -748,6 +748,64 @@ html {
   margin-bottom: 5px;
 }
 
+/* --- Dark Mode Overrides for Big Calendar --- */
+[data-theme="dark"] .rbc-timeslot-group,
+[data-theme="midnight"] .rbc-timeslot-group {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="dark"] .rbc-time-view,
+[data-theme="midnight"] .rbc-time-view,
+[data-theme="dark"] .rbc-time-header,
+[data-theme="midnight"] .rbc-time-header,
+[data-theme="dark"] .rbc-time-content,
+[data-theme="midnight"] .rbc-time-content {
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="dark"] .rbc-day-slot .rbc-time-slot,
+[data-theme="midnight"] .rbc-day-slot .rbc-time-slot {
+  border-top-color: var(--border-primary) !important;
+}
+
+[data-theme="dark"] .rbc-time-gutter .rbc-timeslot-group,
+[data-theme="midnight"] .rbc-time-gutter .rbc-timeslot-group {
+  border-bottom-color: var(--border-primary) !important;
+}
+
+/* Dark mode event cards - muted pastel equivalents */
+[data-theme="dark"] .rbc-event,
+[data-theme="midnight"] .rbc-event {
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-secondary) !important;
+}
+
+[data-theme="dark"] .rbc-event:nth-child(1), [data-theme="midnight"] .rbc-event:nth-child(1),
+[data-theme="dark"] .rbc-event:nth-child(5), [data-theme="midnight"] .rbc-event:nth-child(5) {
+  background-color: rgba(56, 189, 248, 0.15) !important; /* light blue tinted */
+}
+
+[data-theme="dark"] .rbc-event:nth-child(2), [data-theme="midnight"] .rbc-event:nth-child(2),
+[data-theme="dark"] .rbc-event:nth-child(6), [data-theme="midnight"] .rbc-event:nth-child(6) {
+  background-color: rgba(250, 204, 21, 0.15) !important; /* yellow tinted */
+}
+
+[data-theme="dark"] .rbc-event:nth-child(3), [data-theme="midnight"] .rbc-event:nth-child(3),
+[data-theme="dark"] .rbc-event:nth-child(7), [data-theme="midnight"] .rbc-event:nth-child(7) {
+  background-color: rgba(167, 139, 250, 0.15) !important; /* purple tinted */
+}
+
+[data-theme="dark"] .rbc-event:nth-child(4), [data-theme="midnight"] .rbc-event:nth-child(4),
+[data-theme="dark"] .rbc-event:nth-child(8), [data-theme="midnight"] .rbc-event:nth-child(8) {
+  background-color: rgba(244, 114, 182, 0.15) !important; /* pink tinted */
+}
+
+[data-theme="dark"] .rbc-event-label,
+[data-theme="midnight"] .rbc-event-label {
+  color: var(--text-secondary) !important;
+}
+
 @keyframes blob {
   0% {
     transform: translate(0px, 0px) scale(1);
@@ -792,35 +850,35 @@ html {
   animation: float 6s ease-in-out infinite;
 }
 
-/* NutoPass Button Animation */
-.btn-nuto {
+/* CPE Automation Button Animation */
+.btn-cpe {
   @apply transition-all duration-200 ease-out;
 }
 
-.btn-nuto:hover {
+.btn-cpe:hover {
   @apply -translate-y-0.5 shadow-md;
 }
 
-.btn-nuto:active {
+.btn-cpe:active {
   @apply scale-95;
 }
 
-/* Nuto Interactive Card Theme */
-.nuto-card {
-  @apply relative bg-white rounded-2xl shadow-sm border border-slate-200/60 transition-all duration-300 hover:shadow-lg hover:border-nutoSlate/30 hover:-translate-y-1;
+/* CPE Interactive Card Theme */
+.cpe-card {
+  @apply relative bg-white rounded-2xl shadow-sm border border-slate-200/60 transition-all duration-300 hover:shadow-lg hover:border-CPENavy/30 hover:-translate-y-1;
 }
 
-.nuto-card-indicator {
-  @apply absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-nutoSlate to-nutoOrange scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-20 pointer-events-none;
+.cpe-card-indicator {
+  @apply absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-CPENavy to-CPEGold scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-20 pointer-events-none;
 }
 
 /* Global Click Feedback */
-.nuto-card:active {
+.cpe-card:active {
   @apply scale-[0.98];
   transition-duration: 100ms;
 }
 
-.nuto-btn-active {
+.cpe-btn-active {
   @apply scale-90 opacity-80;
   transition-duration: 100ms;
 }

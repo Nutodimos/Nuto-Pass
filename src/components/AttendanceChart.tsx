@@ -38,13 +38,13 @@ const AttendanceChart = ({
         />
         <Bar
           dataKey="present"
-          fill="#436275" // nutoSlate
+          fill="#436275" // CPENavy
           legendType="circle"
           radius={[10, 10, 0, 0]}
         />
         <Bar
           dataKey="absent"
-          fill="#FF7F50" // nutoOrange
+          fill="#FF7F50" // CPEGold
           legendType="circle"
           radius={[10, 10, 0, 0]}
         />

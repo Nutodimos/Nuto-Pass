@@ -20,7 +20,7 @@ const TeachingOverviewTabs = ({
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h2 className="text-lg font-semibold text-nutoSlateDark mb-4">
+            <h2 className="text-lg font-semibold text-CPENavyDark mb-4">
                 Teaching Overview
             </h2>
 
@@ -29,7 +29,7 @@ const TeachingOverviewTabs = ({
                 <button
                     onClick={() => setActiveTab("courses")}
                     className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === "courses"
-                            ? "bg-white text-nutoSlate shadow-sm"
+                            ? "bg-white text-CPENavy shadow-sm"
                             : "text-gray-500 hover:text-gray-700"
                         }`}
                 >
@@ -37,7 +37,7 @@ const TeachingOverviewTabs = ({
                     <span>Courses</span>
                     <span
                         className={`px-2 py-0.5 rounded-full text-xs ${activeTab === "courses"
-                                ? "bg-nutoSlate text-white"
+                                ? "bg-CPENavy text-white"
                                 : "bg-gray-200 text-gray-600"
                             }`}
                     >
@@ -47,7 +47,7 @@ const TeachingOverviewTabs = ({
                 <button
                     onClick={() => setActiveTab("lessons")}
                     className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === "lessons"
-                            ? "bg-white text-nutoOrange shadow-sm"
+                            ? "bg-white text-CPEGold shadow-sm"
                             : "text-gray-500 hover:text-gray-700"
                         }`}
                 >
@@ -55,7 +55,7 @@ const TeachingOverviewTabs = ({
                     <span>Lessons</span>
                     <span
                         className={`px-2 py-0.5 rounded-full text-xs ${activeTab === "lessons"
-                                ? "bg-nutoOrange text-white"
+                                ? "bg-CPEGold text-white"
                                 : "bg-gray-200 text-gray-600"
                             }`}
                     >

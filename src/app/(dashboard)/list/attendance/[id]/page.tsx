@@ -93,7 +93,7 @@ const ClassAttendancePage = async ({
         return (
             <tr
                 key={item.id}
-                className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-nutoSlate/10"
+                className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-CPENavy/10"
             >
                 <td className="flex items-center gap-4 p-4">
                     <Image
@@ -110,11 +110,11 @@ const ClassAttendancePage = async ({
                 </td>
                 <td className="hidden md:table-cell">{item.username}</td>
                 <td className="hidden md:table-cell">{item.biometricId || "Not Registered"}</td>
-                <td className="hidden md:table-cell font-bold text-nutoSlate">{percentage}%</td>
+                <td className="hidden md:table-cell font-bold text-CPENavy">{percentage}%</td>
                 <td>
                     <div className="flex items-center gap-2">
                         <Link href={`/list/students/${item.username}`}>
-                            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-nutoSlate/20">
+                            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-CPENavy/20">
                                 <Image src="/view.png" alt="" width={16} height={16} />
                             </button>
                         </Link>
@@ -136,7 +136,11 @@ const ClassAttendancePage = async ({
             if (value !== undefined) {
                 switch (key) {
                     case "search":
-                        query.name = { contains: value, mode: "insensitive" };
+                        query.OR = [
+                            { name: { contains: value, mode: "insensitive" } },
+                            { surname: { contains: value, mode: "insensitive" } },
+                            { username: { contains: value, mode: "insensitive" } },
+                        ];
                         break;
                 }
             }
@@ -202,14 +206,14 @@ const ClassAttendancePage = async ({
             {/* Student List */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 {/* Header with Class Info and Search */}
-                <div className="bg-gradient-to-r from-nutoSlate/5 to-nutoOrange/5 p-5 border-b border-slate-100">
+                <div className="bg-gradient-to-r from-CPENavy/5 to-CPEGold/5 p-5 border-b border-slate-100">
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-nutoSlate to-nutoSlateDark flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-CPENavy to-CPENavyDark flex items-center justify-center">
                                 <span className="text-white font-bold text-lg">{className.charAt(0)}</span>
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-nutoSlateDark">
+                                <h2 className="text-xl font-bold text-CPENavyDark">
                                     {className}
                                 </h2>
                                 <p className="text-sm text-gray-500">{count} students enrolled</p>

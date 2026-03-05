@@ -56,7 +56,11 @@ const LecturersPage = async ({
             };
             break;
           case "search":
-            query.name = { contains: value, mode: "insensitive" };
+            query.OR = [
+              { name: { contains: value, mode: "insensitive" } },
+              { surname: { contains: value, mode: "insensitive" } },
+              { username: { contains: value, mode: "insensitive" } },
+            ];
             break;
           default:
             break;
@@ -82,7 +86,7 @@ const LecturersPage = async ({
   return (
     <div className="flex-1 p-4 flex flex-col gap-4">
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-nutoSlate to-nutoSlateDark p-6 rounded-2xl shadow-lg">
+      <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
@@ -117,9 +121,9 @@ const LecturersPage = async ({
           {data.map((lecturer: TeacherWithDetails) => (
             <div
               key={lecturer.id}
-              className="group nuto-card p-5 flex flex-col"
+              className="group cpe-card p-5 flex flex-col"
             >
-              <div className="group nuto-card-indicator"></div>
+              <div className="group cpe-card-indicator"></div>
               <Link href={`/list/lecturers/${lecturer.id}`} className="block flex-1 relative z-10">
                 {/* Header with Avatar */}
                 <div className="flex items-start gap-4 mb-4">
@@ -133,25 +137,25 @@ const LecturersPage = async ({
                     />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-800 group-hover:text-nutoSlate transition-colors">
+                    <h3 className="text-lg font-semibold text-gray-800 group-hover:text-CPENavy transition-colors">
                       {lecturer.name} {lecturer.surname}
                     </h3>
                     <p className="text-sm text-gray-500">ID: {lecturer.username}</p>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-nutoSlate transition-colors" />
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-CPENavy transition-colors" />
                 </div>
 
                 {/* Contact Info */}
                 <div className="space-y-2 mb-4">
                   {lecturer.email && (
                     <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Mail className="w-4 h-4 text-nutoSlate" />
+                      <Mail className="w-4 h-4 text-CPENavy" />
                       <span className="truncate">{lecturer.email}</span>
                     </div>
                   )}
                   {lecturer.phone && (
                     <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Phone className="w-4 h-4 text-nutoOrange" />
+                      <Phone className="w-4 h-4 text-CPEGold" />
                       <span>{lecturer.phone}</span>
                     </div>
                   )}
@@ -161,14 +165,14 @@ const LecturersPage = async ({
                 {lecturer.subjects.length > 0 && (
                   <div className="mb-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <BookOpen className="w-4 h-4 text-nutoSlate" />
+                      <BookOpen className="w-4 h-4 text-CPENavy" />
                       <span className="text-xs font-medium text-gray-500">Courses</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {lecturer.subjects.slice(0, 3).map((subject) => (
                         <span
                           key={subject.id}
-                          className="px-2 py-1 bg-nutoSlate/10 text-nutoSlate text-xs rounded-md"
+                          className="px-2 py-1 bg-CPENavy/10 text-CPENavy text-xs rounded-md"
                         >
                           {subject.name}
                         </span>
@@ -185,11 +189,11 @@ const LecturersPage = async ({
                 {/* Stats */}
                 <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                    <BookOpen className="w-4 h-4 text-nutoSlate" />
+                    <BookOpen className="w-4 h-4 text-CPENavy" />
                     <span>{lecturer.subjects.length} Courses</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                    <GraduationCap className="w-4 h-4 text-nutoOrange" />
+                    <GraduationCap className="w-4 h-4 text-CPEGold" />
                     <span>{lecturer._count.lessons} Lessons</span>
                   </div>
                 </div>

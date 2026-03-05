@@ -51,12 +51,12 @@ const LoginPage = () => {
   };
 
   return (
-    <div data-theme="light" className="min-h-screen flex items-center justify-center bg-[#F7F8FA] p-4 relative overflow-hidden selection:bg-nutoOrange/20 selection:text-nutoOrangeDark">
+    <div data-theme="light" className="min-h-screen flex items-center justify-center bg-[#F7F8FA] p-4 relative overflow-hidden selection:bg-CPEGold/20 selection:text-CPEGoldDark">
 
       {/* Background Decorative Elements */}
-      <div className="absolute top-0 inset-x-0 h-[500px] bg-gradient-to-b from-nutoSlate/5 via-[#F7F8FA] to-transparent pointer-events-none" />
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-nutoSlate/10 rounded-full blur-[100px] pointer-events-none animate-pulse duration-[8000ms]" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-nutoOrange/10 rounded-full blur-[100px] pointer-events-none animate-pulse duration-[10000ms]" />
+      <div className="absolute top-0 inset-x-0 h-[500px] bg-gradient-to-b from-CPENavy/5 via-[#F7F8FA] to-transparent pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-CPENavy/10 rounded-full blur-[100px] pointer-events-none animate-pulse duration-[8000ms]" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-CPEGold/10 rounded-full blur-[100px] pointer-events-none animate-pulse duration-[10000ms]" />
 
       <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in-95 duration-700">
 
@@ -69,9 +69,9 @@ const LoginPage = () => {
           {/* Logo Heading area */}
           <div className="flex flex-col items-center mb-10">
             <Link href="/" className="group mb-6 relative hover:scale-105 transition-transform duration-300">
-              <div className="absolute inset-0 bg-nutoSlate/20 rounded-2xl blur-xl group-hover:bg-nutoSlate/30 transition-colors" />
+              <div className="absolute inset-0 bg-CPENavy/20 rounded-2xl blur-xl group-hover:bg-CPENavy/30 transition-colors" />
               <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center relative z-10 p-4">
-                <Image src="/nutopass-logo.png" alt="Logo" fill className="object-contain p-2 mix-blend-multiply" />
+                <Image src="/cpeautomation-logo.png" alt="Logo" fill className="object-contain p-2 mix-blend-multiply" />
               </div>
             </Link>
 
@@ -93,10 +93,10 @@ const LoginPage = () => {
                   autoComplete="username"
                   value={matricNo}
                   onChange={(e) => setMatricNo(e.target.value)}
-                  className="w-full px-5 py-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-nutoSlate/10 focus:border-nutoSlate/50 focus:bg-white transition-all duration-300"
+                  className="w-full px-5 py-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-CPENavy/10 focus:border-CPENavy/50 focus:bg-white transition-all duration-300"
                   placeholder="e.g. CPE/19/..."
                 />
-                <span className="absolute right-4 top-4 text-emerald-600/50 group-focus-within:text-nutoSlate transition-colors">
+                <span className="absolute right-4 top-4 text-emerald-600/50 group-focus-within:text-CPENavy transition-colors">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                 </span>
               </div>
@@ -111,7 +111,7 @@ const LoginPage = () => {
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-5 py-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-nutoSlate/10 focus:border-nutoSlate/50 focus:bg-white transition-all duration-300 pr-12"
+                  className="w-full px-5 py-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-CPENavy/10 focus:border-CPENavy/50 focus:bg-white transition-all duration-300 pr-12"
                   placeholder="••••••••"
                 />
                 <button
@@ -136,7 +136,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-4 bg-gradient-to-r from-nutoSlate to-nutoSlateDark text-white rounded-2xl font-bold text-lg shadow-[0_8px_30px_rgba(67,98,117,0.3)] hover:shadow-[0_8px_30px_rgba(67,98,117,0.5)] hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-3 relative overflow-hidden group"
+              className="w-full mt-2 py-4 bg-gradient-to-r from-CPENavy to-CPENavyDark text-white rounded-2xl font-bold text-lg shadow-[0_8px_30px_rgba(67,98,117,0.3)] hover:shadow-[0_8px_30px_rgba(67,98,117,0.5)] hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-3 relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
               {loading ? (
@@ -159,7 +159,7 @@ const LoginPage = () => {
         <div className="mt-8 text-center text-slate-500 text-sm">
           <p>
             Having trouble? Contact the{' '}
-            <span className="text-nutoSlate font-bold cursor-help hover:underline decoration-nutoOrange decoration-2" title="Contact Admin">
+            <span className="text-CPENavy font-bold cursor-help hover:underline decoration-CPEGold decoration-2" title="Contact Admin">
               System Administrator
             </span>
           </p>

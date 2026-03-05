@@ -25,8 +25,8 @@ const MenuLink = ({ item }: MenuLinkProps) => {
         <Link
             href={item.href}
             className={`flex items-center justify-center lg:justify-start gap-4 py-2 md:px-2 rounded-md transition-colors ${isActive
-                    ? "bg-nutoSlate/10 text-nutoSlate"
-                    : "text-gray-500 hover:bg-nutoSlate/10 hover:text-nutoSlate"
+                    ? "bg-CPENavy/10 text-CPENavy"
+                    : "text-gray-500 hover:bg-CPENavy/10 hover:text-CPENavy"
                 }`}
         >
             <Image src={item.icon} alt="" width={20} height={20} />

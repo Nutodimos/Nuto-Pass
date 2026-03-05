@@ -76,9 +76,9 @@ const NavigationProgress = () => {
 
             // Add active feedback to buttons
             if (button) {
-                button.classList.add("nuto-btn-active");
+                button.classList.add("cpe-btn-active");
                 setTimeout(() => {
-                    button.classList.remove("nuto-btn-active");
+                    button.classList.remove("cpe-btn-active");
                 }, 200);
             }
         };
@@ -97,7 +97,7 @@ const NavigationProgress = () => {
         <div className="fixed top-0 left-0 right-0 z-[9999] pointer-events-none">
             {/* Progress bar */}
             <div
-                className="h-[3px] bg-gradient-to-r from-nutoOrange via-nutoOrangeDark to-nutoSlate transition-all duration-300 ease-out"
+                className="h-[3px] bg-gradient-to-r from-CPEGold via-CPEGoldDark to-CPENavy transition-all duration-300 ease-out"
                 style={{
                     width: `${progress}%`,
                     boxShadow: "0 0 10px rgba(255, 127, 80, 0.7), 0 0 5px rgba(255, 127, 80, 0.5)",

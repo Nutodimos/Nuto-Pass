@@ -1,10 +1,11 @@
 import SettingsForm from "@/components/forms/SettingsForm";
 import ProfileSettings from "@/components/forms/ProfileSettings";
 import ThemeSettings from "@/components/forms/ThemeSettings";
+import SecuritySettings from "@/components/forms/SecuritySettings";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { Settings, User, Palette, Shield } from "lucide-react";
+import { Settings, User, Palette, Shield, Lock } from "lucide-react";
 
 // Client wrapper for tabs
 import SettingsTabs from "./SettingsTabs";
@@ -91,6 +92,13 @@ const SettingsPage = async () => {
         content: <ThemeSettings />,
     });
 
+    tabs.push({
+        id: "security",
+        label: "Security",
+        icon: "lock",
+        content: <SecuritySettings />,
+    });
+
     if (role === "admin") {
         tabs.push({
             id: "school",
@@ -107,10 +115,10 @@ const SettingsPage = async () => {
                         }}
                     >
                         <div className="flex items-center gap-3">
-                            <Shield className="w-5 h-5 text-nutoSlate" />
+                            <Shield className="w-5 h-5 text-CPENavy" />
                             <div>
                                 <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Current Status: </span>
-                                <span className="font-semibold text-nutoSlate">{currentSession}</span>
+                                <span className="font-semibold text-CPENavy">{currentSession}</span>
                                 <span className="mx-2" style={{ color: 'var(--text-tertiary)' }}>•</span>
                                 <span className="font-semibold text-amber-600">{semesterText}</span>
                             </div>
@@ -128,7 +136,7 @@ const SettingsPage = async () => {
     return (
         <div className="flex-1 m-4 mt-0">
             {/* Header */}
-            <div className="bg-gradient-to-r from-nutoSlate to-nutoSlateDark rounded-2xl p-6 mb-6 shadow-lg">
+            <div className="bg-gradient-to-r from-CPENavy to-CPENavyDark rounded-2xl p-6 mb-6 shadow-lg">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                         <Settings className="w-8 h-8 text-white" />

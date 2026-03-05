@@ -104,7 +104,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
                             cropping: true,
                             croppingAspectRatio: 1,
                             croppingShowDimensions: true,
-                            folder: "nutopass/avatars",
+                            folder: "cpeautomation/avatars",
                         }}
                         onSuccess={(result: any) => {
                             setAvatarUrl(result.info.secure_url);
@@ -134,7 +134,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
                         Profile Photo
                     </h3>
                     <p className="text-xs mt-1 mb-3" style={{ color: 'var(--text-tertiary)' }}>
-                        JPG, PNG or WebP. Max 5MB. Hosted on Cloudinary.
+                        JPG, PNG or WebP. Max 5MB.
                     </p>
                     <CldUploadWidget
                         uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_PRESET}
@@ -146,7 +146,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
                             cropping: true,
                             croppingAspectRatio: 1,
                             croppingShowDimensions: true,
-                            folder: "nutopass/avatars",
+                            folder: "cpeautomation/avatars",
                         }}
                         onSuccess={(result: any) => {
                             setAvatarUrl(result.info.secure_url);
@@ -160,7 +160,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
                             <button
                                 type="button"
                                 onClick={() => open()}
-                                className="px-4 py-2 rounded-xl text-sm font-semibold border transition-colors hover:bg-nutoSlate/10"
+                                className="px-4 py-2 rounded-xl text-sm font-semibold border transition-colors hover:bg-CPENavy/10"
                                 style={{
                                     borderColor: 'var(--border-primary)',
                                     color: 'var(--text-secondary)',
@@ -172,7 +172,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
                         )}
                     </CldUploadWidget>
                     {avatarUrl && avatarUrl !== profile.img && (
-                        <span className="ml-2 text-xs text-nutoOrange font-medium">● Unsaved</span>
+                        <span className="ml-2 text-xs text-CPEGold font-medium">● Unsaved</span>
                     )}
                 </div>
             </div>
@@ -232,7 +232,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                            <Mail className="w-4 h-4 text-nutoSlate" />
+                            <Mail className="w-4 h-4 text-CPENavy" />
                             Email
                         </label>
                         <input
@@ -240,7 +240,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
                             name="email"
                             defaultValue={profile.email || ""}
                             placeholder="your.email@example.com"
-                            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-nutoSlate focus:border-transparent transition-all text-sm"
+                            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-CPENavy focus:border-transparent transition-all text-sm"
                             style={{
                                 backgroundColor: 'var(--bg-input)',
                                 borderColor: 'var(--border-primary)',
@@ -251,7 +251,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
 
                     <div className="space-y-2">
                         <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                            <Phone className="w-4 h-4 text-nutoSlate" />
+                            <Phone className="w-4 h-4 text-CPENavy" />
                             Phone
                         </label>
                         <input
@@ -259,7 +259,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
                             name="phone"
                             defaultValue={profile.phone || ""}
                             placeholder="+234 xxx xxx xxxx"
-                            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-nutoSlate focus:border-transparent transition-all text-sm"
+                            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-CPENavy focus:border-transparent transition-all text-sm"
                             style={{
                                 backgroundColor: 'var(--bg-input)',
                                 borderColor: 'var(--border-primary)',
@@ -270,7 +270,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
 
                     <div className="space-y-2 sm:col-span-2">
                         <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                            <MapPin className="w-4 h-4 text-nutoSlate" />
+                            <MapPin className="w-4 h-4 text-CPENavy" />
                             Address
                         </label>
                         <input
@@ -278,7 +278,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
                             name="address"
                             defaultValue={profile.address || ""}
                             placeholder="Your address"
-                            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-nutoSlate focus:border-transparent transition-all text-sm"
+                            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-CPENavy focus:border-transparent transition-all text-sm"
                             style={{
                                 backgroundColor: 'var(--bg-input)',
                                 borderColor: 'var(--border-primary)',
@@ -295,7 +295,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
                         <select
                             name="bloodType"
                             defaultValue={profile.bloodType || ""}
-                            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-nutoSlate focus:border-transparent transition-all text-sm cursor-pointer"
+                            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-CPENavy focus:border-transparent transition-all text-sm cursor-pointer"
                             style={{
                                 backgroundColor: 'var(--bg-input)',
                                 borderColor: 'var(--border-primary)',
@@ -322,7 +322,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
                         <select
                             name="sex"
                             defaultValue={profile.sex || ""}
-                            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-nutoSlate focus:border-transparent transition-all text-sm cursor-pointer"
+                            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-CPENavy focus:border-transparent transition-all text-sm cursor-pointer"
                             style={{
                                 backgroundColor: 'var(--bg-input)',
                                 borderColor: 'var(--border-primary)',
@@ -337,14 +337,14 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
 
                     <div className="space-y-2">
                         <label className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                            <Calendar className="w-4 h-4 text-nutoOrange" />
+                            <Calendar className="w-4 h-4 text-CPEGold" />
                             Birthday
                         </label>
                         <input
                             type="date"
                             name="birthday"
                             defaultValue={formatDate(profile.birthday)}
-                            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-nutoSlate focus:border-transparent transition-all text-sm"
+                            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-CPENavy focus:border-transparent transition-all text-sm"
                             style={{
                                 backgroundColor: 'var(--bg-input)',
                                 borderColor: 'var(--border-primary)',
@@ -358,7 +358,7 @@ const ProfileSettings = ({ profile, role }: ProfileSettingsProps) => {
             {/* Submit Button */}
             <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-nutoSlate to-nutoSlateDark text-white p-3 rounded-xl font-semibold hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-CPENavy to-CPENavyDark text-white p-3 rounded-xl font-semibold hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
             >
                 <User className="w-4 h-4" />
                 Save Changes

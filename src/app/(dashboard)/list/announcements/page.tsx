@@ -27,10 +27,16 @@ const AnnouncementListPage = async ({
     ];
   }
 
-  // Role-based filtering
+  // Role-based filtering for Class
   const roleConditions = {
     teacher: { lessons: { some: { teacherId: currentUserId! } } },
     student: { students: { some: { id: currentUserId! } } },
+  };
+
+  // Role-based filtering for Subject
+  const subjectConditions = {
+    teacher: { teachers: { some: { id: currentUserId! } } },
+    student: { enrollments: { some: { studentId: currentUserId! } } },
   };
 
   // Filter based on target audience
@@ -50,8 +56,9 @@ const AnnouncementListPage = async ({
       { OR: audienceFilter },
       {
         OR: [
-          { classId: null },
+          { classId: null, subjectId: null },
           { class: roleConditions[role as keyof typeof roleConditions] || {} },
+          { subject: subjectConditions[role as keyof typeof subjectConditions] || {} },
         ],
       },
     ],
@@ -70,6 +77,12 @@ const AnnouncementListPage = async ({
       targetAudience: true,
       classId: true,
       class: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      subject: {
         select: {
           id: true,
           name: true,
@@ -105,11 +118,11 @@ const AnnouncementListPage = async ({
       {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-nutoSlate to-nutoSlateDark rounded-xl shadow-lg">
+          <div className="p-3 bg-gradient-to-br from-CPENavy to-CPENavyDark rounded-xl shadow-lg">
             <Megaphone className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 bg-gradient-to-r from-nutoSlate to-nutoSlateDark bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold text-slate-800 bg-gradient-to-r from-CPENavy to-CPENavyDark bg-clip-text text-transparent">
               Announcements
             </h1>
             <p className="text-sm text-slate-500 flex items-center gap-1">
@@ -129,7 +142,7 @@ const AnnouncementListPage = async ({
             </div>
             <h3 className="text-lg font-semibold text-slate-700 mb-2">No announcements yet</h3>
             <p className="text-sm text-slate-500 mb-6 max-w-md mx-auto">
-              {role === "admin"
+              {role === "admin" || role === "teacher"
                 ? "Start by creating your first announcement using the button below"
                 : "Check back later for important updates and notifications"}
             </p>
@@ -141,15 +154,15 @@ const AnnouncementListPage = async ({
               style={{
                 animationDelay: `${index * 50}ms`,
               }}
-              className="border border-slate-200 rounded-2xl p-5 hover:shadow-xl hover:border-nutoSlate/30 hover:-translate-y-1 transition-all duration-300 group bg-white animate-fadeInUp"
+              className="border border-slate-200 rounded-2xl p-5 hover:shadow-xl hover:border-CPENavy/30 hover:-translate-y-1 transition-all duration-300 group bg-white animate-fadeInUp"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-start gap-4 flex-1">
-                  <div className="p-3 bg-gradient-to-br from-nutoSlate/10 to-nutoSlate/5 rounded-xl group-hover:from-nutoSlate group-hover:to-nutoSlateDark transition-all duration-300">
-                    <Megaphone className="w-5 h-5 text-nutoSlate group-hover:text-white transition-colors duration-300" />
+                  <div className="p-3 bg-gradient-to-br from-CPENavy/10 to-CPENavy/5 rounded-xl group-hover:from-CPENavy group-hover:to-CPENavyDark transition-all duration-300">
+                    <Megaphone className="w-5 h-5 text-CPENavy group-hover:text-white transition-colors duration-300" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg text-slate-800 mb-2 group-hover:text-nutoSlate transition-colors">
+                    <h3 className="font-bold text-lg text-slate-800 mb-2 group-hover:text-CPENavy transition-colors">
                       {announcement.title}
                     </h3>
                     <p className="text-sm text-slate-600 leading-relaxed">
@@ -225,37 +238,53 @@ const AnnouncementListPage = async ({
                     <span>{announcement.class.name}</span>
                   </div>
                 )}
+
+                {announcement.subject && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-100 text-blue-600 text-xs font-medium">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <span>{announcement.subject.name}</span>
+                  </div>
+                )}
               </div>
             </div>
           ))
         )}
       </div>
 
-      {/* FLOATING ACTION BUTTON (FAB) - Only for admin */}
-      {role === "admin" && (
-        <div className="fixed bottom-8 right-8 z-50 group">
-          <div className="relative">
-            {/* Pulsing ring effect */}
-            <div className="absolute inset-0 bg-nutoOrange rounded-full animate-ping opacity-75"></div>
-
-            {/* Main FAB button */}
+      {/* FLOATING ACTION BUTTON (FAB) - For admin and teacher */}
+      {
+        (role === "admin" || role === "teacher") && (
+          <div className="fixed bottom-8 right-8 z-50 group">
             <div className="relative">
-              <FormContainer table="announcement" type="create" />
-            </div>
+              {/* Pulsing ring effect */}
+              <div className="absolute inset-0 bg-CPEGold rounded-full animate-ping opacity-75"></div>
 
-            {/* Tooltip */}
-            <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-              <div className="bg-slate-800 text-white text-sm px-3 py-2 rounded-lg shadow-lg">
-                Create New Announcement
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
-                  <div className="border-8 border-transparent border-l-slate-800"></div>
+              {/* Main FAB button */}
+              <div className="relative">
+                <FormContainer table="announcement" type="create" />
+              </div>
+
+              {/* Tooltip */}
+              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                <div className="bg-slate-800 text-white text-sm px-3 py-2 rounded-lg shadow-lg">
+                  Create New Announcement
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                    <div className="border-8 border-transparent border-l-slate-800"></div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

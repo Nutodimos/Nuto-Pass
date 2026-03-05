@@ -41,15 +41,15 @@ const UserCard = async ({
       label: "Administrators",
     },
     teacher: {
-      bg: "bg-gradient-to-br from-nutoSlate to-nutoSlateDark",
+      bg: "bg-gradient-to-br from-CPENavy to-CPENavyDark",
       icon: Users,
-      iconBg: "bg-nutoSlateLight/20",
+      iconBg: "bg-CPESlate/20",
       label: "Lecturers",
     },
     student: {
-      bg: "bg-gradient-to-br from-nutoOrange to-nutoOrangeDark",
+      bg: "bg-gradient-to-br from-CPEGold to-CPEGoldDark",
       icon: GraduationCap,
-      iconBg: "bg-nutoOrangeLight/20",
+      iconBg: "bg-CPEGoldLight/20",
       label: "Students",
     },
   };

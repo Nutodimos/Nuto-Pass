@@ -24,11 +24,11 @@ const Announcements = async () => {
   });
 
   return (
-    <div className="group nuto-card p-6">
-      <div className="group nuto-card-indicator"></div>
+    <div className="group cpe-card p-6">
+      <div className="group cpe-card-indicator"></div>
       <div className="flex items-center justify-between mb-6 relative z-10">
         <h1 className="text-xl font-bold text-slate-800">Announcements</h1>
-        <a href="/list/announcements" className="text-sm font-medium text-nutoSlate hover:text-nutoSlateDark hover:underline">
+        <a href="/list/announcements" className="text-sm font-medium text-CPENavy hover:text-CPENavyDark hover:underline">
           View All
         </a>
       </div>
@@ -41,7 +41,7 @@ const Announcements = async () => {
                 }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <h2 className="font-semibold text-slate-800 group-hover:text-nutoSlate transition-colors line-clamp-1">{announcement.title}</h2>
+                <h2 className="font-semibold text-slate-800 group-hover:text-CPENavy transition-colors line-clamp-1">{announcement.title}</h2>
                 <span className="text-[10px] font-medium text-slate-400 bg-white border border-slate-100 px-2 py-1 rounded-full whitespace-nowrap">
                   {new Intl.DateTimeFormat("en-GB", { month: 'short', day: 'numeric' }).format(announcement.date)}
                 </span>

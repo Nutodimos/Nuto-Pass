@@ -29,9 +29,10 @@ const TeacherPage = async () => {
 
   const activeAssignments = await prisma.assignment.count({
     where: {
-      lesson: {
-        teacherId: userId!,
-        isActive: true,
+      subject: {
+        teachers: {
+          some: { id: userId! },
+        },
       },
       dueDate: {
         gte: new Date(),
@@ -67,14 +68,14 @@ const TeacherPage = async () => {
 
 
   return (
-    <div className="flex-1 p-4 flex gap-8 flex-col xl:flex-row bg-nutoSlate/5 min-h-screen">
+    <div className="flex-1 p-4 flex gap-8 flex-col xl:flex-row bg-CPENavy/5 min-h-screen">
       {/* LEFT COLUMN */}
       <div className="w-full xl:w-2/3 flex flex-col gap-8">
 
         {/* HERO SECTION */}
-        <div className="relative shrink-0 overflow-hidden rounded-3xl bg-gradient-to-br from-nutoSlate to-nutoSlateDark p-8 shadow-xl shadow-nutoSlate/10 border border-nutoSlate/20">
+        <div className="relative shrink-0 overflow-hidden rounded-3xl bg-gradient-to-br from-CPENavy to-CPENavyDark p-8 shadow-xl shadow-CPENavy/10 border border-CPENavy/20">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full pointer-events-none filter blur-2xl transform translate-x-1/2 -translate-y-1/2"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-nutoOrange/20 rounded-full pointer-events-none filter blur-2xl transform -translate-x-1/2 translate-y-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-CPEGold/20 rounded-full pointer-events-none filter blur-2xl transform -translate-x-1/2 translate-y-1/2"></div>
 
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-6">
@@ -82,7 +83,7 @@ const TeacherPage = async () => {
                 <div className="w-full h-full rounded-xl overflow-hidden relative">
                   <Image
                     src={teacher?.img || "/noAvatar.png"}
-                    alt="Teacher Profile"
+                    alt="Lecturer Profile"
                     fill
                     className="object-cover"
                   />
@@ -110,30 +111,30 @@ const TeacherPage = async () => {
 
         {/* QUICK STATS */}
         <div className="flex flex-col md:flex-row gap-6 shrink-0">
-          <Link href={`/list/courses?teacherId=${userId}`} className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-nutoOrange/30 hover:-translate-y-1 transition-all group">
+          <Link href={`/list/courses?teacherId=${userId}`} className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-CPEGold/30 hover:-translate-y-1 transition-all group">
             <div>
-              <p className="text-sm font-semibold text-gray-500 mb-1">Total Subjects</p>
-              <h2 className="text-3xl font-bold text-nutoSlateDark group-hover:text-nutoOrange transition-colors">{teacher?._count.subjects}</h2>
+              <p className="text-sm font-semibold text-gray-500 mb-1">Total Courses</p>
+              <h2 className="text-3xl font-bold text-CPENavyDark group-hover:text-CPEGold transition-colors">{teacher?._count.subjects}</h2>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-nutoOrange/10 flex items-center justify-center group-hover:bg-nutoOrange/20 transition-colors">
-              <BookOpen className="w-6 h-6 text-nutoOrange" />
+            <div className="w-12 h-12 rounded-2xl bg-CPEGold/10 flex items-center justify-center group-hover:bg-CPEGold/20 transition-colors">
+              <BookOpen className="w-6 h-6 text-CPEGold" />
             </div>
           </Link>
           {teacher && teacher.classes.length > 0 && (
-            <Link href={`/list/levels/${teacher.classes[0].id}`} className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-nutoSlate/30 hover:-translate-y-1 transition-all group">
+            <Link href={`/list/levels/${teacher.classes[0].id}`} className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-CPENavy/30 hover:-translate-y-1 transition-all group">
               <div>
                 <p className="text-sm font-semibold text-gray-500 mb-1">Level Advising</p>
-                <h2 className="text-3xl font-bold text-nutoSlateDark group-hover:text-nutoSlate transition-colors">{teacher._count.classes}</h2>
+                <h2 className="text-3xl font-bold text-CPENavyDark group-hover:text-CPENavy transition-colors">{teacher._count.classes}</h2>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-nutoSlate/10 flex items-center justify-center group-hover:bg-nutoSlate/20 transition-colors">
-                <Clock className="w-6 h-6 text-nutoSlate" />
+              <div className="w-12 h-12 rounded-2xl bg-CPENavy/10 flex items-center justify-center group-hover:bg-CPENavy/20 transition-colors">
+                <Clock className="w-6 h-6 text-CPENavy" />
               </div>
             </Link>
           )}
           <Link href={`/list/assignments?teacherId=${userId}`} className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-green-300 hover:-translate-y-1 transition-all group">
             <div>
               <p className="text-sm font-semibold text-gray-500 mb-1">Active Assignments</p>
-              <h2 className="text-3xl font-bold text-nutoSlateDark group-hover:text-green-600 transition-colors">{activeAssignments}</h2>
+              <h2 className="text-3xl font-bold text-CPENavyDark group-hover:text-green-600 transition-colors">{activeAssignments}</h2>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">
               <ClipboardList className="w-6 h-6 text-green-500" />
@@ -144,8 +145,8 @@ const TeacherPage = async () => {
         {/* CALENDAR SECTION */}
         <div className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 min-h-[500px]">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-xl font-bold text-nutoSlateDark">Your Schedule</h1>
-            <Link href="/list/lessons" className="text-sm font-medium text-nutoSlate hover:underline flex items-center gap-1">
+            <h1 className="text-xl font-bold text-CPENavyDark">Your Schedule</h1>
+            <Link href="/list/lessons" className="text-sm font-medium text-CPENavy hover:underline flex items-center gap-1">
               View All Lessons <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -159,8 +160,8 @@ const TeacherPage = async () => {
         {/* TODAY'S LESSONS WIDGET */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-lg font-bold text-nutoSlateDark">Today's Classes</h1>
-            <div className="w-8 h-8 rounded-full bg-nutoSlate/10 flex items-center justify-center text-nutoSlate font-bold text-sm">
+            <h1 className="text-lg font-bold text-CPENavyDark">Today&apos;s Classes</h1>
+            <div className="w-8 h-8 rounded-full bg-CPENavy/10 flex items-center justify-center text-CPENavy font-bold text-sm">
               {todaysLessons.length}
             </div>
           </div>
@@ -168,8 +169,8 @@ const TeacherPage = async () => {
           <div className="flex flex-col gap-4">
             {todaysLessons.length > 0 ? (
               todaysLessons.map((lesson) => (
-                <div key={lesson.id} className="flex gap-4 items-start p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:border-nutoSlate/30 transition-all group">
-                  <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-white border border-gray-200 shrink-0 shadow-sm group-hover:shadow group-hover:border-nutoSlate/30 transition-all">
+                <div key={lesson.id} className="flex gap-4 items-start p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:border-CPENavy/30 transition-all group">
+                  <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-white border border-gray-200 shrink-0 shadow-sm group-hover:shadow group-hover:border-CPENavy/30 transition-all">
                     <span className="text-xs font-bold text-gray-500">
                       {lesson.startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })}
                     </span>
@@ -177,7 +178,7 @@ const TeacherPage = async () => {
                   <div className="flex flex-col flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <h2 className="font-bold text-gray-800 text-sm">{lesson.subject.name}</h2>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-nutoSlate/10 text-nutoSlate">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-CPENavy/10 text-CPENavy">
                         {lesson.class.name}
                       </span>
                     </div>
@@ -206,7 +207,7 @@ const TeacherPage = async () => {
 
         {/* QUICK ACTIONS WIDGET */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-          <h1 className="text-lg font-bold text-nutoSlateDark mb-4">Quick Actions</h1>
+          <h1 className="text-lg font-bold text-CPENavyDark mb-4">Quick Actions</h1>
           <div className="grid grid-cols-2 gap-4">
             <Link href="/list/attendance" className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all text-center">
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">

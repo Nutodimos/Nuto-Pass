@@ -29,8 +29,10 @@ model Student {
   class       Class        @relation(fields: [classId], references: [id])
   gradeId     Int
   grade       Grade        @relation(fields: [gradeId], references: [id])
-  attendances Attendance[]
-  birthday    DateTime
+  attendances  Attendance[]
+  submissions  AssignmentSubmission[]
+  enrollments  CourseEnrollment[]
+  birthday     DateTime
   biometricId String?      @unique
 
   @@index([classId])
@@ -78,7 +80,7 @@ model Class {
   students      Student[]
   gradeId       Int
   grade         Grade          @relation(fields: [gradeId], references: [id])
-  events        Event[]
+
   announcements Announcement[]
   materials     Material[]
 }
@@ -89,8 +91,11 @@ model Subject {
   isActive  Boolean   @default(true)
   semester  Int?      // 1 = First semester, 2 = Second semester, null = both/full year
   teachers  Teacher[]
-  lessons   Lesson[]
-  materials Material[]
+  lessons     Lesson[]
+  materials   Material[]
+  assignments Assignment[]
+  enrollments CourseEnrollment[]
+  announcements Announcement[]
 }
 
 model Lesson {
@@ -107,7 +112,6 @@ model Lesson {
   class       Class        @relation(fields: [classId], references: [id])
   teacherId   String
   teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  assignments Assignment[]
   attendances Attendance[]
   attendanceSessions AttendanceSession[]
 
@@ -119,15 +123,34 @@ model Lesson {
 
 
 model Assignment {
-  id        Int      @id @default(autoincrement())
-  title     String
-  startDate DateTime
-  dueDate   DateTime
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String?
+  attachmentUrl String?
+  startDate     DateTime
+  dueDate       DateTime
 
-  lessonId Int
-  lesson   Lesson   @relation(fields: [lessonId], references: [id])
+  subjectId     Int
+  subject       Subject  @relation(fields: [subjectId], references: [id])
+  submissions   AssignmentSubmission[]
 
-  @@index([lessonId])
+  @@index([subjectId])
+}
+
+model AssignmentSubmission {
+  id             Int      @id @default(autoincrement())
+  assignmentId   Int
+  assignment     Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  submissionUrl  String
+  submissionDate DateTime   @default(now())
+  grade          Int?
+  feedback       String?
+
+  @@unique([assignmentId, studentId]) // One submission per student per assignment
+  @@index([assignmentId])
+  @@index([studentId])
 }
 
 
@@ -147,18 +170,7 @@ model Attendance {
   @@index([date])
 }
 
-model Event {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  startTime   DateTime
-  endTime     DateTime
 
-  classId Int?
-  class   Class? @relation(fields: [classId], references: [id])
-
-  @@index([classId])
-}
 
 model Announcement {
   id              Int                 @id @default(autoincrement())
@@ -169,6 +181,8 @@ model Announcement {
 
   classId Int?
   class   Class?            @relation(fields: [classId], references: [id])
+  subjectId Int?
+  subject   Subject?        @relation(fields: [subjectId], references: [id])
   reads   AnnouncementRead[]
 }
 
@@ -246,4 +260,17 @@ model Notification {
 
   @@index([userId])
   @@index([userId, isRead])
+}
+
+model CourseEnrollment {
+  id         Int      @id @default(autoincrement())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId  Int
+  subject    Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime @default(now())
+
+  @@unique([studentId, subjectId])
+  @@index([studentId])
+  @@index([subjectId])
 }

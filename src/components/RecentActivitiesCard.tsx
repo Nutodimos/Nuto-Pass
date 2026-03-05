@@ -74,8 +74,8 @@ const RecentActivitiesCard = async () => {
     ].slice(0, 5);
 
     return (
-        <div className="group nuto-card p-6 h-full flex flex-col">
-            <div className="group nuto-card-indicator"></div>
+        <div className="group cpe-card p-6 h-full flex flex-col">
+            <div className="group cpe-card-indicator"></div>
             {/* Header */}
             <div className="flex items-center justify-between mb-6 relative z-10">
                 <div>
@@ -119,7 +119,7 @@ const RecentActivitiesCard = async () => {
             {/* View All Link */}
             <Link
                 href="/list/announcements"
-                className="mt-4 flex items-center justify-center gap-2 text-sm font-medium text-nutoSlate hover:text-nutoSlateDark transition-colors group"
+                className="mt-4 flex items-center justify-center gap-2 text-sm font-medium text-CPENavy hover:text-CPENavyDark transition-colors group"
             >
                 <span>View all activities</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

@@ -129,7 +129,7 @@ const AttendanceCalendar = ({
                         </div>
                         <button
                             onClick={() => setIsModalOpen(false)}
-                            className="mt-4 w-full py-2 bg-nutoSlate text-white rounded-md hover:bg-nutoSlateDark"
+                            className="mt-4 w-full py-2 bg-CPENavy text-white rounded-md hover:bg-CPENavyDark"
                         >
                             Close
                         </button>

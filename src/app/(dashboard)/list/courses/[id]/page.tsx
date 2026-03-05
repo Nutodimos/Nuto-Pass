@@ -56,7 +56,7 @@ const SingleCoursePage = async ({
             {/* LEFT */}
             <div className="w-full xl:w-2/3 flex flex-col gap-4">
                 {/* COURSE HEADER */}
-                <div className="bg-gradient-to-br from-nutoSlate to-nutoSlateDark p-6 rounded-2xl shadow-lg">
+                <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
                     <div className="flex flex-col md:flex-row gap-6 items-center">
                         {/* Icon */}
                         <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center">
@@ -80,60 +80,60 @@ const SingleCoursePage = async ({
                     {/* Lecturers */}
                     <Link
                         href={`/list/lecturers?subjectId=${course.id}`}
-                        className="bg-gradient-to-br from-nutoSlateLight/20 to-nutoSlate/10 p-5 rounded-2xl border border-nutoSlate/20 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
+                        className="bg-gradient-to-br from-CPESlate/20 to-CPENavy/10 p-5 rounded-2xl border border-CPENavy/20 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
                     >
-                        <div className="w-12 h-12 rounded-xl bg-nutoSlate flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-xl bg-CPENavy flex items-center justify-center">
                             <Users className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h3 className="text-2xl font-bold text-nutoSlateDark">
+                            <h3 className="text-2xl font-bold text-CPENavyDark">
                                 {course._count.teachers}
                             </h3>
-                            <p className="text-sm text-nutoSlate">Lecturers</p>
+                            <p className="text-sm text-CPENavy">Lecturers</p>
                         </div>
                     </Link>
 
                     {/* Lessons */}
                     <Link
                         href={`/list/lessons?subjectId=${course.id}`}
-                        className="bg-gradient-to-br from-nutoOrangeLight/20 to-nutoOrange/10 p-5 rounded-2xl border border-nutoOrange/20 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
+                        className="bg-gradient-to-br from-CPEGoldLight/20 to-CPEGold/10 p-5 rounded-2xl border border-CPEGold/20 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
                     >
-                        <div className="w-12 h-12 rounded-xl bg-nutoOrange flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-xl bg-CPEGold flex items-center justify-center">
                             <Calendar className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h3 className="text-2xl font-bold text-nutoOrangeDark">
+                            <h3 className="text-2xl font-bold text-CPEGoldDark">
                                 {course._count.lessons}
                             </h3>
-                            <p className="text-sm text-nutoOrange">Lessons</p>
+                            <p className="text-sm text-CPEGold">Lessons</p>
                         </div>
                     </Link>
 
                     {/* Materials */}
                     <Link
                         href={`/list/materials?subjectId=${course.id}`}
-                        className="bg-gradient-to-br from-nutoSlate/10 to-nutoSlateLight/10 p-5 rounded-2xl border border-nutoSlate/10 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
+                        className="bg-gradient-to-br from-CPENavy/10 to-CPESlate/10 p-5 rounded-2xl border border-CPENavy/10 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
                     >
-                        <div className="w-12 h-12 rounded-xl bg-nutoSlateLight flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-xl bg-CPESlate flex items-center justify-center">
                             <FileText className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h3 className="text-2xl font-bold text-nutoSlateDark">
+                            <h3 className="text-2xl font-bold text-CPENavyDark">
                                 {course._count.materials}
                             </h3>
-                            <p className="text-sm text-nutoSlate">Materials</p>
+                            <p className="text-sm text-CPENavy">Materials</p>
                         </div>
                     </Link>
                 </div>
 
                 {/* LESSONS SECTION */}
-                <div className="group nuto-card p-6">
-                    <div className="group nuto-card-indicator"></div>
+                <div className="group cpe-card p-6">
+                    <div className="group cpe-card-indicator"></div>
                     <div className="flex items-center justify-between mb-4 relative z-10">
-                        <h2 className="text-lg font-semibold text-nutoSlateDark">Lessons</h2>
+                        <h2 className="text-lg font-semibold text-CPENavyDark">Lessons</h2>
                         <Link
                             href={`/list/lessons?subjectId=${course.id}`}
-                            className="text-sm text-nutoSlate hover:text-nutoSlateDark"
+                            className="text-sm text-CPENavy hover:text-CPENavyDark"
                         >
                             View All →
                         </Link>
@@ -149,11 +149,11 @@ const SingleCoursePage = async ({
                             {course.lessons.map((lesson) => (
                                 <div
                                     key={lesson.id}
-                                    className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-nutoSlate/5 transition-colors"
+                                    className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-CPENavy/5 transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-nutoOrange/10 flex items-center justify-center">
-                                            <BookOpen className="w-5 h-5 text-nutoOrange" />
+                                        <div className="w-10 h-10 rounded-lg bg-CPEGold/10 flex items-center justify-center">
+                                            <BookOpen className="w-5 h-5 text-CPEGold" />
                                         </div>
                                         <div>
                                             <h3 className="font-medium text-gray-800 capitalize">
@@ -162,7 +162,7 @@ const SingleCoursePage = async ({
                                             <p className="text-xs text-gray-500">{lesson.class.name}</p>
                                         </div>
                                     </div>
-                                    <span className="text-xs font-medium px-2 py-1 rounded-md bg-nutoSlate/10 text-nutoSlate">
+                                    <span className="text-xs font-medium px-2 py-1 rounded-md bg-CPENavy/10 text-CPENavy">
                                         {lesson.day.charAt(0) + lesson.day.slice(1).toLowerCase()}
                                     </span>
                                 </div>
@@ -172,13 +172,13 @@ const SingleCoursePage = async ({
                 </div>
 
                 {/* MATERIALS SECTION */}
-                <div className="group nuto-card p-6">
-                    <div className="group nuto-card-indicator"></div>
+                <div className="group cpe-card p-6">
+                    <div className="group cpe-card-indicator"></div>
                     <div className="flex items-center justify-between mb-4 relative z-10">
-                        <h2 className="text-lg font-semibold text-nutoSlateDark">Course Materials</h2>
+                        <h2 className="text-lg font-semibold text-CPENavyDark">Course Materials</h2>
                         <Link
                             href={`/list/materials?subjectId=${course.id}`}
-                            className="text-sm text-nutoSlate hover:text-nutoSlateDark"
+                            className="text-sm text-CPENavy hover:text-CPENavyDark"
                         >
                             View All →
                         </Link>
@@ -194,11 +194,11 @@ const SingleCoursePage = async ({
                             {course.materials.map((material) => (
                                 <div
                                     key={material.id}
-                                    className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-nutoOrange/5 transition-colors"
+                                    className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-CPEGold/5 transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-nutoSlate/10 flex items-center justify-center">
-                                            <FileText className="w-5 h-5 text-nutoSlate" />
+                                        <div className="w-10 h-10 rounded-lg bg-CPENavy/10 flex items-center justify-center">
+                                            <FileText className="w-5 h-5 text-CPENavy" />
                                         </div>
                                         <div>
                                             <h3 className="font-medium text-gray-800">{material.title}</h3>
@@ -210,7 +210,7 @@ const SingleCoursePage = async ({
                                     <Link
                                         href={material.filePath}
                                         target="_blank"
-                                        className="flex items-center gap-1 px-3 py-2 rounded-lg bg-nutoOrange text-white text-sm font-medium hover:bg-nutoOrangeDark transition-colors"
+                                        className="flex items-center gap-1 px-3 py-2 rounded-lg bg-CPEGold text-white text-sm font-medium hover:bg-CPEGoldDark transition-colors"
                                     >
                                         <Download className="w-4 h-4" />
                                         <span className="hidden sm:inline">Download</span>
@@ -225,18 +225,18 @@ const SingleCoursePage = async ({
             {/* RIGHT */}
             <div className="w-full xl:w-1/3 flex flex-col gap-4">
                 {/* Quick Links */}
-                <div className="group nuto-card p-5">
-                    <div className="group nuto-card-indicator"></div>
-                    <h2 className="text-lg font-semibold text-nutoSlateDark mb-4 relative z-10">Quick Links</h2>
+                <div className="group cpe-card p-5">
+                    <div className="group cpe-card-indicator"></div>
+                    <h2 className="text-lg font-semibold text-CPENavyDark mb-4 relative z-10">Quick Links</h2>
                     <div className="flex flex-wrap gap-2 relative z-10">
                         <Link
-                            className="px-4 py-2 rounded-xl bg-nutoSlate text-white text-sm font-medium hover:bg-nutoSlateDark transition-colors"
+                            className="px-4 py-2 rounded-xl bg-CPENavy text-white text-sm font-medium hover:bg-CPENavyDark transition-colors"
                             href={`/list/lessons?subjectId=${course.id}`}
                         >
                             All Lessons
                         </Link>
                         <Link
-                            className="px-4 py-2 rounded-xl bg-nutoOrange text-white text-sm font-medium hover:bg-nutoOrangeDark transition-colors"
+                            className="px-4 py-2 rounded-xl bg-CPEGold text-white text-sm font-medium hover:bg-CPEGoldDark transition-colors"
                             href={`/list/materials?subjectId=${course.id}`}
                         >
                             All Materials
@@ -245,9 +245,9 @@ const SingleCoursePage = async ({
                 </div>
 
                 {/* Lecturers */}
-                <div className="group nuto-card p-5">
-                    <div className="group nuto-card-indicator"></div>
-                    <h2 className="text-lg font-semibold text-nutoSlateDark mb-4 relative z-10">Lecturers</h2>
+                <div className="group cpe-card p-5">
+                    <div className="group cpe-card-indicator"></div>
+                    <h2 className="text-lg font-semibold text-CPENavyDark mb-4 relative z-10">Lecturers</h2>
 
                     {course.teachers.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-6 text-gray-400 relative z-10">
@@ -260,9 +260,9 @@ const SingleCoursePage = async ({
                                 <Link
                                     key={teacher.id}
                                     href={`/list/lecturers/${teacher.id}`}
-                                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-nutoSlate/10 transition-colors"
+                                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-CPENavy/10 transition-colors"
                                 >
-                                    <div className="w-10 h-10 rounded-full overflow-hidden bg-nutoSlate/20">
+                                    <div className="w-10 h-10 rounded-full overflow-hidden bg-CPENavy/20">
                                         <Image
                                             src={teacher.img || "/noAvatar.png"}
                                             alt=""

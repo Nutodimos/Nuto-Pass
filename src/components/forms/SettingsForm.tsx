@@ -34,8 +34,8 @@ const SettingsForm = ({ currentSession, currentSemester }: SettingsFormProps) =>
             {/* Session Year Card */}
             <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-5 border border-slate-200">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-nutoSlate/10 rounded-lg">
-                        <Calendar className="w-5 h-5 text-nutoSlate" />
+                    <div className="p-2 bg-CPENavy/10 rounded-lg">
+                        <Calendar className="w-5 h-5 text-CPENavy" />
                     </div>
                     <div>
                         <h3 className="font-semibold text-gray-800">Academic Session</h3>
@@ -47,7 +47,7 @@ const SettingsForm = ({ currentSession, currentSemester }: SettingsFormProps) =>
                     name="sessionYear"
                     defaultValue={currentSession}
                     placeholder="e.g. 2024/25"
-                    className="w-full p-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-nutoSlate focus:border-transparent transition-all"
+                    className="w-full p-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-CPENavy focus:border-transparent transition-all"
                 />
             </div>
 
@@ -78,7 +78,7 @@ const SettingsForm = ({ currentSession, currentSemester }: SettingsFormProps) =>
             {/* Submit Button */}
             <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-nutoSlate to-nutoSlateDark text-white p-3 rounded-xl font-semibold hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-CPENavy to-CPENavyDark text-white p-3 rounded-xl font-semibold hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
             >
                 <Settings className="w-4 h-4" />
                 Update Settings

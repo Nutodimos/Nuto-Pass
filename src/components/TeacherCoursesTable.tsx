@@ -81,12 +81,12 @@ const TeacherCoursesTable = async ({
             {courses.map((course: SubjectWithDetails) => (
               <tr
                 key={course.id}
-                className="border-b border-gray-50 hover:bg-nutoSlate/5 transition-colors"
+                className="border-b border-gray-50 hover:bg-CPENavy/5 transition-colors"
               >
                 <td className="py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-nutoSlate/10 flex items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-nutoSlate" />
+                    <div className="w-10 h-10 rounded-lg bg-CPENavy/10 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-CPENavy" />
                     </div>
                     <span className="font-medium text-gray-800">
                       {course.name}
@@ -102,7 +102,7 @@ const TeacherCoursesTable = async ({
                 <td className="py-4 text-right">
                   <Link
                     href={`/list/lessons?subjectId=${course.id}&teacherId=${teacherId}`}
-                    className="text-sm text-nutoSlate hover:text-nutoSlateDark font-medium"
+                    className="text-sm text-CPENavy hover:text-CPENavyDark font-medium"
                   >
                     View Lessons →
                   </Link>

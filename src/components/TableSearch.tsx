@@ -46,13 +46,13 @@ const TableSearch = () => {
         bg-white/80 backdrop-blur-sm
         border-2 transition-all duration-300
         ${isFocused
-          ? 'border-nutoOrange shadow-lg shadow-nutoOrange/10'
+          ? 'border-CPEGold shadow-lg shadow-CPEGold/10'
           : 'border-gray-200 hover:border-gray-300'
         }
       `}
     >
       <Search
-        className={`w-4 h-4 transition-colors duration-300 ${isFocused ? 'text-nutoOrange' : 'text-gray-400'
+        className={`w-4 h-4 transition-colors duration-300 ${isFocused ? 'text-CPEGold' : 'text-gray-400'
           }`}
       />
       <input
@@ -68,7 +68,7 @@ const TableSearch = () => {
         <button
           type="button"
           onClick={handleClear}
-          className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-nutoOrange/20 hover:text-nutoOrange transition-all"
+          className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 hover:bg-CPEGold/20 hover:text-CPEGold transition-all"
           title="Clear search"
         >
           <X className="w-3 h-3" />

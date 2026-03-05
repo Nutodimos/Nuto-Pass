@@ -44,7 +44,7 @@ const SubjectAttendanceSummary = async ({ studentId }: { studentId: string }) =>
 
     return (
         <div className="bg-white p-4 rounded-md h-full">
-            <h2 className="text-xl font-semibold mb-4">Subject Attendance</h2>
+            <h2 className="text-xl font-semibold mb-4">Course Attendance</h2>
             <div className="flex flex-col gap-4">
                 {Object.entries(subjectStats).map(([subject, stats]) => {
                     const percentage = Math.round((stats.present / stats.total) * 100);

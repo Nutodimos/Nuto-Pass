@@ -7,6 +7,7 @@ import {
   SubjectSchema,
   TeacherSchema,
   AssignmentSchema,
+  AssignmentSubmissionSchema,
   AnnouncementSchema,
   LessonSchema,
   MaterialSchema,
@@ -394,9 +395,11 @@ export const createAssignment = async (
     await prisma.assignment.create({
       data: {
         title: data.title,
+        description: data.description || null,
+        attachmentUrl: data.attachmentUrl || null,
         startDate: data.startDate,
         dueDate: data.dueDate,
-        lessonId: data.lessonId,
+        subjectId: data.subjectId,
       },
     });
 
@@ -418,9 +421,11 @@ export const updateAssignment = async (
       },
       data: {
         title: data.title,
+        description: data.description || null,
+        attachmentUrl: data.attachmentUrl || null,
         startDate: data.startDate,
         dueDate: data.dueDate,
-        lessonId: data.lessonId,
+        subjectId: data.subjectId,
       },
     });
 
@@ -447,6 +452,61 @@ export const deleteAssignment = async (
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
+  }
+};
+
+export const createAssignmentSubmission = async (
+  currentState: CurrentState,
+  data: AssignmentSubmissionSchema
+) => {
+  try {
+    // Uses upsert so a student can re-submit and overwrite their previous submission URL
+    await prisma.assignmentSubmission.upsert({
+      where: {
+        assignmentId_studentId: {
+          assignmentId: data.assignmentId,
+          studentId: data.studentId,
+        },
+      },
+      update: {
+        submissionUrl: data.submissionUrl,
+        submissionDate: new Date(),
+      },
+      create: {
+        assignmentId: data.assignmentId,
+        studentId: data.studentId,
+        submissionUrl: data.submissionUrl,
+      },
+    });
+
+    revalidatePath("/list/assignments");
+    return { success: true, error: false };
+  } catch (err) {
+    return handleActionError(err);
+  }
+};
+
+export const gradeAssignmentSubmission = async (
+  submissionId: number,
+  grade: number,
+  feedback?: string
+) => {
+  try {
+    await prisma.assignmentSubmission.update({
+      where: {
+        id: submissionId,
+      },
+      data: {
+        grade,
+        feedback: feedback || null,
+      },
+    });
+
+    revalidatePath("/list/assignments");
+    return { success: true, error: false };
+  } catch (err) {
+    console.error("Grading failed", err);
+    return { success: false, error: true };
   }
 };
 
@@ -618,6 +678,7 @@ export const createAnnouncement = async (
         date: data.date,
         targetAudience: data.targetAudience,
         classId: data.classId || null,
+        subjectId: data.subjectId || null,
       },
     });
 
@@ -643,6 +704,7 @@ export const updateAnnouncement = async (
         date: data.date,
         targetAudience: data.targetAudience,
         classId: data.classId || null,
+        subjectId: data.subjectId || null,
       },
     });
 

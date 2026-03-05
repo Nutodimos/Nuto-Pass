@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SignOutButton, useUser } from "@clerk/nextjs";
+import { SignOutButton, useUser, useClerk } from "@clerk/nextjs";
 import Image from "next/image";
 
 interface MenuItem {
@@ -31,14 +31,14 @@ const menuItems: MenuSection[] = [
         items: [
             { icon: Home, label: "Home", href: "/", visible: ["admin", "teacher", "student", "parent"] },
             { icon: Fingerprint, label: "Attendance", href: "/list/attendance", visible: ["admin", "teacher", "student", "parent"] },
-            { icon: Users, label: "Lecturers", href: "/list/lecturers", visible: ["admin", "student"] },
+            { icon: Users, label: "Lecturers", href: "/list/lecturers", visible: ["admin"] },
             { icon: GraduationCap, label: "Students", href: "/list/students", visible: ["admin", "teacher"] },
-            { icon: BookOpen, label: "Courses", href: "/list/courses", visible: ["admin"] },
+            { icon: BookOpen, label: "Courses", href: "/list/courses", visible: ["admin", "teacher", "student"] },
             { icon: Layers, label: "Levels", href: "/list/levels", visible: ["admin", "teacher"] },
-            { icon: Presentation, label: "Lessons", href: "/list/lessons", visible: ["admin", "teacher"] },
+            { icon: Presentation, label: "Lessons", href: "/list/lessons", visible: ["admin", "teacher", "student"] },
             { icon: BookOpen, label: "Materials", href: "/list/materials", visible: ["admin", "teacher", "student"] },
             { icon: ClipboardList, label: "Assignments", href: "/list/assignments", visible: ["admin", "teacher", "student", "parent"] },
-            { icon: Calendar, label: "Events", href: "/list/events", visible: ["admin", "teacher", "student", "parent"] },
+            // { icon: Calendar, label: "Events", href: "/list/events", visible: ["admin", "teacher", "student", "parent"] },
             { icon: MessageSquare, label: "Messages", href: "/list/messages", visible: ["admin", "teacher", "student", "parent"] },
             { icon: Megaphone, label: "Announcements", href: "/list/announcements", visible: ["admin", "teacher", "student", "parent"] },
 
@@ -66,6 +66,8 @@ const SidebarContent = ({
 }) => {
     const pathname = usePathname();
     const { user } = useUser();
+    const { signOut } = useClerk();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const isActive = (href: string) => {
         if (href === "/") return pathname === "/" || pathname === `/${role}`;
@@ -76,24 +78,26 @@ const SidebarContent = ({
         <div className="flex flex-col h-full">
             {/* Logo */}
             <div className={`p-4 border-b border-slate-100 ${isCollapsed ? "flex justify-center" : ""}`}>
-                <Link href="/" onClick={onNavigate} className={`flex items-center gap-2 ${isCollapsed ? "justify-center" : ""}`}>
-                    <Image src="/nutopass-logo.png" alt="logo" width={32} height={32} className="mix-blend-multiply" />
-                    {!isCollapsed && <span className="font-bold text-nutoSlate">NutoPass</span>}
+                <Link href="/" onClick={onNavigate} className={`flex items-center gap-3 ${isCollapsed ? "justify-center" : ""}`}>
+                    <div className={`relative ${isCollapsed ? "w-8 h-8" : "w-10 h-10"}`}>
+                        <Image src="/cpeautomation-logo.png" alt="logo" fill className="object-contain mix-blend-multiply" />
+                    </div>
+                    {!isCollapsed && <span className="font-bold text-CPENavy tracking-tight">CPE Automation</span>}
                 </Link>
             </div>
 
             {/* User Info */}
             {showUserInfo && user && !isCollapsed && (
-                <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-nutoSlate/5 to-transparent">
+                <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-CPENavy/5 to-transparent">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-nutoSlate/20 flex items-center justify-center text-nutoSlate font-bold">
+                        <div className="w-10 h-10 rounded-full bg-CPENavy/20 flex items-center justify-center text-CPENavy font-bold">
                             {user.firstName?.[0] || user.username?.[0] || "U"}
                         </div>
                         <div>
                             <p className="font-semibold text-slate-700 text-sm">
                                 {user.firstName || user.username || "User"}
                             </p>
-                            <p className="text-xs text-nutoSlate capitalize">
+                            <p className="text-xs text-CPENavy capitalize">
                                 {role === "teacher" ? "lecturer" : role}
                             </p>
                         </div>
@@ -125,8 +129,8 @@ const SidebarContent = ({
                                             title={isCollapsed ? item.label : undefined}
                                             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${isCollapsed ? "justify-center" : ""
                                                 } ${active
-                                                    ? "bg-nutoSlate text-white shadow-lg shadow-nutoSlate/30"
-                                                    : "text-slate-600 hover:bg-nutoSlate/10 hover:text-nutoSlate"
+                                                    ? "bg-CPENavy text-white shadow-lg shadow-CPENavy/30"
+                                                    : "text-slate-600 hover:bg-CPENavy/10 hover:text-CPENavy"
                                                 }`}
                                         >
                                             <Icon className="w-5 h-5 flex-shrink-0" />
@@ -140,17 +144,35 @@ const SidebarContent = ({
             </div>
 
             {/* Logout */}
-            <div className="p-3 border-t border-slate-100">
-                <SignOutButton>
-                    <button
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-colors ${isCollapsed ? "justify-center" : ""
-                            }`}
-                        title={isCollapsed ? "Logout" : undefined}
-                    >
-                        <LogOut className="w-5 h-5" />
-                        {!isCollapsed && <span className="font-medium text-sm">Logout</span>}
-                    </button>
-                </SignOutButton>
+            <div className="p-3 border-t border-slate-100 mt-auto">
+                <button
+                    onClick={async () => {
+                        try {
+                            setIsLoggingOut(true);
+                            await signOut();
+                        } catch (error) {
+                            console.error("Error signing out:", error);
+                            setIsLoggingOut(false);
+                        }
+                    }}
+                    disabled={isLoggingOut}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl ${isLoggingOut
+                        ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                        : "text-red-500 hover:bg-red-50"
+                        } transition-colors ${isCollapsed ? "justify-center" : ""}`}
+                    title={isCollapsed ? "Logout" : undefined}
+                >
+                    {isLoggingOut ? (
+                        <div className="w-5 h-5 flex-shrink-0 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin" />
+                    ) : (
+                        <LogOut className="w-5 h-5 flex-shrink-0" />
+                    )}
+                    {!isCollapsed && (
+                        <span className="font-medium text-sm">
+                            {isLoggingOut ? "Logging out..." : "Logout"}
+                        </span>
+                    )}
+                </button>
             </div>
         </div>
     );
@@ -227,7 +249,7 @@ export const MobileMenuButton = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(true)}
-                className="md:hidden p-2.5 rounded-xl bg-slate-50 hover:bg-nutoSlate/10 border border-transparent hover:border-nutoSlate/20 transition-all duration-200"
+                className="md:hidden p-2.5 rounded-xl bg-slate-50 hover:bg-CPENavy/10 border border-transparent hover:border-CPENavy/20 transition-all duration-200"
             >
                 <Menu className="w-5 h-5 text-slate-600" />
             </motion.button>

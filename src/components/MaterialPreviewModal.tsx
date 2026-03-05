@@ -32,8 +32,8 @@ const MaterialPreviewModal = ({ isOpen, onClose, filePath, title, fileType }: Ma
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-nutoOrange/10 rounded-lg">
-                            <FileText className="w-5 h-5 text-nutoOrange" />
+                        <div className="p-2 bg-CPEGold/10 rounded-lg">
+                            <FileText className="w-5 h-5 text-CPEGold" />
                         </div>
                         <div>
                             <h2 className="font-semibold text-gray-800 line-clamp-1">{title}</h2>
@@ -45,7 +45,7 @@ const MaterialPreviewModal = ({ isOpen, onClose, filePath, title, fileType }: Ma
                             href={filePath}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-4 py-2 bg-nutoOrange text-white rounded-lg text-sm font-medium hover:bg-nutoOrangeDark transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-CPEGold text-white rounded-lg text-sm font-medium hover:bg-CPEGoldDark transition-colors"
                         >
                             <Download className="w-4 h-4" />
                             Download
@@ -66,7 +66,7 @@ const MaterialPreviewModal = ({ isOpen, onClose, filePath, title, fileType }: Ma
                             {isLoading && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                                     <div className="flex flex-col items-center gap-3">
-                                        <div className="w-10 h-10 border-4 border-nutoOrange/30 border-t-nutoOrange rounded-full animate-spin"></div>
+                                        <div className="w-10 h-10 border-4 border-CPEGold/30 border-t-CPEGold rounded-full animate-spin"></div>
                                         <p className="text-gray-500 text-sm">Loading preview...</p>
                                     </div>
                                 </div>
@@ -105,7 +105,7 @@ const MaterialPreviewModal = ({ isOpen, onClose, filePath, title, fileType }: Ma
                                 href={filePath}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-6 py-3 bg-nutoOrange text-white rounded-xl font-medium hover:bg-nutoOrangeDark transition-colors shadow-lg shadow-nutoOrange/20"
+                                className="flex items-center gap-2 px-6 py-3 bg-CPEGold text-white rounded-xl font-medium hover:bg-CPEGoldDark transition-colors shadow-lg shadow-CPEGold/20"
                             >
                                 <Download className="w-5 h-5" />
                                 Download {title}

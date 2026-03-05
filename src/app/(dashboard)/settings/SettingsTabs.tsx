@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, Palette, Shield } from "lucide-react";
+import { User, Palette, Shield, Lock } from "lucide-react";
 
 interface Tab {
     id: string;
@@ -13,6 +13,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     user: User,
     palette: Palette,
     shield: Shield,
+    lock: Lock,
 };
 
 const SettingsTabs = ({
@@ -43,8 +44,8 @@ const SettingsTabs = ({
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 whitespace-nowrap ${isActive
-                                ? "bg-gradient-to-r from-nutoSlate to-nutoSlateDark text-white shadow-lg shadow-nutoSlate/30"
-                                : "hover:bg-nutoSlate/10"
+                                ? "bg-gradient-to-r from-CPENavy to-CPENavyDark text-white shadow-lg shadow-CPENavy/30"
+                                : "hover:bg-CPENavy/10"
                                 }`}
                             style={!isActive ? { color: 'var(--text-secondary)' } : undefined}
                         >

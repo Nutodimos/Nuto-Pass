@@ -32,7 +32,12 @@ const MaterialListPage = async ({
             if (value !== undefined) {
                 switch (key) {
                     case "search":
-                        query.title = { contains: value, mode: "insensitive" };
+                        query.OR = [
+                            { title: { contains: value, mode: "insensitive" } },
+                            { subject: { name: { contains: value, mode: "insensitive" } } },
+                            { teacher: { name: { contains: value, mode: "insensitive" } } },
+                            { teacher: { surname: { contains: value, mode: "insensitive" } } },
+                        ];
                         break;
                     case "classId":
                         query.classId = parseInt(value);
@@ -50,14 +55,29 @@ const MaterialListPage = async ({
         }
     }
 
-    // RBAC LOGIC for class-specific materials
+    // RBAC LOGIC for class-specific or course-specific materials
     if (role === "student" && currentUserId) {
         const student = await prisma.student.findUnique({
             where: { id: currentUserId },
             select: { classId: true },
         });
+
+        const enrollments = await prisma.courseEnrollment.findMany({
+            where: { studentId: currentUserId },
+            select: { subjectId: true }
+        });
+        const enrolledSubjectIds = enrollments.map((e: { subjectId: number }) => e.subjectId);
+
         if (student) {
-            query.classId = student.classId;
+            query.AND = [
+                ...(query.AND ? (Array.isArray(query.AND) ? query.AND : [query.AND]) : []),
+                {
+                    OR: [
+                        { classId: student.classId },
+                        { subjectId: { in: enrolledSubjectIds } }
+                    ]
+                }
+            ];
         } else {
             query.classId = -1;
         }
@@ -69,7 +89,13 @@ const MaterialListPage = async ({
     const generalMaterials = await prisma.material.findMany({
         where: {
             isGeneral: true,
-            ...(queryParams.search ? { title: { contains: queryParams.search, mode: "insensitive" } } : {}),
+            ...(queryParams.search ? {
+                OR: [
+                    { title: { contains: queryParams.search, mode: "insensitive" } },
+                    { teacher: { name: { contains: queryParams.search, mode: "insensitive" } } },
+                    { teacher: { surname: { contains: queryParams.search, mode: "insensitive" } } }
+                ]
+            } : {}),
         },
         include: {
             subject: true,
@@ -110,7 +136,7 @@ const MaterialListPage = async ({
     return (
         <div className="flex-1 m-4 mt-0">
             {/* HEADER */}
-            <div className="bg-gradient-to-r from-nutoSlate to-nutoSlateDark rounded-2xl p-6 mb-6 shadow-lg">
+            <div className="bg-gradient-to-r from-CPENavy to-CPENavyDark rounded-2xl p-6 mb-6 shadow-lg">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
@@ -193,8 +219,8 @@ const MaterialListPage = async ({
                         <div key={subjectName}>
                             {/* Subject Header */}
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 bg-nutoOrange/10 rounded-lg">
-                                    <GraduationCap className="w-5 h-5 text-nutoOrange" />
+                                <div className="p-2 bg-CPEGold/10 rounded-lg">
+                                    <GraduationCap className="w-5 h-5 text-CPEGold" />
                                 </div>
                                 <h2 className="text-lg font-bold text-gray-800">{subjectName}</h2>
                                 <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs font-medium text-gray-600">
@@ -211,7 +237,7 @@ const MaterialListPage = async ({
                                         id={item.id}
                                         title={item.title}
                                         filePath={item.filePath}
-                                        className={item.class?.name || 'N/A'}
+                                        className={item.class?.name || 'Course Wide'}
                                         teacherName={`${item.teacher?.name || ''} ${item.teacher?.surname || ''}`}
                                         createdAt={item.createdAt}
                                         canDelete={role === "admin" || (role === "teacher" && item.teacherId === currentUserId)}

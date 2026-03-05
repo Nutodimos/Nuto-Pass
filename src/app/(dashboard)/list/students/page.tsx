@@ -2,6 +2,8 @@ import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
 import BiometricRegistrationButton from "@/components/BiometricRegistrationButton";
+import CsvImportModal from "@/components/CsvImportModal";
+import CollapsibleSection from "@/components/CollapsibleSection";
 
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
@@ -22,7 +24,6 @@ import {
 
 type StudentList = Student & { class: Class };
 
-type LevelAdvisingStudent = StudentList;
 type CourseGroup = {
   subject: { id: number; name: string };
   students: StudentList[];
@@ -42,8 +43,8 @@ const StudentListPage = async ({
 
   // UI Component for rendering a Student Card
   const StudentCard = ({ student, showActions = false }: { student: StudentList, showActions?: boolean }) => (
-    <div key={student.id} className="group nuto-card flex flex-col">
-      <div className="group nuto-card-indicator"></div>
+    <div key={student.id} className="group cpe-card flex flex-col">
+      <div className="group cpe-card-indicator"></div>
       <Link href={`/list/students/${student.username}`} className="block flex-1 relative z-10">
         <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-4 flex items-center gap-4">
           <div className="relative">
@@ -57,18 +58,18 @@ const StudentListPage = async ({
             <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-800 truncate group-hover:text-nutoSlate transition-colors">
+            <h3 className="font-semibold text-gray-800 truncate group-hover:text-CPENavy transition-colors">
               {student.name}
             </h3>
             <p className="text-sm text-gray-500">{student.surname}</p>
           </div>
-          <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-nutoSlate transition-colors" />
+          <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-CPENavy transition-colors" />
         </div>
 
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-3 text-sm">
-            <div className="w-8 h-8 rounded-lg bg-nutoSlate/10 flex items-center justify-center flex-shrink-0">
-              <Hash className="w-4 h-4 text-nutoSlate" />
+            <div className="w-8 h-8 rounded-lg bg-CPENavy/10 flex items-center justify-center flex-shrink-0">
+              <Hash className="w-4 h-4 text-CPENavy" />
             </div>
             <div className="min-w-0">
               <p className="text-xs text-gray-400">Matric No.</p>
@@ -76,8 +77,8 @@ const StudentListPage = async ({
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <div className="w-8 h-8 rounded-lg bg-nutoOrange/10 flex items-center justify-center flex-shrink-0">
-              <GraduationCap className="w-4 h-4 text-nutoOrange" />
+            <div className="w-8 h-8 rounded-lg bg-CPEGold/10 flex items-center justify-center flex-shrink-0">
+              <GraduationCap className="w-4 h-4 text-CPEGold" />
             </div>
             <div className="min-w-0">
               <p className="text-xs text-gray-400">Level</p>
@@ -111,65 +112,73 @@ const StudentListPage = async ({
 
   // LECTURER DASHBOARD VIEW
   if (role === "teacher" && userId) {
-    // 1. Fetch Level Advising Students
+    // 1. Fetch Level Advising info (class + students)
+    const advisingClass = await prisma.class.findFirst({
+      where: { supervisorId: userId },
+      select: { id: true, name: true },
+    });
+
+    // Build search filter
+    const searchFilter = searchParams.search
+      ? {
+        OR: [
+          { name: { contains: searchParams.search, mode: "insensitive" as const } },
+          { surname: { contains: searchParams.search, mode: "insensitive" as const } },
+          { username: { contains: searchParams.search, mode: "insensitive" as const } },
+        ],
+      }
+      : {};
+
     const advisingStudents = await prisma.student.findMany({
       where: {
         isActive: true,
         class: { supervisorId: userId },
+        ...searchFilter,
       },
       include: { class: true },
       orderBy: { name: "asc" },
     });
 
-    // 2. Fetch students for courses taught by this lecturer
-    const lessons = await prisma.lesson.findMany({
-      where: { teacherId: userId, isActive: true },
-      include: {
-        subject: true,
-        class: {
-          include: {
-            students: {
-              where: { isActive: true },
-              include: { class: true },
-              orderBy: { name: "asc" },
-            }
-          }
-        }
-      }
+    // 2. Fetch courses taught by this lecturer with enrolled students
+    const taughtSubjects = await prisma.subject.findMany({
+      where: {
+        teachers: { some: { id: userId } },
+        isActive: true,
+      },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
     });
 
-    // Group students by Subject
-    const courseGroupsMap = new Map<number, CourseGroup>();
-
-    lessons.forEach(lesson => {
-      if (!courseGroupsMap.has(lesson.subjectId)) {
-        courseGroupsMap.set(lesson.subjectId, {
-          subject: lesson.subject,
-          students: []
-        });
-      }
-
-      const group = courseGroupsMap.get(lesson.subjectId)!;
-      // Add students from this class, avoiding duplicates if multiple lessons share the same class
-      lesson.class.students.forEach(student => {
-        if (!group.students.some(s => s.id === student.id)) {
-          group.students.push(student as StudentList);
-        }
+    // Fetch enrolled students for each subject
+    const courseGroups: CourseGroup[] = [];
+    for (const subject of taughtSubjects) {
+      const enrollments = await prisma.courseEnrollment.findMany({
+        where: {
+          subjectId: subject.id,
+          student: searchParams.search ? searchFilter : undefined,
+        },
+        include: {
+          student: {
+            include: { class: true },
+          },
+        },
+        orderBy: { student: { name: "asc" } },
       });
-    });
 
-    // Sort students within each group and sort groups alphabetically
-    const courseGroups = Array.from(courseGroupsMap.values())
-      .map(group => {
-        group.students.sort((a, b) => a.name.localeCompare(b.name));
-        return group;
-      })
-      .sort((a, b) => a.subject.name.localeCompare(b.subject.name));
+      const students = enrollments
+        .map((e: { student: StudentList }) => e.student)
+        .filter((s: StudentList) => s.isActive);
+
+      courseGroups.push({
+        subject: { id: subject.id, name: subject.name },
+        students,
+      });
+    }
 
     return (
       <div className="flex-1 p-4 flex flex-col gap-8">
         {/* HEADER */}
-        <div className="bg-gradient-to-br from-nutoSlate to-nutoSlateDark p-6 rounded-2xl shadow-lg">
+        <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
@@ -189,36 +198,73 @@ const StudentListPage = async ({
         </div>
 
         {/* SECTION: LEVEL ADVISING */}
-        {advisingStudents.length > 0 && (
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3 border-b-2 border-nutoOrange/30 pb-2">
-              <GraduationCap className="w-6 h-6 text-nutoOrange" />
-              <h2 className="text-xl font-bold text-nutoSlateDark">Level Advising</h2>
-              <span className="bg-nutoOrange/10 text-nutoOrange text-xs font-bold px-2.5 py-1 rounded-full">{advisingStudents.length}</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {advisingStudents.map(student => <StudentCard key={student.id} student={student as StudentList} showActions={true} />)}
-            </div>
-          </div>
+        {advisingClass && (
+          <CollapsibleSection
+            defaultOpen={true}
+            title={
+              <div className="flex items-center gap-3">
+                <GraduationCap className="w-6 h-6 text-CPEGold" />
+                <h2 className="text-xl font-bold text-CPENavyDark">Level Advising — {advisingClass.name}</h2>
+                <span className="bg-CPEGold/10 text-CPEGold text-xs font-bold px-2.5 py-1 rounded-full">{advisingStudents.length}</span>
+              </div>
+            }
+            action={
+              <CsvImportModal
+                mode="import-students"
+                targetId={advisingClass.id}
+                targetName={advisingClass.name}
+              />
+            }
+          >
+            {advisingStudents.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {advisingStudents.map(student => <StudentCard key={student.id} student={student as StudentList} showActions={true} />)}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 bg-slate-50 border border-slate-100 rounded-2xl w-full">
+                <Users className="w-12 h-12 text-gray-300 mb-3" />
+                <h3 className="text-base font-medium text-gray-500">No students yet</h3>
+                <p className="text-sm text-gray-400">Import students using a CSV file</p>
+              </div>
+            )}
+          </CollapsibleSection>
         )}
 
         {/* SECTION: COURSES */}
         {courseGroups.map(group => (
-          group.students.length > 0 && (
-            <div key={group.subject.id} className="flex flex-col gap-4">
-              <div className="flex items-center gap-3 border-b-2 border-nutoSlate/30 pb-2">
-                <BookOpen className="w-6 h-6 text-nutoSlate" />
-                <h2 className="text-xl font-bold text-nutoSlateDark">Course: {group.subject.name}</h2>
-                <span className="bg-nutoSlate/10 text-nutoSlate text-xs font-bold px-2.5 py-1 rounded-full">{group.students.length}</span>
+          <CollapsibleSection
+            key={group.subject.id}
+            defaultOpen={false}
+            title={
+              <div className="flex items-center gap-3">
+                <BookOpen className="w-6 h-6 text-CPENavy" />
+                <h2 className="text-xl font-bold text-CPENavyDark">Course: {group.subject.name}</h2>
+                <span className="bg-CPENavy/10 text-CPENavy text-xs font-bold px-2.5 py-1 rounded-full">{group.students.length}</span>
               </div>
+            }
+            action={
+              <CsvImportModal
+                mode="enroll-students"
+                targetId={group.subject.id}
+                targetName={group.subject.name}
+              />
+            }
+          >
+            {group.students.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {group.students.map(student => <StudentCard key={student.id} student={student} />)}
               </div>
-            </div>
-          )
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 bg-slate-50 border border-slate-100 rounded-2xl w-full">
+                <Users className="w-12 h-12 text-gray-300 mb-3" />
+                <h3 className="text-base font-medium text-gray-500">No enrolled students</h3>
+                <p className="text-sm text-gray-400">Enroll students using a CSV file</p>
+              </div>
+            )}
+          </CollapsibleSection>
         ))}
 
-        {advisingStudents.length === 0 && courseGroups.length === 0 && (
+        {!advisingClass && courseGroups.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
             <Users className="w-16 h-16 text-gray-300 mb-4" />
             <h3 className="text-lg font-medium text-gray-500">No students assigned to you yet</h3>
@@ -238,7 +284,11 @@ const StudentListPage = async ({
       if (value !== undefined) {
         switch (key) {
           case "search":
-            query.name = { contains: value, mode: "insensitive" };
+            query.OR = [
+              { name: { contains: value, mode: "insensitive" } },
+              { surname: { contains: value, mode: "insensitive" } },
+              { username: { contains: value, mode: "insensitive" } },
+            ];
             break;
           default:
             break;
@@ -263,7 +313,7 @@ const StudentListPage = async ({
   return (
     <div className="flex-1 p-4 flex flex-col gap-4">
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-nutoSlate to-nutoSlateDark p-6 rounded-2xl shadow-lg">
+      <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">

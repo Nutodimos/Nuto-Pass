@@ -37,8 +37,8 @@ const AttendanceOverviewCard = async () => {
     const isPositive = percentageChange >= 0;
 
     return (
-        <div className="group nuto-card p-6">
-            <div className="group nuto-card-indicator"></div>
+        <div className="group cpe-card p-6">
+            <div className="group cpe-card-indicator"></div>
             {/* Header */}
             <div className="flex items-center justify-between mb-6 relative z-10">
                 <div>

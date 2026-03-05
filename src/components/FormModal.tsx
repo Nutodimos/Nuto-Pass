@@ -33,8 +33,9 @@ const deleteActionMap = {
   // attendance: deleteAttendance, TODO: IMPL
   // event: deleteEvent, TODO: IMPL
   announcement: deleteAnnouncement,
-
+  assignmentSubmission: null, // Deletions aren't handled via UI for submissions
   material: deleteMaterial,
+  courseEnrollment: null,
 };
 
 // USE LAZY LOADING
@@ -64,6 +65,11 @@ const AssignmentForm = dynamic(() => import("./forms/AssignmentForm"), {
   loading: () => <h1>Loading...</h1>,
 });
 
+const AssignmentSubmissionForm = dynamic(() => import("./forms/AssignmentSubmissionForm"), {
+  ssr: false,
+  loading: () => <h1>Loading...</h1>,
+});
+
 const AnnouncementForm = dynamic(() => import("./forms/AnnouncementForm"), {
   ssr: false,
   loading: () => <h1>Loading...</h1>,
@@ -76,7 +82,6 @@ const LessonForm = dynamic(() => import("./forms/LessonForm"), {
   ssr: false,
   loading: () => <h1>Loading...</h1>,
 });
-// TODO: OTHER FORMS
 
 const forms: {
   [key: string]: (
@@ -126,6 +131,14 @@ const forms: {
       relatedData={relatedData}
     />
   ),
+  assignmentSubmission: (setOpen, type, data, relatedData) => (
+    <AssignmentSubmissionForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
 
   announcement: (setOpen, type, data, relatedData) => (
     <AnnouncementForm
@@ -163,9 +176,9 @@ const FormModal = ({
   const size = type === "create" ? "w-14 h-14" : "w-7 h-7";
   const bgColor =
     type === "create"
-      ? "bg-gradient-to-br from-nutoOrange to-nutoOrangeDark text-white"
+      ? "bg-gradient-to-br from-CPEGold to-CPEGoldDark text-white"
       : type === "update"
-        ? "bg-nutoSlate"
+        ? "bg-CPENavy"
         : "bg-red-500";
 
   const [open, setOpen] = useState(false);
@@ -195,7 +208,7 @@ const FormModal = ({
         <span className="text-center font-medium">
           All data will be lost. Are you sure you want to delete this {table === "teacher" ? "lecturer" : table}?
         </span>
-        <button className="bg-red-600 text-white py-2 px-4 rounded-md border-none w-max self-center btn-nuto hover:bg-red-700">
+        <button className="bg-red-600 text-white py-2 px-4 rounded-md border-none w-max self-center btn-cpe hover:bg-red-700">
           Delete
         </button>
       </form>

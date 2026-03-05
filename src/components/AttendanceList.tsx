@@ -224,7 +224,7 @@ const AttendanceList = ({
 
                 {/* Read-Only Date Display */}
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-nutoSlate shadow-sm">
+                    <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-CPENavy shadow-sm">
                         <CalendarIcon className="w-5 h-5" />
                     </div>
                     <div className="flex flex-col">
@@ -252,7 +252,7 @@ const AttendanceList = ({
                             placeholder="Search student..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-nutoOrange/20 focus:border-nutoOrange transition-all shadow-sm"
+                            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-CPEGold/20 focus:border-CPEGold transition-all shadow-sm"
                         />
                     </div>
 
@@ -260,7 +260,7 @@ const AttendanceList = ({
                     <button
                         onClick={handleDownloadCSV}
                         title="Download CSV for current list"
-                        className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-nutoSlate hover:border-nutoSlate/30 hover:bg-slate-50 transition-all shadow-sm"
+                        className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-CPENavy hover:border-CPENavy/30 hover:bg-slate-50 transition-all shadow-sm"
                     >
                         <Download className="w-4 h-4" />
                     </button>
@@ -291,8 +291,8 @@ const AttendanceList = ({
 
             {/* Live Indicator (Only if active and viewing today) */}
             {session?.status === "OPEN" && isToday && (
-                <div className="flex items-center gap-2 text-sm font-bold text-nutoOrange animate-pulse bg-nutoOrange/5 px-4 py-2 rounded-xl border border-nutoOrange/20 -mt-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-nutoOrange shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>
+                <div className="flex items-center gap-2 text-sm font-bold text-CPEGold animate-pulse bg-CPEGold/5 px-4 py-2 rounded-xl border border-CPEGold/20 -mt-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-CPEGold shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>
                     Live Biometric Session Active — Students can scan fingers now
                 </div>
             )}
@@ -302,8 +302,8 @@ const AttendanceList = ({
                 {/* Loading Overlay for History */}
                 {isLoadingHistory && (
                     <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px] flex items-center justify-center rounded-xl border border-slate-100">
-                        <div className="flex flex-col items-center gap-2 text-nutoSlate font-semibold">
-                            <div className="w-6 h-6 border-2 border-nutoSlate/30 border-t-nutoSlate rounded-full animate-spin"></div>
+                        <div className="flex flex-col items-center gap-2 text-CPENavy font-semibold">
+                            <div className="w-6 h-6 border-2 border-CPENavy/30 border-t-CPENavy rounded-full animate-spin"></div>
                             Loading Date...
                         </div>
                     </div>

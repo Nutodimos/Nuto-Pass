@@ -35,19 +35,19 @@ const StudentPerformance = async ({ studentId }: { studentId: string }) => {
 
     // Determine color based on attendance
     const getPerformanceColor = (percent: number) => {
-        if (percent >= 80) return { stroke: "#436275", bg: "bg-nutoSlate" }; // nutoSlate
-        if (percent >= 50) return { stroke: "#FF7F50", bg: "bg-nutoOrange" }; // nutoOrange
-        return { stroke: "#E5673D", bg: "bg-nutoOrangeDark" }; // nutoOrangeDark
+        if (percent >= 80) return { stroke: "#436275", bg: "bg-CPENavy" }; // CPENavy
+        if (percent >= 50) return { stroke: "#FF7F50", bg: "bg-CPEGold" }; // CPEGold
+        return { stroke: "#E5673D", bg: "bg-CPEGoldDark" }; // CPEGoldDark
     };
 
     const colors = getPerformanceColor(attendancePercent);
 
     return (
-        <div className="bg-gradient-to-br from-nutoSlate/5 to-nutoOrange/5 p-6 rounded-2xl border border-nutoSlate/10">
+        <div className="bg-gradient-to-br from-CPENavy/5 to-CPEGold/5 p-6 rounded-2xl border border-CPENavy/10">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-nutoSlateDark">Performance</h2>
+                <h2 className="text-lg font-semibold text-CPENavyDark">Performance</h2>
                 {student?.class && (
-                    <span className="px-3 py-1 rounded-full bg-nutoSlate text-white text-xs font-medium flex items-center gap-1">
+                    <span className="px-3 py-1 rounded-full bg-CPENavy text-white text-xs font-medium flex items-center gap-1">
                         <GraduationCap className="w-3 h-3" />
                         {student.class.name}
                     </span>
@@ -79,8 +79,8 @@ const StudentPerformance = async ({ studentId }: { studentId: string }) => {
                         />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-3xl font-bold text-nutoSlateDark">{attendancePercent}%</span>
-                        <span className="text-xs text-nutoSlate">Attendance</span>
+                        <span className="text-3xl font-bold text-CPENavyDark">{attendancePercent}%</span>
+                        <span className="text-xs text-CPENavy">Attendance</span>
                     </div>
                 </div>
             </div>
@@ -88,16 +88,16 @@ const StudentPerformance = async ({ studentId }: { studentId: string }) => {
             {/* Stats */}
             <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-xl bg-white/50">
-                    <span className="text-sm text-nutoSlate">Classes Attended</span>
-                    <span className="font-bold text-nutoSlateDark">{presentAttendances}</span>
+                    <span className="text-sm text-CPENavy">Classes Attended</span>
+                    <span className="font-bold text-CPENavyDark">{presentAttendances}</span>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-xl bg-white/50">
-                    <span className="text-sm text-nutoSlate">Total Classes</span>
-                    <span className="font-bold text-nutoSlateDark">{totalAttendances}</span>
+                    <span className="text-sm text-CPENavy">Total Classes</span>
+                    <span className="font-bold text-CPENavyDark">{totalAttendances}</span>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-xl bg-white/50">
-                    <span className="text-sm text-nutoSlate">Available Lessons</span>
-                    <span className="font-bold text-nutoOrange">{student?.class?._count.lessons || 0}</span>
+                    <span className="text-sm text-CPENavy">Available Lessons</span>
+                    <span className="font-bold text-CPEGold">{student?.class?._count.lessons || 0}</span>
                 </div>
             </div>
         </div>

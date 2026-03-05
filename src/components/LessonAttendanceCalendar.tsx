@@ -201,7 +201,7 @@ const LessonAttendanceCalendar = ({
                                 </h3>
                                 <div className="flex items-center gap-3 mt-2">
                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200 text-xs font-bold text-slate-600">
-                                        <Users className="w-3.5 h-3.5 text-nutoSlate" />
+                                        <Users className="w-3.5 h-3.5 text-CPENavy" />
                                         {totalCount} Checked
                                     </span>
                                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${percentage >= 80 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
@@ -238,7 +238,7 @@ const LessonAttendanceCalendar = ({
                                             <div className="flex flex-col">
                                                 <Link
                                                     href={`/list/students/${record.student.username}`}
-                                                    className="font-semibold text-sm text-slate-800 hover:text-nutoOrange transition-colors"
+                                                    className="font-semibold text-sm text-slate-800 hover:text-CPEGold transition-colors"
                                                 >
                                                     {record.student.name} {record.student.surname}
                                                 </Link>

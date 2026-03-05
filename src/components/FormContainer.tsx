@@ -10,6 +10,7 @@ export type FormContainerProps = {
   | "class"
   | "lesson"
   | "assignment"
+  | "assignmentSubmission"
   | "attendance"
   | "event"
   | "announcement"
@@ -56,10 +57,24 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
         break;
 
       case "announcement":
-        const classes = await prisma.class.findMany({
-          select: { id: true, name: true },
-        });
-        relatedData = { classes };
+        let annClasses: any[] = [];
+        let annSubjects: any[] = [];
+
+        if (role === "admin") {
+          annClasses = await prisma.class.findMany({ select: { id: true, name: true } });
+          annSubjects = await prisma.subject.findMany({ select: { id: true, name: true } });
+        } else if (role === "teacher") {
+          annClasses = await prisma.class.findMany({
+            where: { supervisorId: currentUserId! },
+            select: { id: true, name: true },
+          });
+          annSubjects = await prisma.subject.findMany({
+            where: { teachers: { some: { id: currentUserId! } } },
+            select: { id: true, name: true },
+          });
+        }
+
+        relatedData = { classes: annClasses, subjects: annSubjects, role };
         break;
 
       case "material":
@@ -82,6 +97,24 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
           }),
         ]);
         relatedData = { classes: lessonClasses, subjects: lessonSubjects };
+        break;
+
+      case "assignment":
+        const assignmentQuery: any = {
+          select: {
+            id: true,
+            name: true,
+          },
+        };
+
+        // If the user is a teacher, they should only be able to assign work to their own subjects
+        if (role === "teacher") {
+          assignmentQuery.where = { teachers: { some: { id: currentUserId! } } };
+        }
+
+        const assignmentSubjects = await prisma.subject.findMany(assignmentQuery);
+
+        relatedData = { subjects: assignmentSubjects };
         break;
 
       default:

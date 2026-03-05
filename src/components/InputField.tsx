@@ -36,12 +36,12 @@ const InputField = ({
 
   return (
     <div className={hidden ? "hidden" : "flex flex-col gap-2 w-full md:w-1/4"}>
-      <label className="text-sm font-medium text-nutoSlateDark">{label}</label>
+      <label className="text-sm font-medium text-CPENavyDark">{label}</label>
       <div className="relative w-full">
         <input
           type={inputType}
           {...register(name)}
-          className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200"
+          className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
           {...inputProps}
           defaultValue={defaultValue}
         />
@@ -49,7 +49,7 @@ const InputField = ({
           <button
             type="button"
             onClick={togglePasswordVisibility}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-nutoSlate focus:outline-none transition-colors"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-CPENavy focus:outline-none transition-colors"
           >
             {showPassword ? (
               <EyeOff className="w-5 h-5" />

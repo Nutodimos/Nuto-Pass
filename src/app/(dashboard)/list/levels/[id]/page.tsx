@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Users, BookOpen, User, Calendar, Clock, Check } from "lucide-react";
 import { auth } from "@clerk/nextjs/server";
 import FormContainer from "@/components/FormContainer";
+import CsvImportModal from "@/components/CsvImportModal";
 
 const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
     // 1. Fetch Class Data & Relations
@@ -83,7 +84,7 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
         <div className="flex-1 p-4 flex flex-col gap-6 bg-[#F7F8FA] min-h-screen">
             {/* Header / Breadcrumb Area */}
             <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                <Link href="/list/levels" className="hover:text-nutoSlate transition-colors">Levels</Link>
+                <Link href="/list/levels" className="hover:text-CPENavy transition-colors">Levels</Link>
                 <span>/</span>
                 <span className="font-semibold text-slate-800">{level.name}</span>
             </div>
@@ -91,7 +92,7 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
             {/* SECTION 1: TOP DASHBOARD STATS */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 {/* Main Level Profile Card */}
-                <div className="lg:col-span-2 bg-gradient-to-br from-nutoSlate to-nutoSlateDark rounded-3xl p-6 text-white shadow-xl relative overflow-hidden group">
+                <div className="lg:col-span-2 bg-gradient-to-br from-CPENavy to-CPENavyDark rounded-3xl p-6 text-white shadow-xl relative overflow-hidden group">
                     <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none group-hover:bg-white/20 transition-all duration-700" />
 
                     <div className="relative z-10 flex flex-col h-full justify-between gap-6">
@@ -105,10 +106,15 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
                                     <p className="text-white/80 font-medium">{level.grade.level} Level &bull; {level._count.students} Students Enrolled</p>
                                 </div>
                             </div>
-                            {role === "admin" && (
-                                <div className="flex gap-2">
-                                    <FormContainer table="class" type="update" data={level} />
-                                    <FormContainer table="class" type="delete" id={level.id} />
+                            {(role === "admin" || (role === "teacher" && sessionClaims?.sub === level.supervisorId)) && (
+                                <div className="flex gap-2 items-center">
+                                    <CsvImportModal mode="import-students" targetId={level.id} targetName={level.name} />
+                                    {role === "admin" && (
+                                        <>
+                                            <FormContainer table="class" type="update" data={level} />
+                                            <FormContainer table="class" type="delete" id={level.id} />
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -135,7 +141,7 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
                 {/* Dashboard Metric Widgets */}
                 <Link href={`/list/students?classId=${level.id}`} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between">
                     <div className="flex justify-between items-start">
-                        <div className="w-12 h-12 rounded-xl bg-nutoOrange/10 text-nutoOrange flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <div className="w-12 h-12 rounded-xl bg-CPEGold/10 text-CPEGold flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                             <Users className="w-6 h-6" />
                         </div>
                         <div className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">+Active</div>
@@ -188,13 +194,13 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
                             <Link
                                 href={`/list/lessons/${lesson.id}`}
                                 key={lesson.id}
-                                className="group relative bg-white rounded-2xl p-5 shadow-sm border border-slate-200/60 hover:shadow-lg hover:border-nutoSlate/30 transition-all duration-300 hover:-translate-y-1 flex flex-col h-full overflow-hidden"
+                                className="group relative bg-white rounded-2xl p-5 shadow-sm border border-slate-200/60 hover:shadow-lg hover:border-CPENavy/30 transition-all duration-300 hover:-translate-y-1 flex flex-col h-full overflow-hidden"
                             >
                                 {/* Interactive hover state gradient */}
-                                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-nutoSlate to-nutoOrange scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+                                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-CPENavy to-CPEGold scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
 
                                 <div className="flex items-start justify-between mb-4">
-                                    <div className="p-2.5 rounded-xl bg-slate-50 text-slate-600 group-hover:bg-nutoSlate/10 group-hover:text-nutoSlate transition-colors">
+                                    <div className="p-2.5 rounded-xl bg-slate-50 text-slate-600 group-hover:bg-CPENavy/10 group-hover:text-CPENavy transition-colors">
                                         <BookOpen className="w-5 h-5" />
                                     </div>
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-100 px-2 py-1 rounded border border-slate-200">
@@ -203,7 +209,7 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
                                 </div>
 
                                 <div className="flex-1">
-                                    <h3 className="font-bold text-lg leading-tight text-slate-800 mb-1 group-hover:text-nutoSlate transition-colors line-clamp-2">
+                                    <h3 className="font-bold text-lg leading-tight text-slate-800 mb-1 group-hover:text-CPENavy transition-colors line-clamp-2">
                                         {lesson.subject.name}
                                     </h3>
                                 </div>

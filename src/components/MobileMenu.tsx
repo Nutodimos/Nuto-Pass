@@ -63,7 +63,7 @@ const MobileMenu = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(true)}
-                className="md:hidden p-2.5 rounded-xl bg-slate-50 hover:bg-nutoSlate/10 border border-transparent hover:border-nutoSlate/20 transition-all duration-200"
+                className="md:hidden p-2.5 rounded-xl bg-slate-50 hover:bg-CPENavy/10 border border-transparent hover:border-CPENavy/20 transition-all duration-200"
             >
                 <Menu className="w-5 h-5 text-slate-600" />
             </motion.button>
@@ -92,8 +92,8 @@ const MobileMenu = () => {
                             {/* Header */}
                             <div className="flex items-center justify-between p-4 border-b border-slate-100">
                                 <Link href="/" onClick={() => setIsOpen(false)} className="flex items-center gap-2">
-                                    <Image src="/nutopass-logo.png" alt="logo" width={32} height={32} className="mix-blend-multiply" />
-                                    <span className="font-bold text-nutoSlate">NutoPass</span>
+                                    <Image src="/cpeautomation-logo.png" alt="logo" width={32} height={32} className="mix-blend-multiply" />
+                                    <span className="font-bold text-CPENavy">CPE Automation</span>
                                 </Link>
                                 <motion.button
                                     whileHover={{ scale: 1.1 }}
@@ -107,16 +107,16 @@ const MobileMenu = () => {
 
                             {/* User Info */}
                             {user && (
-                                <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-nutoSlate/5 to-transparent">
+                                <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-CPENavy/5 to-transparent">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-nutoSlate/20 flex items-center justify-center text-nutoSlate font-bold">
+                                        <div className="w-10 h-10 rounded-full bg-CPENavy/20 flex items-center justify-center text-CPENavy font-bold">
                                             {user.firstName?.[0] || user.username?.[0] || "U"}
                                         </div>
                                         <div>
                                             <p className="font-semibold text-slate-700">
                                                 {user.firstName || user.username || "User"}
                                             </p>
-                                            <p className="text-xs text-nutoSlate capitalize">{role}</p>
+                                            <p className="text-xs text-CPENavy capitalize">{role}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -147,8 +147,8 @@ const MobileMenu = () => {
                                                                 href={item.href}
                                                                 onClick={() => setIsOpen(false)}
                                                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${active
-                                                                    ? "bg-nutoSlate text-white shadow-lg shadow-nutoSlate/30"
-                                                                    : "text-slate-600 hover:bg-nutoSlate/10 hover:text-nutoSlate"
+                                                                    ? "bg-CPENavy text-white shadow-lg shadow-CPENavy/30"
+                                                                    : "text-slate-600 hover:bg-CPENavy/10 hover:text-CPENavy"
                                                                     }`}
                                                             >
                                                                 <Icon className="w-5 h-5" />

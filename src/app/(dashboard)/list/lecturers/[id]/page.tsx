@@ -47,8 +47,8 @@ const SingleTeacherPage = async ({
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
       {/* LEFT */}
       <div className="w-full xl:w-2/3 flex flex-col gap-4">
-        {/* PROFILE CARD - Nuto Theme */}
-        <div className="bg-gradient-to-br from-nutoSlate to-nutoSlateDark p-6 rounded-2xl shadow-lg">
+        {/* PROFILE CARD - CPE Theme */}
+        <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
           <div className="flex flex-col md:flex-row gap-6">
             {/* Avatar */}
             <div className="flex-shrink-0">
@@ -99,7 +99,7 @@ const SingleTeacherPage = async ({
                     <Calendar className="w-4 h-4 text-white" />
                   </div>
                   <span>
-                    {new Intl.DateTimeFormat("en-GB").format(teacher.birthday)}
+                    {teacher.birthday ? new Intl.DateTimeFormat("en-GB").format(teacher.birthday) : "-"}
                   </span>
                 </div>
               </div>
@@ -110,28 +110,28 @@ const SingleTeacherPage = async ({
         {/* STATS CARDS */}
         <div className="grid grid-cols-2 gap-4">
           {/* Courses Card */}
-          <Link href={`/list/courses?teacherId=${teacher.id}`} className="bg-gradient-to-br from-nutoSlateLight/20 to-nutoSlate/10 p-5 rounded-2xl border border-nutoSlate/20 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer">
-            <div className="w-12 h-12 rounded-xl bg-nutoSlate flex items-center justify-center">
+          <Link href={`/list/courses?teacherId=${teacher.id}`} className="bg-gradient-to-br from-CPESlate/20 to-CPENavy/10 p-5 rounded-2xl border border-CPENavy/20 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer">
+            <div className="w-12 h-12 rounded-xl bg-CPENavy flex items-center justify-center">
               <BookOpen className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-nutoSlateDark">
+              <h3 className="text-2xl font-bold text-CPENavyDark">
                 {teacher._count.subjects}
               </h3>
-              <p className="text-sm text-nutoSlate">Courses</p>
+              <p className="text-sm text-CPENavy">Courses</p>
             </div>
           </Link>
 
           {/* Lessons Card */}
-          <Link href={`/list/lessons?teacherId=${teacher.id}`} className="bg-gradient-to-br from-nutoOrangeLight/20 to-nutoOrange/10 p-5 rounded-2xl border border-nutoOrange/20 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer">
-            <div className="w-12 h-12 rounded-xl bg-nutoOrange flex items-center justify-center">
+          <Link href={`/list/lessons?teacherId=${teacher.id}`} className="bg-gradient-to-br from-CPEGoldLight/20 to-CPEGold/10 p-5 rounded-2xl border border-CPEGold/20 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer">
+            <div className="w-12 h-12 rounded-xl bg-CPEGold flex items-center justify-center">
               <Calendar className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-nutoOrangeDark">
+              <h3 className="text-2xl font-bold text-CPEGoldDark">
                 {teacher._count.lessons}
               </h3>
-              <p className="text-sm text-nutoOrange">Lessons</p>
+              <p className="text-sm text-CPEGold">Lessons</p>
             </div>
           </Link>
         </div>
@@ -157,9 +157,9 @@ const SingleTeacherPage = async ({
         />
 
         {/* SCHEDULE */}
-        <div className="group nuto-card p-6 h-[600px] flex flex-col">
-          <div className="group nuto-card-indicator"></div>
-          <h2 className="text-lg font-semibold text-nutoSlateDark mb-4 relative z-10">Schedule</h2>
+        <div className="group cpe-card p-6 h-[600px] flex flex-col">
+          <div className="group cpe-card-indicator"></div>
+          <h2 className="text-lg font-semibold text-CPENavyDark mb-4 relative z-10">Schedule</h2>
           <div className="relative z-10 flex-1">
             <BigCalendarContainer type="teacherId" id={teacher.id} />
           </div>
@@ -169,30 +169,30 @@ const SingleTeacherPage = async ({
       {/* RIGHT */}
       <div className="w-full xl:w-1/3 flex flex-col gap-4">
         {/* Shortcuts */}
-        <div className="group nuto-card p-5">
-          <div className="group nuto-card-indicator"></div>
-          <h2 className="text-lg font-semibold text-nutoSlateDark mb-4 relative z-10">Quick Links</h2>
+        <div className="group cpe-card p-5">
+          <div className="group cpe-card-indicator"></div>
+          <h2 className="text-lg font-semibold text-CPENavyDark mb-4 relative z-10">Quick Links</h2>
           <div className="flex flex-wrap gap-2 relative z-10">
             <Link
-              className="px-4 py-2 rounded-xl bg-nutoSlate text-white text-sm font-medium hover:bg-nutoSlateDark transition-colors"
+              className="px-4 py-2 rounded-xl bg-CPENavy text-white text-sm font-medium hover:bg-CPENavyDark transition-colors"
               href={`/list/lessons?teacherId=${teacher.id}`}
             >
               Lessons
             </Link>
             <Link
-              className="px-4 py-2 rounded-xl bg-nutoOrange text-white text-sm font-medium hover:bg-nutoOrangeDark transition-colors"
+              className="px-4 py-2 rounded-xl bg-CPEGold text-white text-sm font-medium hover:bg-CPEGoldDark transition-colors"
               href={`/list/students?teacherId=${teacher.id}`}
             >
               Students
             </Link>
             <Link
-              className="px-4 py-2 rounded-xl bg-nutoSlateLight text-white text-sm font-medium hover:bg-nutoSlate transition-colors"
+              className="px-4 py-2 rounded-xl bg-CPESlate text-white text-sm font-medium hover:bg-CPENavy transition-colors"
               href={`/list/assignments?teacherId=${teacher.id}`}
             >
               Assignments
             </Link>
             <Link
-              className="px-4 py-2 rounded-xl bg-nutoOrangeLight text-white text-sm font-medium hover:bg-nutoOrange transition-colors"
+              className="px-4 py-2 rounded-xl bg-CPEGoldLight text-white text-sm font-medium hover:bg-CPEGold transition-colors"
               href={`/list/materials?teacherId=${teacher.id}`}
             >
               Materials

@@ -14,12 +14,13 @@ const config: Config = {
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
       colors: {
-        nutoSlate: "#436275",
-        nutoSlateLight: "#7096AB",
-        nutoSlateDark: "#2A404E",
-        nutoOrange: "#FF7F50",
-        nutoOrangeLight: "#FFB399",
-        nutoOrangeDark: "#E5673D",
+        CPENavy: "#0A1E4B",
+        CPESlate: "#4A6073",
+        CPENavyDark: "#08142A",
+        CPEGold: "#B99146",
+        CPEGoldLight: "#D4B473",
+        CPEGoldDark: "#8E6D2B",
+        CPETeal: "#2C7A82",
       },
       keyframes: {
         fadeInUp: {

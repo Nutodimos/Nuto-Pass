@@ -21,11 +21,11 @@ const BigCalendar = ({
     setView(selectedView);
   };
 
-  // Custom event styling with Nuto theme
+  // Custom event styling with CPE theme
   const eventStyleGetter = () => {
     return {
       style: {
-        backgroundColor: "#436275", // nutoSlate
+        backgroundColor: "#436275", // CPENavy
         borderRadius: "8px",
         opacity: 0.95,
         color: "white",
@@ -45,20 +45,20 @@ const BigCalendar = ({
 
     return {
       style: {
-        backgroundColor: isToday ? "rgba(255, 127, 80, 0.05)" : undefined, // Light nutoOrange for today
+        backgroundColor: isToday ? "rgba(255, 127, 80, 0.05)" : undefined, // Light CPEGold for today
       },
     };
   };
 
   return (
-    <div className="nuto-calendar h-full">
+    <div className="cpe-calendar h-full">
       <style jsx global>{`
-        /* Nuto Theme for React Big Calendar */
-        .nuto-calendar .rbc-calendar {
+        /* CPE Theme for React Big Calendar */
+        .cpe-calendar .rbc-calendar {
           font-family: inherit;
         }
         
-        .nuto-calendar .rbc-header {
+        .cpe-calendar .rbc-header {
           background: linear-gradient(135deg, #436275 0%, #2A404E 100%);
           color: white;
           padding: 12px 8px;
@@ -67,11 +67,11 @@ const BigCalendar = ({
           border: none !important;
         }
         
-        .nuto-calendar .rbc-header + .rbc-header {
+        .cpe-calendar .rbc-header + .rbc-header {
           border-left: 1px solid rgba(255,255,255,0.2) !important;
         }
         
-        .nuto-calendar .rbc-btn-group button {
+        .cpe-calendar .rbc-btn-group button {
           background: #436275;
           color: white;
           border: none;
@@ -82,49 +82,49 @@ const BigCalendar = ({
           transition: all 0.2s;
         }
         
-        .nuto-calendar .rbc-btn-group button:hover {
+        .cpe-calendar .rbc-btn-group button:hover {
           background: #2A404E;
         }
         
-        .nuto-calendar .rbc-btn-group button.rbc-active {
+        .cpe-calendar .rbc-btn-group button.rbc-active {
           background: #FF7F50;
         }
         
-        .nuto-calendar .rbc-toolbar {
+        .cpe-calendar .rbc-toolbar {
           padding: 12px 0;
           margin-bottom: 12px;
         }
         
-        .nuto-calendar .rbc-toolbar-label {
+        .cpe-calendar .rbc-toolbar-label {
           font-weight: 600;
           font-size: 16px;
           color: #2A404E;
         }
         
-        .nuto-calendar .rbc-time-view {
+        .cpe-calendar .rbc-time-view {
           border: 1px solid #e2e8f0;
           border-radius: 12px;
           overflow: hidden;
         }
         
-        .nuto-calendar .rbc-time-header {
+        .cpe-calendar .rbc-time-header {
           border-bottom: 2px solid #436275;
         }
         
-        .nuto-calendar .rbc-timeslot-group {
+        .cpe-calendar .rbc-timeslot-group {
           border-bottom: 1px solid #f1f5f9;
         }
         
-        .nuto-calendar .rbc-time-content {
+        .cpe-calendar .rbc-time-content {
           border-top: none;
         }
         
-        .nuto-calendar .rbc-current-time-indicator {
+        .cpe-calendar .rbc-current-time-indicator {
           background-color: #FF7F50;
           height: 2px;
         }
         
-        .nuto-calendar .rbc-current-time-indicator::before {
+        .cpe-calendar .rbc-current-time-indicator::before {
           content: '';
           position: absolute;
           left: -6px;
@@ -135,38 +135,38 @@ const BigCalendar = ({
           border-radius: 50%;
         }
         
-        .nuto-calendar .rbc-today {
+        .cpe-calendar .rbc-today {
           background-color: rgba(255, 127, 80, 0.08);
         }
         
-        .nuto-calendar .rbc-time-slot {
+        .cpe-calendar .rbc-time-slot {
           font-size: 11px;
           color: #7096AB;
         }
         
-        .nuto-calendar .rbc-event {
+        .cpe-calendar .rbc-event {
           box-shadow: 0 2px 8px rgba(67, 98, 117, 0.3);
         }
         
-        .nuto-calendar .rbc-event:hover {
+        .cpe-calendar .rbc-event:hover {
           transform: scale(1.02);
           box-shadow: 0 4px 12px rgba(67, 98, 117, 0.4);
         }
         
-        .nuto-calendar .rbc-event-label {
+        .cpe-calendar .rbc-event-label {
           font-size: 10px;
           opacity: 0.9;
         }
         
-        .nuto-calendar .rbc-event-content {
+        .cpe-calendar .rbc-event-content {
           font-size: 12px;
         }
         
-        .nuto-calendar .rbc-allday-cell {
+        .cpe-calendar .rbc-allday-cell {
           display: none;
         }
         
-        .nuto-calendar .rbc-time-header-content {
+        .cpe-calendar .rbc-time-header-content {
           border-left: none;
         }
       `}</style>

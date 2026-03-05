@@ -65,15 +65,15 @@ const MaterialCard = ({ id, title, filePath, className, teacherName, createdAt, 
 
     return (
         <>
-            <div className={`group nuto-card flex flex-col ${isGeneral ? 'border-amber-200' : ''}`}>
-                <div className="group nuto-card-indicator"></div>
+            <div className={`group cpe-card flex flex-col ${isGeneral ? 'border-amber-200' : ''}`}>
+                <div className="group cpe-card-indicator"></div>
                 {/* Card Header with file type indicator */}
-                <div className={`h-2 shrink-0 ${isGeneral ? 'bg-gradient-to-r from-amber-400/40 to-amber-200/20' : 'bg-gradient-to-r from-nutoOrange/20 to-nutoOrange/5'}`}></div>
+                <div className={`h-2 shrink-0 ${isGeneral ? 'bg-gradient-to-r from-amber-400/40 to-amber-200/20' : 'bg-gradient-to-r from-CPEGold/20 to-CPEGold/5'}`}></div>
 
                 <div className="p-4 flex-1 flex flex-col">
                     {/* File Icon & Type Badge */}
                     <div className="flex items-start justify-between mb-3">
-                        <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-nutoOrange/10 transition-colors">
+                        <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-CPEGold/10 transition-colors">
                             {getFileIcon(filePath)}
                         </div>
                         <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${color}`}>
@@ -82,7 +82,7 @@ const MaterialCard = ({ id, title, filePath, className, teacherName, createdAt, 
                     </div>
 
                     {/* Title */}
-                    <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 group-hover:text-nutoOrange transition-colors">
+                    <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 group-hover:text-CPEGold transition-colors">
                         {title}
                     </h3>
 
@@ -110,7 +110,7 @@ const MaterialCard = ({ id, title, filePath, className, teacherName, createdAt, 
                     <div className="flex items-center gap-2 pt-3 border-t border-gray-50">
                         <button
                             onClick={() => setIsPreviewOpen(true)}
-                            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-nutoSlate/10 text-nutoSlate rounded-lg text-sm font-medium hover:bg-nutoSlate hover:text-white transition-all"
+                            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-CPENavy/10 text-CPENavy rounded-lg text-sm font-medium hover:bg-CPENavy hover:text-white transition-all"
                         >
                             <Eye className="w-4 h-4" />
                             Preview
@@ -119,7 +119,7 @@ const MaterialCard = ({ id, title, filePath, className, teacherName, createdAt, 
                             href={filePath}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 py-2 px-3 bg-nutoOrange/10 text-nutoOrange rounded-lg text-sm font-medium hover:bg-nutoOrange hover:text-white transition-all"
+                            className="flex items-center justify-center gap-2 py-2 px-3 bg-CPEGold/10 text-CPEGold rounded-lg text-sm font-medium hover:bg-CPEGold hover:text-white transition-all"
                             title="Download"
                         >
                             <Download className="w-4 h-4" />

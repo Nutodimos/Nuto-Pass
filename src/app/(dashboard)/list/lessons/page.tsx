@@ -43,6 +43,7 @@ const LessonListPage = async ({
             query.OR = [
               { subject: { name: { contains: value, mode: "insensitive" } } },
               { teacher: { name: { contains: value, mode: "insensitive" } } },
+              { teacher: { surname: { contains: value, mode: "insensitive" } } },
             ];
             break;
           default:
@@ -52,9 +53,18 @@ const LessonListPage = async ({
     }
   }
 
-  // TEACHER FILTER
+  // ROLE FILTER
   if (role === "teacher") {
     query.teacherId = sessionClaims?.sub as string;
+  } else if (role === "student") {
+    const studentId = sessionClaims?.sub as string;
+    const enrollments = await prisma.courseEnrollment.findMany({
+      where: { studentId: studentId },
+      select: { subjectId: true },
+    });
+    const enrolledSubjectIds = enrollments.map((e: { subjectId: number }) => e.subjectId);
+
+    query.subjectId = { in: enrolledSubjectIds };
   }
 
   // FETCH DATA - No Pagination, fetch all to show complete schedule
@@ -90,7 +100,7 @@ const LessonListPage = async ({
   return (
     <div className="flex-1 m-4 mt-0">
       {/* HEADER */}
-      <div className="bg-gradient-to-r from-nutoSlate via-nutoSlateDark to-nutoSlate rounded-2xl p-6 mb-8 shadow-lg">
+      <div className="bg-gradient-to-r from-CPENavy via-CPENavyDark to-CPENavy rounded-2xl p-6 mb-8 shadow-lg">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-white/20 rounded-xl">
@@ -133,9 +143,9 @@ const LessonListPage = async ({
                 {lessons.map((lesson) => (
                   <div
                     key={lesson.id}
-                    className="group nuto-card flex flex-col relative"
+                    className="group cpe-card flex flex-col relative"
                   >
-                    <div className="group nuto-card-indicator z-0"></div>
+                    <div className="group cpe-card-indicator z-0"></div>
 
                     {/* The Full Card Link Layer - sits underneath actions */}
                     <Link
@@ -148,13 +158,10 @@ const LessonListPage = async ({
                       {/* HEADER: Subject & Time */}
                       <div className="flex justify-between items-start mb-3 pointer-events-auto">
                         <div className="flex-1 pointer-events-none">
-                          <h3 className="font-bold text-slate-800 text-lg leading-tight mb-1 group-hover:text-nutoSlate transition-colors">
+                          <h3 className="font-bold text-slate-800 text-lg leading-tight mb-1 group-hover:text-CPENavy transition-colors">
                             {lesson.subject.name}
                           </h3>
-                          <p className="text-sm text-slate-500 font-medium capitalize mb-2">
-                            {lesson.name?.toLowerCase().startsWith('lesson') ? lesson.name.replace(/lesson/i, 'Lesson ') : lesson.name}
-                          </p>
-                          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mt-2">
                             <Clock className="w-3.5 h-3.5" />
                             {formatTime(lesson.startTime)} - {formatTime(lesson.endTime)}
                           </div>
@@ -188,7 +195,7 @@ const LessonListPage = async ({
           <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
             <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>No lessons schedules found.</p>
-            {role === "admin" && <p className="text-sm mt-2 text-nutoSlateUnderline">Try adding a new lesson.</p>}
+            {role === "admin" && <p className="text-sm mt-2 text-CPENavyUnderline">Try adding a new lesson.</p>}
           </div>
         )}
       </div>

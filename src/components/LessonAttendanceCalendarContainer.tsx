@@ -28,7 +28,7 @@ const LessonAttendanceCalendarContainer = async ({ lessonId }: { lessonId: numbe
     return (
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-nutoSlateDark">Historical Attendance</h2>
+                <h2 className="text-xl font-bold text-CPENavyDark">Historical Attendance</h2>
             </div>
             <div className="flex-1 flex flex-col relative z-10">
                 <LessonAttendanceCalendar attendance={attendanceRecords} lessonId={lessonId} />

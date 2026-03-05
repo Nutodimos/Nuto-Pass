@@ -126,7 +126,7 @@ async function main() {
         title: `Assignment ${i}`,
         startDate: new Date(new Date().setHours(new Date().getHours() + 1)),
         dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-        lessonId: (i % 30) + 1,
+        subjectId: (i % 10) + 1,
       },
     });
   }
@@ -145,18 +145,7 @@ async function main() {
     });
   }
 
-  // EVENT
-  for (let i = 1; i <= 5; i++) {
-    await prisma.event.create({
-      data: {
-        title: `Event ${i}`,
-        description: `Description for Event ${i}`,
-        startTime: new Date(new Date().setHours(new Date().getHours() + 1)),
-        endTime: new Date(new Date().setHours(new Date().getHours() + 2)),
-        classId: (i % 5) + 1,
-      },
-    });
-  }
+
 
   // ANNOUNCEMENT
   for (let i = 1; i <= 5; i++) {

@@ -15,7 +15,7 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Nutodimos Bio-Attendance",
-  description: "Fingerprint biometric attendance system",
+  description: "Advanced Biometric Attendance System powered by AI",
 };
 
 export default function RootLayout({

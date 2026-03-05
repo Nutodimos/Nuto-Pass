@@ -1,6 +1,7 @@
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
+import CsvImportModal from "@/components/CsvImportModal";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Class, Grade, Prisma, Teacher } from "@prisma/client";
@@ -51,13 +52,20 @@ const ClassListPage = async ({
     }
   }
 
-  // TEACHER FILTER: Only show classes where the teacher has lessons
+  // TEACHER FILTER: Show classes where the teacher has lessons OR is the supervisor (Level Advisor)
   if (role === "teacher") {
-    query.lessons = {
-      some: {
-        teacherId: sessionClaims?.sub as string
-      }
-    };
+    query.OR = [
+      {
+        lessons: {
+          some: {
+            teacherId: sessionClaims?.sub as string,
+          },
+        },
+      },
+      {
+        supervisorId: sessionClaims?.sub as string,
+      },
+    ];
   }
 
   const [data, count] = await prisma.$transaction([
@@ -85,7 +93,7 @@ const ClassListPage = async ({
   return (
     <div className="flex-1 m-4 mt-0">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-nutoSlate via-nutoSlateDark to-nutoSlate rounded-2xl p-6 mb-6 shadow-lg">
+      <div className="bg-gradient-to-r from-CPENavy via-CPENavyDark to-CPENavy rounded-2xl p-6 mb-6 shadow-lg">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-white/20 rounded-xl">
@@ -108,20 +116,19 @@ const ClassListPage = async ({
       {/* Levels Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {data.map((level, index) => (
-          <Link
-            key={level.id}
-            href={`/list/levels/${level.id}`}
-            className="group"
-          >
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:border-nutoSlate/30 transition-all duration-300 hover:-translate-y-1">
+          <div key={level.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:border-CPENavy/30 transition-all duration-300 hover:-translate-y-1 flex flex-col group relative">
+            <Link
+              href={`/list/levels/${level.id}`}
+              className="block flex-1 relative z-10"
+            >
               {/* Level Header */}
               <div className="bg-gradient-to-r from-slate-50 to-slate-100 p-6 border-b border-slate-100">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-nutoSlate to-nutoSlateDark flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-CPENavy to-CPENavyDark flex items-center justify-center">
                     <span className="text-2xl font-bold text-white">{level.name.charAt(0)}</span>
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-nutoSlateDark group-hover:text-nutoSlate transition-colors">{level.name}</h2>
+                    <h2 className="text-xl font-bold text-CPENavyDark group-hover:text-CPENavy transition-colors">{level.name}</h2>
                     <p className="text-slate-500 text-sm">Academic Year 2024/2025</p>
                   </div>
                 </div>
@@ -160,20 +167,33 @@ const ClassListPage = async ({
                     <div className="flex items-center justify-center gap-1 text-slate-500 mb-1">
                       <Users className="w-4 h-4" />
                     </div>
-                    <p className="text-2xl font-bold text-nutoSlateDark">{level._count.students}</p>
+                    <p className="text-2xl font-bold text-CPENavyDark">{level._count.students}</p>
                     <p className="text-xs text-slate-500">Students</p>
                   </div>
                   <div className="bg-slate-50 rounded-xl p-3 text-center">
                     <div className="flex items-center justify-center gap-1 text-slate-500 mb-1">
                       <BookOpen className="w-4 h-4" />
                     </div>
-                    <p className="text-2xl font-bold text-nutoSlateDark">{level._count.lessons}</p>
+                    <p className="text-2xl font-bold text-CPENavyDark">{level._count.lessons}</p>
                     <p className="text-xs text-slate-500">Lessons</p>
                   </div>
                 </div>
               </div>
+            </Link>
+
+            {/* Actions Row */}
+            <div className="flex items-center gap-2 px-5 pb-5 pt-0 relative z-10">
+              {(role === "admin" || (role === "teacher" && sessionClaims?.sub === level.supervisorId)) && (
+                <div className="w-full">
+                  <CsvImportModal
+                    mode="import-students"
+                    targetId={level.id}
+                    targetName={level.name}
+                  />
+                </div>
+              )}
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 

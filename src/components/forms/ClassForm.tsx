@@ -75,10 +75,10 @@ const ClassForm = ({
   return (
     <form className="flex flex-col gap-6" onSubmit={onSubmit}>
       <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-nutoSlate to-nutoSlateDark flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-CPENavy to-CPENavyDark flex items-center justify-center">
           <span className="text-white font-bold">L</span>
         </div>
-        <h1 className="text-xl font-bold text-nutoSlateDark">
+        <h1 className="text-xl font-bold text-CPENavyDark">
           {type === "create" ? "Create New Level" : "Update Level"}
         </h1>
       </div>
@@ -103,9 +103,9 @@ const ClassForm = ({
           />
         )}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-sm font-medium text-nutoSlateDark">Level Adviser</label>
+          <label className="text-sm font-medium text-CPENavyDark">Level Adviser</label>
           <select
-            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200"
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
             {...register("supervisorId")}
             defaultValue={data?.teachers}
           >
@@ -128,9 +128,9 @@ const ClassForm = ({
           )}
         </div>
         <div className="hidden">
-          <label className="text-sm font-medium text-nutoSlateDark">Grade</label>
+          <label className="text-sm font-medium text-CPENavyDark">Grade</label>
           <select
-            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200"
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
             {...register("gradeId")}
             defaultValue={data?.gradeId || grades[0]?.id}
           >
@@ -156,7 +156,7 @@ const ClassForm = ({
       )}
       <button
         type="submit"
-        className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-nutoSlate to-nutoSlateDark text-white font-semibold text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+        className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-CPENavy to-CPENavyDark text-white font-semibold text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
       >
         {type === "create" ? "Create Level" : "Update Level"}
       </button>

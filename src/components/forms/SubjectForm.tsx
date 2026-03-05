@@ -48,7 +48,7 @@ const SubjectForm = ({
 
   useEffect(() => {
     if (state.success) {
-      toast(`Subject has been ${type === "create" ? "created" : "updated"}!`);
+      toast(`Course has been ${type === "create" ? "created" : "updated"}!`);
       setOpen(false);
       router.refresh();
     }
@@ -59,17 +59,17 @@ const SubjectForm = ({
   return (
     <form className="flex flex-col gap-6" onSubmit={onSubmit}>
       <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-nutoOrange to-nutoOrangeDark flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-CPEGold to-CPEGoldDark flex items-center justify-center">
           <span className="text-white font-bold">C</span>
         </div>
-        <h1 className="text-xl font-bold text-nutoSlateDark">
+        <h1 className="text-xl font-bold text-CPENavyDark">
           {type === "create" ? "Create New Course" : "Update Course"}
         </h1>
       </div>
 
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Subject name"
+          label="Course Name"
           name="name"
           defaultValue={data?.name}
           register={register}
@@ -86,10 +86,10 @@ const SubjectForm = ({
           />
         )}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-sm font-medium text-nutoSlateDark">Lecturers</label>
+          <label className="text-sm font-medium text-CPENavyDark">Lecturers</label>
           <select
             multiple
-            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200 min-h-[100px]"
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200 min-h-[100px]"
             {...register("teachers")}
             defaultValue={data?.teachers}
           >
@@ -108,9 +108,9 @@ const SubjectForm = ({
           )}
         </div>
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-sm font-medium text-nutoSlateDark">Semester</label>
+          <label className="text-sm font-medium text-CPENavyDark">Semester</label>
           <select
-            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-nutoSlate focus:bg-white focus:outline-none transition-all duration-200"
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
             {...register("semester")}
             defaultValue={data?.semester ?? "1"}
           >
@@ -129,7 +129,7 @@ const SubjectForm = ({
       )}
       <button
         type="submit"
-        className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-nutoOrange to-nutoOrangeDark text-white font-semibold text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+        className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-CPEGold to-CPEGoldDark text-white font-semibold text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
       >
         {type === "create" ? "Create Course" : "Update Course"}
       </button>

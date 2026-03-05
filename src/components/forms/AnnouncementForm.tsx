@@ -15,10 +15,9 @@ const schema = z.object({
     title: z.string().min(1, { message: "Title is required!" }),
     description: z.string().min(1, { message: "Description is required!" }),
     date: z.coerce.date({ message: "Date is required!" }),
-    targetAudience: z.enum(["all", "students", "teachers"], {
-        message: "Target audience is required!",
-    }),
+    targetAudience: z.enum(["all", "students", "teachers"]).optional().default("all"),
     classId: z.coerce.number().optional(),
+    subjectId: z.coerce.number().optional(),
 });
 
 type Inputs = z.infer<typeof schema>;
@@ -70,13 +69,13 @@ const AnnouncementForm = ({
         } else if (state.error) {
             toast.error(
                 (state as any).messages
-                    ? (state as any).messages[0]
+                    ? (state as any).messages.join("\n")
                     : "An error occurred!"
             );
         }
     }, [state, router, type, setOpen]);
 
-    const { classes } = relatedData || {};
+    const { classes, subjects, role } = relatedData || {};
 
     return (
         <form className="flex flex-col gap-6" onSubmit={onSubmit}>
@@ -121,24 +120,51 @@ const AnnouncementForm = ({
                     error={errors?.date}
                 />
 
-                <div className="flex flex-col gap-2 w-full md:w-[48%]">
-                    <label className="text-xs text-gray-500">Target Audience</label>
+                {role === "admin" && (
+                    <div className="flex flex-col gap-2 w-full md:w-[48%]">
+                        <label className="text-xs text-gray-500">Target Audience</label>
+                        <select
+                            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+                            {...register("targetAudience")}
+                            defaultValue={data?.targetAudience || "all"}
+                        >
+                            <option value="all">All Users</option>
+                            <option value="students">Students Only</option>
+                            <option value="teachers">Teachers Only</option>
+                        </select>
+                        {errors.targetAudience?.message && (
+                            <p className="text-xs text-red-400">
+                                {errors.targetAudience.message.toString()}
+                            </p>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {subjects && (
+                <div className="flex flex-col gap-2 w-full">
+                    <label className="text-xs text-gray-500">
+                        Course (Optional - leave empty for all courses)
+                    </label>
                     <select
                         className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-                        {...register("targetAudience")}
-                        defaultValue={data?.targetAudience || "all"}
+                        {...register("subjectId")}
+                        defaultValue={data?.subjectId}
                     >
-                        <option value="all">All Users</option>
-                        <option value="students">Students Only</option>
-                        <option value="teachers">Teachers Only</option>
+                        <option value="">All Courses</option>
+                        {subjects.map((subjectItem: { id: number; name: string }) => (
+                            <option value={subjectItem.id} key={subjectItem.id}>
+                                {subjectItem.name}
+                            </option>
+                        ))}
                     </select>
-                    {errors.targetAudience?.message && (
+                    {errors.subjectId?.message && (
                         <p className="text-xs text-red-400">
-                            {errors.targetAudience.message.toString()}
+                            {errors.subjectId.message.toString()}
                         </p>
                     )}
                 </div>
-            </div>
+            )}
 
             {classes && (
                 <div className="flex flex-col gap-2 w-full">
@@ -182,7 +208,7 @@ const AnnouncementForm = ({
                 </span>
             )}
 
-            <button className="bg-nutoSlate text-white p-2 rounded-md hover:bg-nutoSlateDark transition-colors">
+            <button className="bg-CPENavy text-white p-2 rounded-md hover:bg-CPENavyDark transition-colors">
                 {type === "create" ? "Create" : "Update"}
             </button>
         </form>

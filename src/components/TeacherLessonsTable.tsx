@@ -82,7 +82,7 @@ const TeacherLessonsTable = async ({
                 <table className="w-full">
                     <thead>
                         <tr className="text-left text-sm text-gray-500 border-b border-gray-100">
-                            <th className="pb-3 font-medium">Subject</th>
+                            <th className="pb-3 font-medium">Course</th>
                             <th className="pb-3 font-medium hidden sm:table-cell">Class</th>
                             <th className="pb-3 font-medium hidden md:table-cell">Day</th>
                             <th className="pb-3 font-medium hidden lg:table-cell">Time</th>
@@ -93,12 +93,12 @@ const TeacherLessonsTable = async ({
                         {lessons.map((lesson: LessonWithDetails) => (
                             <tr
                                 key={lesson.id}
-                                className="border-b border-gray-50 hover:bg-nutoOrange/5 transition-colors"
+                                className="border-b border-gray-50 hover:bg-CPEGold/5 transition-colors"
                             >
                                 <td className="py-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-nutoOrange/10 flex items-center justify-center">
-                                            <BookOpen className="w-5 h-5 text-nutoOrange" />
+                                        <div className="w-10 h-10 rounded-lg bg-CPEGold/10 flex items-center justify-center">
+                                            <BookOpen className="w-5 h-5 text-CPEGold" />
                                         </div>
                                         <div>
                                             <span className="font-medium text-gray-800 block">
@@ -135,7 +135,7 @@ const TeacherLessonsTable = async ({
                                 <td className="py-4 text-right">
                                     <Link
                                         href={`/list/attendance?lessonId=${lesson.id}`}
-                                        className="text-sm text-nutoOrange hover:text-nutoOrangeDark font-medium"
+                                        className="text-sm text-CPEGold hover:text-CPEGoldDark font-medium"
                                     >
                                         Attendance →
                                     </Link>

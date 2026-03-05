@@ -18,7 +18,7 @@ const ThemeContext = createContext<ThemeContextType>({
 
 export const useTheme = () => useContext(ThemeContext);
 
-const STORAGE_KEY = "nuto-theme";
+const STORAGE_KEY = "cpe-theme";
 
 function getSystemTheme(): "light" | "dark" {
     if (typeof window === "undefined") return "light";

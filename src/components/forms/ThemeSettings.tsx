@@ -7,12 +7,12 @@ const themes: {
     id: Theme;
     name: string;
     description: string;
-    icon: React.ComponentType<{ className?: string }>;
+    icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
     colors: { bg: string; card: string; accent: string; text: string };
 }[] = [
         {
             id: "light",
-            name: "Nuto Light",
+            name: "CPE Light",
             description: "Clean & professional",
             icon: Sun,
             colors: {
@@ -24,7 +24,7 @@ const themes: {
         },
         {
             id: "dark",
-            name: "Nuto Dark",
+            name: "CPE Dark",
             description: "Rich charcoal warmth",
             icon: Moon,
             colors: {
@@ -36,7 +36,7 @@ const themes: {
         },
         {
             id: "midnight",
-            name: "Nuto Midnight",
+            name: "CPE Midnight",
             description: "OLED pure black",
             icon: Eclipse,
             colors: {
@@ -70,7 +70,7 @@ const ThemeSettings = () => {
                     Appearance
                 </h3>
                 <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                    Choose how NutoPass looks to you. Select a theme that suits your preference.
+                    Choose how CPE Automation looks to you. Select a theme that suits your preference.
                 </p>
             </div>
 
@@ -84,12 +84,12 @@ const ThemeSettings = () => {
                             key={t.id}
                             onClick={() => setTheme(t.id)}
                             className={`group relative rounded-2xl p-1 transition-all duration-300 ${isActive
-                                ? "ring-2 ring-nutoOrange shadow-lg shadow-nutoOrange/20 scale-[1.02]"
+                                ? "ring-2 ring-CPEGold shadow-lg shadow-CPEGold/20 scale-[1.02]"
                                 : "ring-1 hover:ring-2 hover:scale-[1.01]"
                                 }`}
                             style={{
-                                ringColor: isActive ? undefined : 'var(--border-primary)',
-                            }}
+                                "--tw-ring-color": isActive ? undefined : "var(--border-primary)",
+                            } as React.CSSProperties}
                         >
                             {/* Theme Preview */}
                             <div
@@ -145,7 +145,7 @@ const ThemeSettings = () => {
 
                                 {/* Active check badge */}
                                 {isActive && (
-                                    <div className="absolute top-2 right-2 w-6 h-6 bg-nutoOrange rounded-full flex items-center justify-center shadow-lg">
+                                    <div className="absolute top-2 right-2 w-6 h-6 bg-CPEGold rounded-full flex items-center justify-center shadow-lg">
                                         <Check className="w-3.5 h-3.5 text-white" />
                                     </div>
                                 )}
@@ -155,13 +155,13 @@ const ThemeSettings = () => {
                             <div className="flex items-center gap-3 px-3 py-3">
                                 <div
                                     className={`p-2 rounded-xl transition-colors ${isActive
-                                        ? "bg-nutoOrange/10"
+                                        ? "bg-CPEGold/10"
                                         : ""
                                         }`}
                                     style={!isActive ? { backgroundColor: 'var(--bg-subtle)' } : undefined}
                                 >
                                     <Icon
-                                        className={`w-5 h-5 ${isActive ? "text-nutoOrange" : ""
+                                        className={`w-5 h-5 ${isActive ? "text-CPEGold" : ""
                                             }`}
                                         style={!isActive ? { color: 'var(--text-secondary)' } : undefined}
                                     />

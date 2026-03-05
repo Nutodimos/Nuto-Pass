@@ -119,7 +119,7 @@ const Menu = async () => {
               if (item.label === "Logout") {
                 return (
                   <SignOutButton key={item.label}>
-                    <span className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-nutoOrange/10 hover:text-nutoOrange transition-colors cursor-pointer">
+                    <span className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-CPEGold/10 hover:text-CPEGold transition-colors cursor-pointer">
                       <Image src={item.icon} alt="" width={20} height={20} />
                       <span className="hidden lg:block">{item.label}</span>
                     </span>

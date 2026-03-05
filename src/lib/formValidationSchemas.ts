@@ -82,13 +82,27 @@ export type StudentSchema = z.infer<typeof studentSchema>;
 export const assignmentSchema = z.object({
   id: z.coerce.number().optional(),
   title: z.string().min(1, { message: "Title name is required!" }),
+  description: z.string().optional(),
+  attachmentUrl: z.string().optional(),
   startDate: z.coerce.date({ message: "Start date is required!" }),
   dueDate: z.coerce.date({ message: "Due date is required!" }),
-  lessonId: z.coerce.number({ message: "Lesson is required!" }),
+  subjectId: z.coerce.number({ message: "Course is required!" }),
 });
 
 export type AssignmentSchema = z.infer<typeof assignmentSchema>;
 
+
+
+export const assignmentSubmissionSchema = z.object({
+  id: z.coerce.number().optional(),
+  assignmentId: z.coerce.number({ message: "Assignment ID is required!" }),
+  studentId: z.string({ message: "Student ID is required!" }),
+  submissionUrl: z.string().url({ message: "Must be a valid URL!" }).min(1, { message: "Submission is required!" }),
+  // grade and feedback are set by the teacher, not the student submitting
+  // so they are optional/omitted in the basic submission schema
+});
+
+export type AssignmentSubmissionSchema = z.infer<typeof assignmentSubmissionSchema>;
 
 
 export const announcementSchema = z.object({
@@ -96,10 +110,9 @@ export const announcementSchema = z.object({
   title: z.string().min(1, { message: "Title is required!" }),
   description: z.string().min(1, { message: "Description is required!" }),
   date: z.coerce.date({ message: "Date is required!" }),
-  targetAudience: z.enum(["all", "students", "teachers"], {
-    message: "Target audience is required!",
-  }),
+  targetAudience: z.enum(["all", "students", "teachers"]).optional().default("all"),
   classId: z.coerce.number().optional(),
+  subjectId: z.coerce.number().optional(),
 });
 
 export type AnnouncementSchema = z.infer<typeof announcementSchema>;

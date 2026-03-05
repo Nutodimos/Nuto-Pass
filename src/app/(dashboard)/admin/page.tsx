@@ -1,6 +1,5 @@
 import Announcements from "@/components/Announcements";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
-import EventCalendarContainer from "@/components/EventCalendarContainer";
 import UserCard from "@/components/UserCard";
 import AttendanceOverviewCard from "@/components/AttendanceOverviewCard";
 import RecentActivitiesCard from "@/components/RecentActivitiesCard";
@@ -42,7 +41,6 @@ const AdminPage = ({
 
       {/* RIGHT COLUMN (1/3) */}
       <div className="w-full lg:w-1/3 flex flex-col gap-8">
-        <EventCalendarContainer searchParams={searchParams} />
         <Announcements />
       </div>
     </div>

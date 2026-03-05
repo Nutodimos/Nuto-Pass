@@ -131,7 +131,7 @@ const Navbar = () => {
       { name: "Students", route: "/list/students", icon: GraduationCap, keywords: ["student", "pupils", "learner"], roles: ["admin", "teacher"] },
       { name: "Lecturers", route: "/list/lecturers", icon: Users, keywords: ["lecturer", "teacher", "instructor", "professor"], roles: ["admin"] },
       { name: "Classes", route: "/list/attendance", icon: Building2, keywords: ["class", "level", "grade"] },
-      { name: "Subjects", route: "/list/courses", icon: BookOpen, keywords: ["subject", "course", "module"] },
+      { name: "Courses", route: "/list/courses", icon: BookOpen, keywords: ["subject", "course", "module"] },
       { name: "Lessons", route: "/list/lessons", icon: Presentation, keywords: ["lesson", "schedule", "timetable"] },
       { name: "Assignments", route: "/list/assignments", icon: ClipboardList, keywords: ["assignment", "homework", "task"] },
       { name: "Announcements", route: "/list/announcements", icon: Megaphone, keywords: ["announcement", "notice", "news"] },
@@ -218,24 +218,22 @@ const Navbar = () => {
     return () => clearTimeout(debounceTimer);
   }, [searchQuery]);
 
-  // Fetch announcements when notification dropdown opens
+  // Fetch announcements on mount to show unread count immediately
   useEffect(() => {
-    if (showNotifications && announcements.length === 0) {
-      const fetchAnnouncements = async () => {
-        try {
-          const res = await fetch("/api/announcements");
-          if (res.ok) {
-            const data = await res.json();
-            setAnnouncements(data.announcements || []);
-            setUnreadCount(data.unreadCount || 0);
-          }
-        } catch (error) {
-          console.error("Error fetching announcements:", error);
+    const fetchAnnouncements = async () => {
+      try {
+        const res = await fetch("/api/announcements");
+        if (res.ok) {
+          const data = await res.json();
+          setAnnouncements(data.announcements || []);
+          setUnreadCount(data.unreadCount || 0);
         }
-      };
-      fetchAnnouncements();
-    }
-  }, [showNotifications, announcements.length]);
+      } catch (error) {
+        console.error("Error fetching announcements:", error);
+      }
+    };
+    fetchAnnouncements();
+  }, []);
 
   // Mark announcement as read
   const markAsRead = async (announcementId: number) => {
@@ -311,7 +309,7 @@ const Navbar = () => {
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
               {isSearching ? "Searching..." : `Results for "${searchQuery}"`}
             </p>
-            {isSearching && <Loader2 className="w-4 h-4 text-nutoSlate animate-spin" />}
+            {isSearching && <Loader2 className="w-4 h-4 text-CPENavy animate-spin" />}
           </div>
 
           {!isSearching && searchResults.length === 0 && (
@@ -331,7 +329,7 @@ const Navbar = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.02 }}
                 onClick={() => handleNavigate(result.route)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-nutoSlate/10 transition-colors text-left group"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-CPENavy/10 transition-colors text-left group"
               >
                 {result.img ? (
                   <Image
@@ -371,10 +369,10 @@ const Navbar = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.03 }}
             onClick={() => handleSearch(cat.route)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-nutoSlate/10 transition-colors text-left group"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-CPENavy/10 transition-colors text-left group"
           >
-            <div className="p-2 rounded-lg bg-slate-100 group-hover:bg-nutoSlate/20 transition-colors">
-              <cat.icon className="w-4 h-4 text-nutoSlate" />
+            <div className="p-2 rounded-lg bg-slate-100 group-hover:bg-CPENavy/20 transition-colors">
+              <cat.icon className="w-4 h-4 text-CPENavy" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-slate-700">{cat.name}</p>
@@ -410,7 +408,7 @@ const Navbar = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowMobileSearch(true)}
-            className="md:hidden p-2.5 rounded-xl bg-slate-50 hover:bg-nutoSlate/10 border border-transparent hover:border-nutoSlate/20 transition-all duration-200"
+            className="md:hidden p-2.5 rounded-xl bg-slate-50 hover:bg-CPENavy/10 border border-transparent hover:border-CPENavy/20 transition-all duration-200"
           >
             <Search className="w-5 h-5 text-slate-500" />
           </motion.button>
@@ -418,7 +416,7 @@ const Navbar = () => {
 
         {/* Center - Mobile Logo (only visible on small screens) */}
         <Link href="/" className="md:hidden">
-          <Image src="/nutopass-logo.png" alt="NutoPass" width={70} height={70} className="mix-blend-multiply" />
+          <Image src="/cpeautomation-logo.png" alt="CPE Automation" width={70} height={70} className="mix-blend-multiply" />
         </Link>
 
 
@@ -433,10 +431,10 @@ const Navbar = () => {
                   : "0 0 0 rgba(0,0,0,0)",
               }}
               transition={{ duration: 0.2 }}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-nutoSlate/30 transition-colors"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-CPENavy/30 transition-colors"
             >
               <Search
-                className={`w-4 h-4 transition-colors ${searchFocused ? "text-nutoSlate" : "text-slate-400"}`}
+                className={`w-4 h-4 transition-colors ${searchFocused ? "text-CPENavy" : "text-slate-400"}`}
               />
               <input
                 ref={searchInputRef}
@@ -467,11 +465,11 @@ const Navbar = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-nutoSlate/5 to-transparent"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-CPENavy/5 to-transparent"
           >
-            <Sparkles className="w-4 h-4 text-nutoOrange" />
+            <Sparkles className="w-4 h-4 text-CPEGold" />
             <span className="text-slate-600 font-medium">{formatDate(currentTime)}</span>
-            <span className="text-nutoSlate font-semibold">{formatTime(currentTime)}</span>
+            <span className="text-CPENavy font-semibold">{formatTime(currentTime)}</span>
           </motion.div>
         </div>
 
@@ -483,10 +481,10 @@ const Navbar = () => {
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="relative p-2.5 rounded-xl bg-slate-50 hover:bg-nutoSlate/10 border border-transparent hover:border-nutoSlate/20 transition-all duration-200 group"
+              className="relative p-2.5 rounded-xl bg-slate-50 hover:bg-CPENavy/10 border border-transparent hover:border-CPENavy/20 transition-all duration-200 group"
             >
-              <MessageSquare className="w-5 h-5 text-slate-500 group-hover:text-nutoSlate transition-colors" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-nutoOrange rounded-full" />
+              <MessageSquare className="w-5 h-5 text-slate-500 group-hover:text-CPENavy transition-colors" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-CPEGold rounded-full" />
             </motion.div>
           </Link>
 
@@ -495,19 +493,19 @@ const Navbar = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2.5 rounded-xl bg-slate-50 hover:bg-nutoSlate/10 border border-transparent hover:border-nutoSlate/20 transition-all duration-200 group"
+            className="relative p-2.5 rounded-xl bg-slate-50 hover:bg-CPENavy/10 border border-transparent hover:border-CPENavy/20 transition-all duration-200 group"
           >
-            <Bell className="w-5 h-5 text-slate-500 group-hover:text-nutoSlate transition-colors" />
+            <Bell className="w-5 h-5 text-slate-500 group-hover:text-CPENavy transition-colors" />
             {unreadCount > 0 && (
               <>
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 flex items-center justify-center min-w-5 h-5 px-1 bg-gradient-to-br from-nutoOrange to-nutoOrangeDark text-white text-[10px] font-bold rounded-full shadow-lg shadow-nutoOrange/30"
+                  className="absolute -top-1 -right-1 flex items-center justify-center min-w-5 h-5 px-1 bg-gradient-to-br from-CPEGold to-CPEGoldDark text-white text-[10px] font-bold rounded-full shadow-lg shadow-CPEGold/30"
                 >
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </motion.span>
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-nutoOrange rounded-full animate-ping opacity-30" />
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-CPEGold rounded-full animate-ping opacity-30" />
               </>
             )}
           </motion.button>
@@ -524,15 +522,15 @@ const Navbar = () => {
               <span className="text-sm font-semibold text-slate-700 leading-tight">
                 {user?.firstName || user?.username || "User"}
               </span>
-              <span className="text-xs text-nutoSlate font-medium capitalize">
-                {(user?.publicMetadata?.role as string) || (user?.username === "admin1" ? "admin" : "Guest")}
+              <span className="text-xs text-CPENavy font-medium capitalize">
+                {(userRole === "teacher" ? "Lecturer" : userRole) || (user?.username === "admin1" ? "Admin" : "Guest")}
               </span>
             </div>
 
             <div className="relative">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="ring-2 ring-nutoSlate/20 ring-offset-2 rounded-full"
+                className="ring-2 ring-CPENavy/20 ring-offset-2 rounded-full"
               >
                 <UserButton
                   appearance={{
@@ -565,7 +563,7 @@ const Navbar = () => {
                 transition={{ duration: 0.2 }}
                 className="absolute top-16 right-4 md:right-6 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50"
               >
-                <div className="px-4 py-3 bg-gradient-to-r from-nutoSlate to-nutoSlateDark flex items-center justify-between">
+                <div className="px-4 py-3 bg-gradient-to-r from-CPENavy to-CPENavyDark flex items-center justify-between">
                   <div>
                     <h3 className="text-white font-semibold">Notifications</h3>
                     <p className="text-white/70 text-xs">
@@ -606,7 +604,7 @@ const Navbar = () => {
                           <div className="flex-1">
                             <p className="text-sm font-medium text-slate-700">{announcement.title}</p>
                             <p className="text-xs text-slate-500">{announcement.description}</p>
-                            <p className="text-xs text-nutoSlate mt-1">{timeAgo}</p>
+                            <p className="text-xs text-CPENavy mt-1">{timeAgo}</p>
                           </div>
                         </motion.div>
                       );
@@ -615,7 +613,7 @@ const Navbar = () => {
                 </div>
                 <div className="px-4 py-3 bg-slate-50 border-t border-slate-100">
                   <Link href="/list/announcements" className="block w-full text-center">
-                    <span className="text-sm font-medium text-nutoSlate hover:text-nutoSlateDark transition-colors">
+                    <span className="text-sm font-medium text-CPENavy hover:text-CPENavyDark transition-colors">
                       View all notifications
                     </span>
                   </Link>
@@ -643,7 +641,7 @@ const Navbar = () => {
             >
               {/* Search Input */}
               <form onSubmit={handleSearchSubmit} className="flex items-center gap-3 p-4 border-b border-slate-100">
-                <Search className="w-5 h-5 text-nutoSlate" />
+                <Search className="w-5 h-5 text-CPENavy" />
                 <input
                   ref={mobileSearchInputRef}
                   type="text"
