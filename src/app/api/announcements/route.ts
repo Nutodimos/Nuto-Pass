@@ -1,11 +1,11 @@
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
+        const { default: prisma } = await import("@/lib/prisma");
         const { userId, sessionClaims } = auth();
         const role = (sessionClaims?.metadata as { role?: string })?.role;
 
