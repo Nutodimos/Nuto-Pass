@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import Announcements from "@/components/Announcements";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import UserCard from "@/components/UserCard";
