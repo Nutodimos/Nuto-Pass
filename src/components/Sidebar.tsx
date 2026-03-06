@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Menu, X, Home, Users, GraduationCap, BookOpen, Calendar,
-    ClipboardList, Fingerprint, MessageSquare, Megaphone,
+    Menu, X, Home, Users, GraduationCap, BookOpen,
+    ClipboardList, Fingerprint, Megaphone,
     Settings, LogOut, Layers, ChevronLeft, Presentation
 } from "lucide-react";
 import Link from "next/link";
@@ -29,19 +29,16 @@ const menuItems: MenuSection[] = [
     {
         title: "MENU",
         items: [
-            { icon: Home, label: "Home", href: "/", visible: ["admin", "teacher", "student", "parent"] },
-            { icon: Fingerprint, label: "Attendance", href: "/list/attendance", visible: ["admin", "teacher", "student", "parent"] },
+            { icon: Home, label: "Home", href: "/", visible: ["admin", "teacher", "student"] },
+            { icon: Fingerprint, label: "Attendance", href: "/list/attendance", visible: ["admin", "teacher", "student"] },
             { icon: Users, label: "Lecturers", href: "/list/lecturers", visible: ["admin"] },
             { icon: GraduationCap, label: "Students", href: "/list/students", visible: ["admin", "teacher"] },
             { icon: BookOpen, label: "Courses", href: "/list/courses", visible: ["admin", "teacher", "student"] },
             { icon: Layers, label: "Levels", href: "/list/levels", visible: ["admin", "teacher"] },
             { icon: Presentation, label: "Lessons", href: "/list/lessons", visible: ["admin", "teacher", "student"] },
             { icon: BookOpen, label: "Materials", href: "/list/materials", visible: ["admin", "teacher", "student"] },
-            { icon: ClipboardList, label: "Assignments", href: "/list/assignments", visible: ["admin", "teacher", "student", "parent"] },
-            // { icon: Calendar, label: "Events", href: "/list/events", visible: ["admin", "teacher", "student", "parent"] },
-            { icon: MessageSquare, label: "Messages", href: "/list/messages", visible: ["admin", "teacher", "student", "parent"] },
-            { icon: Megaphone, label: "Announcements", href: "/list/announcements", visible: ["admin", "teacher", "student", "parent"] },
-
+            { icon: ClipboardList, label: "Assignments", href: "/list/assignments", visible: ["admin", "teacher", "student"] },
+            { icon: Megaphone, label: "Announcements", href: "/list/announcements", visible: ["admin", "teacher", "student"] },
         ],
     },
     {

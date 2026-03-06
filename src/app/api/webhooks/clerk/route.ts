@@ -76,7 +76,7 @@ export async function POST(req: Request) {
                 prisma.admin.delete({ where: { id } }).catch(() => null),
             ]);
 
-            console.log(`User ${id} deleted. Results:`, results);
+
 
             return NextResponse.json({ success: true, message: "User deleted from database" });
         }
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
                     data: updateData,
                 });
                 updated = true;
-                console.log(`Student ${id} updated`);
+
             } catch {
                 // Not a student, try teacher
             }
@@ -128,7 +128,7 @@ export async function POST(req: Request) {
                         data: updateData,
                     });
                     updated = true;
-                    console.log(`Teacher ${id} updated`);
+
                 } catch {
                     // Not a teacher, try admin
                 }
@@ -141,10 +141,9 @@ export async function POST(req: Request) {
                         data: { username },
                     });
                     updated = true;
-                    console.log(`Admin ${id} updated`);
+
                 } catch {
-                    // User not found in any table
-                    console.log(`User ${id} not found in any table`);
+                    console.error(`User ${id} not found in any table`);
                 }
             }
 

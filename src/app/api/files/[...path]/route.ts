@@ -117,9 +117,34 @@ export async function GET(
                     { status: 403 }
                 );
             }
-        }
+        } else if (category === "assignments") {
+            // Assignment submissions: students can only access their own, teachers can access course submissions
+            const submission = await prisma.assignmentSubmission.findFirst({
+                where: { submissionUrl: fileUrlPath },
+                include: { assignment: { include: { subject: { include: { teachers: { select: { id: true } } } } } } },
+            });
 
-        // TODO: Add access control for assignments category as needed
+            if (!submission) {
+                return NextResponse.json({ error: "Submission not found" }, { status: 404 });
+            }
+
+            if (role === "admin") {
+                // Admin can access everything
+            } else if (role === "teacher") {
+                // Teachers can access submissions for subjects they teach
+                const isTeacherOfSubject = submission.assignment.subject.teachers.some(t => t.id === userId);
+                if (!isTeacherOfSubject) {
+                    return NextResponse.json({ error: "Access denied." }, { status: 403 });
+                }
+            } else if (role === "student") {
+                // Students can only access their own submissions
+                if (submission.studentId !== userId) {
+                    return NextResponse.json({ error: "Access denied." }, { status: 403 });
+                }
+            } else {
+                return NextResponse.json({ error: "Access denied." }, { status: 403 });
+            }
+        }
         // Avatars are publicly accessible to any authenticated user (profile pictures)
 
         // Check if file exists on disk

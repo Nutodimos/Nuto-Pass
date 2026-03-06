@@ -1,6 +1,3 @@
-// IT APPEARS THAT BIG CALENDAR SHOWS THE LAST WEEK WHEN THE CURRENT DAY IS A WEEKEND.
-// FOR THIS REASON WE'LL GET THE LAST WEEK AS THE REFERENCE WEEK.
-// IN THE TUTORIAL WE'RE TAKING THE NEXT WEEK AS THE REFERENCE WEEK.
 
 const getLatestMonday = (): Date => {
   const today = new Date();
@@ -47,7 +44,7 @@ export const adjustScheduleToCurrentWeek = (
 export const handleActionError = (
   err: any
 ): { success: boolean; error: true; messages: string[] } => {
-  console.log("Action Error:", err);
+  console.error("Action Error:", err);
 
   // Prisma Unique Constraint Violation
   if (err.code === "P2002" && err.meta?.target) {

@@ -24,24 +24,13 @@ const deleteActionMap = {
   class: deleteClass,
   teacher: deleteTeacher,
   student: deleteStudent,
-  // exam: deleteExam, NO EXAMS
-  // TODO: OTHER DELETE ACTIONS
-  // parent: deleteSubject, NO PARENTS
   lesson: deleteLesson,
   assignment: deleteAssignment,
-  // result: deleteSubject, NO RESULTS
-  // attendance: deleteAttendance, TODO: IMPL
-  // event: deleteEvent, TODO: IMPL
   announcement: deleteAnnouncement,
-  assignmentSubmission: null, // Deletions aren't handled via UI for submissions
+  assignmentSubmission: null,
   material: deleteMaterial,
   courseEnrollment: null,
 };
-
-// USE LAZY LOADING
-
-// import TeacherForm from "./forms/TeacherForm";
-// import StudentForm from "./forms/StudentForm";
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
   ssr: false,

@@ -68,9 +68,6 @@ const AttendanceList = ({
         const interval = setInterval(() => {
             if (session?.status === "OPEN" && isToday) {
                 router.refresh();
-                // Note: We might want a more targeted refresh here for just attendance data,
-                // but router.refresh() will re-pull initialAttendance which we'd then need to sync.
-                // For now, if the session is open, we let NextJS handle the data hydration.
             }
         }, 5000);
 
@@ -81,8 +78,6 @@ const AttendanceList = ({
     useEffect(() => {
         const fetchHistoricalAttendance = async () => {
             if (isToday) {
-                // Return to initial props state or let server action handle it
-                // We don't necessarily want to wipe local optimistic updates if it's today
                 setIsLoadingHistory(true);
                 try {
                     const res = await fetch(`/api/attendance/history?lessonId=${lessonId}&date=${selectedDate}`);
@@ -164,11 +159,9 @@ const AttendanceList = ({
         });
 
         try {
-            // Pass the selectedDate to save it historically
             const result = await updateAttendance(lessonId, studentId, present, selectedDate);
             if (!result.success) {
                 toast.error("Failed to update attendance");
-                // Note: Realistically should rollback optimistic update here
             } else {
                 toast.success(isToday ? "Attendance updated" : "Historical record updated");
                 if (isToday) router.refresh();

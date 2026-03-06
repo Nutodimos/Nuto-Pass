@@ -17,17 +17,18 @@ export const metadata: Metadata = {
   title: "CPE Automation",
   description: "CPE Biometric attendance system / school management",
   manifest: "/manifest.json",
-  themeColor: "#0d9488",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "CPE Automation",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
+};
+
+export const viewport = {
+  themeColor: "#0d9488",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({

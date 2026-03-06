@@ -1,9 +1,0 @@
-
-model AttendanceSession {
-  id        Int      @id @default(autoincrement())
-  lessonId  Int
-  lesson    Lesson   @relation(fields: [lessonId], references: [id])
-  status    String   // "OPEN", "CLOSED"
-  startTime DateTime @default(now())
-  endTime   DateTime?
-}

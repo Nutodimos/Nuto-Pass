@@ -6,25 +6,20 @@ export const POST = async (req: NextRequest) => {
         const body = await req.json();
         const { biometricId, deviceSecret } = body;
 
-        // 1. Authentication (Device OR Admin/Teacher)
-        let isAuthenticated = false;
-        if (deviceSecret && deviceSecret === process.env.DEVICE_SECRET) {
-            isAuthenticated = true;
-        } else {
-            // Check Clerk Session if no device secret
-            // Note: In a real ESP32 scenario, it likely only sends deviceSecret. 
-            // This fallback is for testing or web-based manual entry if implemented.
-            // For strict security, we might want to separate these, but for now we allow both.
+        // Fail closed: reject if DEVICE_SECRET is not configured
+        if (!process.env.DEVICE_SECRET) {
+            return NextResponse.json(
+                { message: "Biometric authentication is not configured" },
+                { status: 503 }
+            );
         }
 
-        if (!isAuthenticated) {
-            // For simplicity, we'll enforce DEVICE_SECRET for now as per original code, 
-            // unless we really want the frontend "Scanner" to use this same endpoint 
-            // without a secret.
-            // Let's stick to DEVICE_SECRET for the hardware path.
-            if (deviceSecret !== process.env.DEVICE_SECRET) {
-                return NextResponse.json({ message: "Invalid Device Secret" }, { status: 401 });
-            }
+        // Validate device secret
+        if (!deviceSecret || deviceSecret !== process.env.DEVICE_SECRET) {
+            return NextResponse.json(
+                { message: "Invalid Device Secret" },
+                { status: 401 }
+            );
         }
 
         if (!biometricId) {
@@ -94,7 +89,7 @@ export const POST = async (req: NextRequest) => {
             { status: 201 }
         );
     } catch (error) {
-        console.log(error);
+        console.error("Biometric attendance error:", error);
         return NextResponse.json(
             { message: "Internal Server Error" },
             { status: 500 }

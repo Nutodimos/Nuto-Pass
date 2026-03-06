@@ -4,9 +4,6 @@ import LandingNavbar from "@/components/LandingNavbar";
 
 export default function Homepage() {
     const { userId, sessionClaims } = auth();
-    console.log(`Homepage: Role=${(sessionClaims?.metadata as any)?.role}, UserId=${userId}`);
-
-    // role is typed as string | undefined in metadata, but we cast to be safe
     const role = (sessionClaims?.metadata as { role?: string })?.role;
 
     if (userId && role) {

@@ -37,12 +37,10 @@ const LoginPage = () => {
         router.push("/");
         toast.success("Welcome back!");
       } else {
-        console.log(result);
         toast.info("Additional steps required for login.");
       }
     } catch (err: any) {
       console.error("Login error:", err);
-      // Clerk errors array
       const errorMessage = err.errors?.[0]?.message || "Invalid Matric No or Password";
       toast.error(errorMessage);
     } finally {

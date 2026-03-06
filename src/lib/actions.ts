@@ -19,10 +19,34 @@ import { handleActionError } from "./utils";
 
 type CurrentState = { success: boolean; error: boolean; messages?: string[] };
 
+/**
+ * Checks that the current user has one of the allowed roles.
+ * Returns the userId and role if authorized, otherwise returns an error state.
+ */
+const requireRole = (
+  allowedRoles: string[]
+): { authorized: true; userId: string; role: string } | { authorized: false; error: CurrentState } => {
+  const { userId, sessionClaims } = auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  if (!userId || !role) {
+    return { authorized: false, error: { success: false, error: true, messages: ["Not authenticated"] } };
+  }
+
+  if (!allowedRoles.includes(role)) {
+    return { authorized: false, error: { success: false, error: true, messages: ["Unauthorized: insufficient permissions"] } };
+  }
+
+  return { authorized: true, userId, role };
+};
+
 export const createSubject = async (
   currentState: CurrentState,
   data: SubjectSchema
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   try {
     await prisma.subject.create({
       data: {
@@ -45,6 +69,9 @@ export const updateSubject = async (
   currentState: CurrentState,
   data: SubjectSchema
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   try {
     await prisma.subject.update({
       where: {
@@ -70,8 +97,10 @@ export const deleteSubject = async (
   currentState: CurrentState,
   data: FormData
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   const id = data.get("id") as string;
-  console.log("Triggering Soft Delete for Subject ID:", id); // Next.js cache break
   try {
     await prisma.subject.update({
       where: {
@@ -93,6 +122,9 @@ export const createClass = async (
   currentState: CurrentState,
   data: ClassSchema
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   try {
     await prisma.class.create({
       data,
@@ -109,6 +141,9 @@ export const updateClass = async (
   currentState: CurrentState,
   data: ClassSchema
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   try {
     await prisma.class.update({
       where: {
@@ -128,6 +163,9 @@ export const deleteClass = async (
   currentState: CurrentState,
   data: FormData
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   const id = data.get("id") as string;
   try {
     await prisma.class.update({
@@ -150,6 +188,9 @@ export const createTeacher = async (
   currentState: CurrentState,
   data: TeacherSchema
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   try {
     const user = await clerkClient().users.createUser({
       username: data.username,
@@ -192,6 +233,9 @@ export const updateTeacher = async (
   currentState: CurrentState,
   data: TeacherSchema
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   if (!data.id) {
     return { success: false, error: true };
   }
@@ -204,7 +248,7 @@ export const updateTeacher = async (
         lastName: data.surname,
       });
     } catch (e) {
-      console.log("Clerk user update failed (ignorable for seed data):", e);
+      console.error("Clerk user update failed:", e);
     }
 
     await prisma.teacher.update({
@@ -240,13 +284,15 @@ export const deleteTeacher = async (
   currentState: CurrentState,
   data: FormData
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   const id = data.get("id") as string;
   try {
     try {
       await clerkClient().users.deleteUser(id);
     } catch (e) {
-      // User might not exist in Clerk (e.g. seed data), proceed to delete from DB
-      console.log("Clerk user delete failed (ignorable if user missing):", e);
+      console.error("Clerk user delete failed:", e);
     }
 
     await prisma.teacher.update({
@@ -269,14 +315,15 @@ export const createStudent = async (
   currentState: CurrentState,
   data: StudentSchema
 ) => {
-  console.log(data);
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
   try {
     const classItem = await prisma.class.findUnique({
       where: { id: data.classId },
       include: { _count: { select: { students: true } } },
     });
 
-    // Capacity check removed
+
 
 
     const user = await clerkClient().users.createUser({
@@ -317,6 +364,9 @@ export const updateStudent = async (
   currentState: CurrentState,
   data: StudentSchema
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   if (!data.id) {
     return { success: false, error: true };
   }
@@ -329,7 +379,7 @@ export const updateStudent = async (
         lastName: data.surname,
       });
     } catch (e) {
-      console.log("Clerk user update failed (ignorable for seed data):", e);
+      console.error("Clerk user update failed:", e);
     }
 
     await prisma.student.update({
@@ -362,12 +412,15 @@ export const deleteStudent = async (
   currentState: CurrentState,
   data: FormData
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   const id = data.get("id") as string;
   try {
     try {
       await clerkClient().users.deleteUser(id);
     } catch (e) {
-      console.log("Clerk user delete failed (ignorable if user missing):", e);
+      console.error("Clerk user delete failed (ignorable if user missing):", e);
     }
 
     await prisma.student.update({
@@ -391,6 +444,9 @@ export const createAssignment = async (
   currentState: CurrentState,
   data: AssignmentSchema
 ) => {
+  const authCheck = requireRole(["admin", "teacher"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   try {
     await prisma.assignment.create({
       data: {
@@ -414,6 +470,9 @@ export const updateAssignment = async (
   currentState: CurrentState,
   data: AssignmentSchema
 ) => {
+  const authCheck = requireRole(["admin", "teacher"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   try {
     await prisma.assignment.update({
       where: {
@@ -440,6 +499,9 @@ export const deleteAssignment = async (
   currentState: CurrentState,
   data: FormData
 ) => {
+  const authCheck = requireRole(["admin", "teacher"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   const id = data.get("id") as string;
   try {
     await prisma.assignment.delete({
@@ -459,6 +521,9 @@ export const createAssignmentSubmission = async (
   currentState: CurrentState,
   data: AssignmentSubmissionSchema
 ) => {
+  const authCheck = requireRole(["admin", "teacher", "student"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   try {
     // Uses upsert so a student can re-submit and overwrite their previous submission URL
     await prisma.assignmentSubmission.upsert({
@@ -491,6 +556,9 @@ export const gradeAssignmentSubmission = async (
   grade: number,
   feedback?: string
 ) => {
+  const authResult = requireRole(["admin", "teacher"]);
+  if (!authResult.authorized) return authResult.error;
+
   try {
     await prisma.assignmentSubmission.update({
       where: {
@@ -516,6 +584,8 @@ export const updateAttendance = async (
   present: boolean,
   dateStr?: string // Optional parameter for historical updates
 ) => {
+  const authResult = requireRole(["admin", "teacher"]);
+  if (!authResult.authorized) return authResult.error;
   try {
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
@@ -562,7 +632,7 @@ export const updateAttendance = async (
 
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return { success: false, error: true };
   }
 };
@@ -573,6 +643,9 @@ export const updateSchoolConfig = async (
   currentState: CurrentState,
   formData: FormData
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   const sessionYear = formData.get("sessionYear") as string;
   const currentSemester = formData.get("currentSemester") as string;
 
@@ -602,7 +675,7 @@ export const updateSchoolConfig = async (
     revalidatePath("/list/courses");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return { success: false, error: true, messages: ["Failed to update settings"] };
   }
 };
@@ -661,7 +734,7 @@ export const updateProfile = async (
     revalidatePath("/settings");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return { success: false, error: true, messages: ["Failed to update profile"] };
   }
 };
@@ -670,6 +743,9 @@ export const createAnnouncement = async (
   currentState: CurrentState,
   data: AnnouncementSchema
 ) => {
+  const authCheck = requireRole(["admin", "teacher"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   try {
     await prisma.announcement.create({
       data: {
@@ -693,6 +769,9 @@ export const updateAnnouncement = async (
   currentState: CurrentState,
   data: AnnouncementSchema
 ) => {
+  const authCheck = requireRole(["admin", "teacher"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   try {
     await prisma.announcement.update({
       where: {
@@ -719,6 +798,9 @@ export const deleteAnnouncement = async (
   currentState: CurrentState,
   data: FormData
 ) => {
+  const authCheck = requireRole(["admin", "teacher"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   const id = data.get("id") as string;
   try {
     await prisma.announcement.delete({
@@ -790,7 +872,7 @@ export const createMaterial = async (
     revalidatePath("/list/materials");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return { success: false, error: true };
   }
 };
@@ -801,6 +883,9 @@ export const deleteMaterial = async (
   currentState: CurrentState,
   data: FormData
 ) => {
+  const authCheck = requireRole(["admin", "teacher"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   const id = data.get("id") as string;
   try {
     await prisma.material.delete({
@@ -812,7 +897,7 @@ export const deleteMaterial = async (
     revalidatePath("/list/materials");
     return { success: true, error: false };
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return { success: false, error: true };
   }
 };
@@ -821,6 +906,9 @@ export const createLesson = async (
   currentState: CurrentState,
   data: LessonSchema
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   try {
     // Auto-generate lesson name from subject and class
     const [subject, classData] = await prisma.$transaction([
@@ -851,6 +939,9 @@ export const updateLesson = async (
   currentState: CurrentState,
   data: LessonSchema
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   try {
     // Auto-generate lesson name from subject and class
     const [subject, classData] = await prisma.$transaction([
@@ -884,6 +975,9 @@ export const deleteLesson = async (
   currentState: CurrentState,
   data: FormData
 ) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+
   const id = data.get("id") as string;
   try {
     await prisma.lesson.update({
