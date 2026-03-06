@@ -1,7 +1,7 @@
-import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 
 const Announcements = async () => {
+  const { default: prisma } = await import("@/lib/prisma");
   const { userId, sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 
@@ -37,8 +37,8 @@ const Announcements = async () => {
           data.map((announcement, index) => (
             <div
               key={announcement.id}
-              className={`rounded-xl p-4 border border-slate-100 hover:shadow-md transition-all duration-200 group ${index % 2 === 0 ? "bg-slate-50/50" : "bg-white"
-                }`}
+              className={`rounded - xl p - 4 border border - slate - 100 hover: shadow - md transition - all duration - 200 group ${index % 2 === 0 ? "bg-slate-50/50" : "bg-white"
+                } `}
             >
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-semibold text-slate-800 group-hover:text-CPENavy transition-colors line-clamp-1">{announcement.title}</h2>

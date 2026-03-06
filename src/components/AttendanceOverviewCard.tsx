@@ -1,7 +1,7 @@
-import prisma from "@/lib/prisma";
 import { TrendingUp, TrendingDown, Users, UserCheck, UserX } from "lucide-react";
 
 const AttendanceOverviewCard = async () => {
+    const { default: prisma } = await import("@/lib/prisma");
     // Get today's date range
     const today = new Date();
     today.setHours(0, 0, 0, 0);

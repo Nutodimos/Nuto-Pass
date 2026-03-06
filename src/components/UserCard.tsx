@@ -1,4 +1,3 @@
-import prisma from "@/lib/prisma";
 import Image from "next/image";
 import Link from "next/link";
 import { Users, GraduationCap, ShieldCheck } from "lucide-react";
@@ -8,6 +7,8 @@ const UserCard = async ({
 }: {
   type: "admin" | "teacher" | "student";
 }) => {
+  const { default: prisma } = await import("@/lib/prisma");
+
   const modelMap: Record<typeof type, any> = {
     admin: prisma.admin,
     teacher: prisma.teacher,
