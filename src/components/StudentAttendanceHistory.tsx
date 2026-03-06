@@ -1,6 +1,6 @@
-import prisma from "@/lib/prisma";
 
 const StudentAttendanceHistory = async ({ studentId }: { studentId: string }) => {
+  const { default: prisma } = await import("@/lib/prisma");
     const attendance = await prisma.attendance.findMany({
         where: {
             studentId: studentId,

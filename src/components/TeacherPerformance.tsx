@@ -1,6 +1,6 @@
-import prisma from "@/lib/prisma";
 
 const TeacherPerformance = async ({ teacherId }: { teacherId: string }) => {
+  const { default: prisma } = await import("@/lib/prisma");
     // Get lessons count for this teacher
     const lessonsCount = await prisma.lesson.count({
         where: { teacherId, isActive: true },

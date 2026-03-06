@@ -1,7 +1,7 @@
-import prisma from "@/lib/prisma";
 import LessonAttendanceCalendar from "./LessonAttendanceCalendar";
 
 const LessonAttendanceCalendarContainer = async ({ lessonId }: { lessonId: number }) => {
+  const { default: prisma } = await import("@/lib/prisma");
     // Fetch all attendance records for this lesson
     const attendanceRecords = await prisma.attendance.findMany({
         where: {

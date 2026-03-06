@@ -1,7 +1,7 @@
-import prisma from "@/lib/prisma";
 import { GraduationCap } from "lucide-react";
 
 const StudentPerformance = async ({ studentId }: { studentId: string }) => {
+  const { default: prisma } = await import("@/lib/prisma");
     // Get total attendance records for this student
     const totalAttendances = await prisma.attendance.count({
         where: { studentId },

@@ -1,4 +1,3 @@
-import prisma from "@/lib/prisma";
 import FormModal from "./FormModal";
 import { auth } from "@clerk/nextjs/server";
 
@@ -21,6 +20,7 @@ export type FormContainerProps = {
 };
 
 const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
+  const { default: prisma } = await import("@/lib/prisma");
   let relatedData = {};
 
   const { userId, sessionClaims } = await auth();

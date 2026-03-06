@@ -1,8 +1,8 @@
-import prisma from "@/lib/prisma";
 import AttendanceCalendar from "./AttendanceCalendar";
 import { auth } from "@clerk/nextjs/server";
 
 const AttendanceCalendarContainer = async ({ studentId }: { studentId: string }) => {
+  const { default: prisma } = await import("@/lib/prisma");
     const { sessionClaims, userId } = auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
 
