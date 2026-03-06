@@ -4,6 +4,8 @@ import { readFile, stat } from "fs/promises";
 import path from "path";
 import prisma from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 // MIME types for common file extensions
 const MIME_TYPES: Record<string, string> = {
     ".pdf": "application/pdf",
