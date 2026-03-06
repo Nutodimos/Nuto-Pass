@@ -1,8 +1,8 @@
+import prisma from "@/lib/prisma";
 import Image from "next/image";
 import AttendanceChart from "./AttendanceChart";
 
 const AttendanceChartContainer = async () => {
-    const { default: prisma } = await import("@/lib/prisma");
   const today = new Date();
   const dayOfWeek = today.getDay();
   const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;

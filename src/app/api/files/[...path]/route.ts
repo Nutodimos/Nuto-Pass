@@ -1,3 +1,4 @@
+import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { readFile, stat } from "fs/promises";
@@ -24,8 +25,7 @@ const MIME_TYPES: Record<string, string> = {
 export async function GET(
     request: NextRequest,
     { params }: { params: { path: string[] } }
-) { 
-    const { default: prisma } = await import("@/lib/prisma");
+) {
  
 
     try {

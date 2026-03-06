@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,7 +9,6 @@ import FormContainer from "@/components/FormContainer";
 import CsvImportModal from "@/components/CsvImportModal";
 
 const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
-  const { default: prisma } = await import("@/lib/prisma");
     // 1. Fetch Class Data & Relations
     const levelId = parseInt(params.id);
     if (isNaN(levelId)) return notFound();

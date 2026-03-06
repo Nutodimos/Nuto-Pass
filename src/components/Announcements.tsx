@@ -1,7 +1,7 @@
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 
 const Announcements = async () => {
-  const { default: prisma } = await import("@/lib/prisma");
   const { userId, sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 

@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+import prisma from "@/lib/prisma";
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import { auth } from "@clerk/nextjs/server";
@@ -8,7 +9,6 @@ import { Clock, BookOpen, ClipboardList, CalendarDays, ArrowRight, CheckCircle2 
 import Link from "next/link";
 
 const StudentPage = async () => {
-  const { default: prisma } = await import("@/lib/prisma");
   const { userId } = auth();
 
   const student = await prisma.student.findUnique({

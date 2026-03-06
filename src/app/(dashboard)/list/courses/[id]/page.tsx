@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { BookOpen, Users, Calendar, FileText, GraduationCap, Download, ExternalLink } from "lucide-react";
 import Image from "next/image";
@@ -10,7 +11,6 @@ const SingleCoursePage = async ({
 }: {
     params: { id: string };
 }) => {
-  const { default: prisma } = await import("@/lib/prisma");
     const { sessionClaims } = auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
 

@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { writeFile, mkdir } from "fs/promises";
@@ -23,8 +24,7 @@ function sanitizeFilename(filename: string): string {
         .substring(0, 100);
 }
 
-export async function POST(request: NextRequest) { 
-    const { default: prisma } = await import("@/lib/prisma");
+export async function POST(request: NextRequest) {
  
 
     try {

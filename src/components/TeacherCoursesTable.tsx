@@ -1,3 +1,4 @@
+import prisma from "@/lib/prisma";
 import { Subject, Teacher, Lesson } from "@prisma/client";
 import Link from "next/link";
 import { BookOpen, Users, ChevronLeft, ChevronRight } from "lucide-react";
@@ -20,7 +21,6 @@ const TeacherCoursesTable = async ({
   page = 1,
   baseUrl,
 }: TeacherCoursesTableProps) => {
-  const { default: prisma } = await import("@/lib/prisma");
   const [courses, count] = await prisma.$transaction([
     prisma.subject.findMany({
       where: {

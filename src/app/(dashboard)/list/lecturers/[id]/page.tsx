@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+import prisma from "@/lib/prisma";
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import FormContainer from "@/components/FormContainer";
@@ -20,7 +21,6 @@ const SingleTeacherPage = async ({
   params: { id: string };
   searchParams: { [key: string]: string | undefined };
 }) => {
-  const { default: prisma } = await import("@/lib/prisma");
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 

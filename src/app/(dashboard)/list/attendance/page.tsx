@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+import prisma from "@/lib/prisma";
 import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
 import { Class, Teacher, Grade } from "@prisma/client";
@@ -29,7 +30,6 @@ const AttendanceClassListPage = async ({
 }: {
     searchParams: { [key: string]: string | undefined };
 }) => {
-  const { default: prisma } = await import("@/lib/prisma");
     const { page, ...queryParams } = searchParams;
     const p = page ? parseInt(page) : 1;
 

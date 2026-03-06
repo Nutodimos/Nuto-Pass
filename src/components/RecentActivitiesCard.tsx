@@ -1,8 +1,8 @@
+import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { UserPlus, Megaphone, Clock, ArrowRight } from "lucide-react";
 
 const RecentActivitiesCard = async () => {
-    const { default: prisma } = await import("@/lib/prisma");
     // Fetch recent students (last 3)
     const recentStudents = await prisma.student.findMany({
         take: 3,

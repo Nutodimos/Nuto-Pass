@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+import prisma from "@/lib/prisma";
 import SettingsForm from "@/components/forms/SettingsForm";
 import ProfileSettings from "@/components/forms/ProfileSettings";
 import ThemeSettings from "@/components/forms/ThemeSettings";
@@ -11,7 +12,6 @@ import { Settings, User, Palette, Shield, Lock } from "lucide-react";
 import SettingsTabs from "./SettingsTabs";
 
 const SettingsPage = async () => {
-  const { default: prisma } = await import("@/lib/prisma");
     const { userId, sessionClaims } = auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
 

@@ -1,11 +1,11 @@
 export const dynamic = "force-dynamic";
+import prisma from "@/lib/prisma";
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { WebhookEvent } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request) { 
-    const { default: prisma } = await import("@/lib/prisma");
+export async function POST(req: Request) {
  
 
     // Get the webhook secret from environment variables
