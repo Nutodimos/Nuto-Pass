@@ -23,7 +23,10 @@ function sanitizeFilename(filename: string): string {
         .substring(0, 100);
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest) { 
+    const { default: prisma } = await import("@/lib/prisma");
+ 
+
     try {
         // Check authentication
         const { userId } = auth();

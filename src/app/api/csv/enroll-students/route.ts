@@ -3,14 +3,17 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/prisma";
 import Papa from "papaparse";
 
 type CsvEnrollRow = {
     matricNo: string;
 };
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest) { 
+    const { default: prisma } = await import("@/lib/prisma");
+ 
+ 
+
     try {
         const { userId, sessionClaims } = auth();
         if (!userId) {

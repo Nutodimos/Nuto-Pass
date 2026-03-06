@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { readFile, stat } from "fs/promises";
 import path from "path";
-import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +24,10 @@ const MIME_TYPES: Record<string, string> = {
 export async function GET(
     request: NextRequest,
     { params }: { params: { path: string[] } }
-) {
+) { 
+    const { default: prisma } = await import("@/lib/prisma");
+ 
+
     try {
         // Check authentication
         const { userId, sessionClaims } = auth();

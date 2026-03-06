@@ -1,9 +1,12 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest) { 
+    const { default: prisma } = await import("@/lib/prisma");
+ 
+ 
+
     const { searchParams } = new URL(req.url);
     const lessonId = searchParams.get("lessonId");
     const dateQuery = searchParams.get("date"); // YYYY-MM-DD
