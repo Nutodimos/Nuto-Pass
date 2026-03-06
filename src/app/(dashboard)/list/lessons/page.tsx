@@ -1,6 +1,6 @@
+export const dynamic = "force-dynamic";
 import FormContainer from "@/components/FormContainer";
 import TableSearch from "@/components/TableSearch";
-import prisma from "@/lib/prisma";
 import { Class, Lesson, Prisma, Subject, Teacher } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { BookOpen, Calendar, Clock, User, Users, Presentation } from "lucide-react";
@@ -17,6 +17,7 @@ const LessonListPage = async ({
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
+  const { default: prisma } = await import("@/lib/prisma");
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 

@@ -1,7 +1,7 @@
+export const dynamic = "force-dynamic";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
-import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma } from "@prisma/client";
 import Image from "next/image";
@@ -14,6 +14,7 @@ const AssignmentListPage = async ({
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
+  const { default: prisma } = await import("@/lib/prisma");
 
   const { userId, sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;

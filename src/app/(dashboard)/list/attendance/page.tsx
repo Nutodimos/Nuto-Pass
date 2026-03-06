@@ -1,6 +1,6 @@
+export const dynamic = "force-dynamic";
 import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
-import prisma from "@/lib/prisma";
 import { Class, Teacher, Grade } from "@prisma/client";
 import { Users, GraduationCap, UserCheck, ChevronRight, ClipboardCheck, BookOpen, CalendarDays, CheckCircle2, XCircle } from "lucide-react";
 import Image from "next/image";
@@ -29,6 +29,7 @@ const AttendanceClassListPage = async ({
 }: {
     searchParams: { [key: string]: string | undefined };
 }) => {
+  const { default: prisma } = await import("@/lib/prisma");
     const { page, ...queryParams } = searchParams;
     const p = page ? parseInt(page) : 1;
 

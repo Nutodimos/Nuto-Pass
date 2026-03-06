@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,6 +8,7 @@ import FormContainer from "@/components/FormContainer";
 import AssignmentGradeModal from "./AssignmentGradeModal";
 
 const AssignmentDetailsPage = async ({ params }: { params: { id: string } }) => {
+  const { default: prisma } = await import("@/lib/prisma");
     const assignmentId = parseInt(params.id);
 
     // 1. Fetch Assignment Data & Relations

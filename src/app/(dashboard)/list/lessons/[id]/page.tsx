@@ -1,5 +1,5 @@
+export const dynamic = "force-dynamic";
 import AttendanceList from "@/components/AttendanceList";
-import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -14,6 +14,7 @@ const SingleLessonPage = async ({
 }: {
     params: { id: string };
 }) => {
+  const { default: prisma } = await import("@/lib/prisma");
     const { sessionClaims } = auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = sessionClaims?.sub; // User ID from Clerk

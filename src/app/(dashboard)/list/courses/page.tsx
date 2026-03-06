@@ -1,8 +1,8 @@
+export const dynamic = "force-dynamic";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
 import CsvImportModal from "@/components/CsvImportModal";
-import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma, Subject, Teacher } from "@prisma/client";
 import { BookOpen, Users, Calendar, FileText, ChevronRight } from "lucide-react";
@@ -23,6 +23,7 @@ const CoursesPage = async ({
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
+  const { default: prisma } = await import("@/lib/prisma");
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
   const userId = sessionClaims?.sub;

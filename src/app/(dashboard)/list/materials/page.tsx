@@ -1,8 +1,8 @@
+export const dynamic = "force-dynamic";
 import FormContainer from "@/components/FormContainer";
 import TableSearch from "@/components/TableSearch";
 import Pagination from "@/components/Pagination";
 import MaterialCard from "@/components/MaterialCard";
-import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Material, Prisma, Subject, Class, Teacher } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
@@ -15,6 +15,7 @@ const MaterialListPage = async ({
 }: {
     searchParams: { [key: string]: string | undefined };
 }) => {
+  const { default: prisma } = await import("@/lib/prisma");
     const { userId, sessionClaims } = await auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = userId;

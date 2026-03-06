@@ -1,8 +1,8 @@
+export const dynamic = "force-dynamic";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
 import CsvImportModal from "@/components/CsvImportModal";
-import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Class, Grade, Prisma, Teacher } from "@prisma/client";
 import Image from "next/image";
@@ -24,6 +24,7 @@ const ClassListPage = async ({
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
+  const { default: prisma } = await import("@/lib/prisma");
 
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;

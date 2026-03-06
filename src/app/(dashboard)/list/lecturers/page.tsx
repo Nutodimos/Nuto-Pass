@@ -1,7 +1,7 @@
+export const dynamic = "force-dynamic";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
-import prisma from "@/lib/prisma";
 import { Class, Prisma, Subject, Teacher } from "@prisma/client";
 import { Users, BookOpen, GraduationCap, Mail, Phone, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -21,6 +21,7 @@ const LecturersPage = async ({
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
+  const { default: prisma } = await import("@/lib/prisma");
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 

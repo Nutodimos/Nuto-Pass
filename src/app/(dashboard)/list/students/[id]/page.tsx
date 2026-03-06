@@ -1,10 +1,10 @@
+export const dynamic = "force-dynamic";
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import FormContainer from "@/components/FormContainer";
 import StudentPerformance from "@/components/StudentPerformance";
 import AttendanceCalendarContainer from "@/components/AttendanceCalendarContainer";
 import SubjectAttendanceSummary from "@/components/SubjectAttendanceSummary";
-import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { Class, Student, Grade } from "@prisma/client";
 import { Mail, Phone, Droplets, Calendar, BookOpen, GraduationCap, Users } from "lucide-react";
@@ -17,6 +17,7 @@ const SingleStudentPage = async ({
 }: {
   params: { id: string };
 }) => {
+  const { default: prisma } = await import("@/lib/prisma");
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 
