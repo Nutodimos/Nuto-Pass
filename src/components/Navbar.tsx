@@ -11,7 +11,6 @@ import { MobileMenuButton } from "./Sidebar";
 import {
   Search,
   Bell,
-  MessageSquare,
   Sparkles,
   Command,
   X,
@@ -235,23 +234,9 @@ const Navbar = () => {
     fetchAnnouncements();
   }, []);
 
-  // Mark announcement as read
-  const markAsRead = async (announcementId: number) => {
-    try {
-      const res = await fetch("/api/announcements/read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ announcementId }),
-      });
-
-      if (res.ok) {
-        // Remove from unread list
-        setAnnouncements(prev => prev.filter(a => a.id !== announcementId));
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
-    } catch (error) {
-      console.error("Error marking announcement as read:", error);
-    }
+  const markAsRead = (announcementId: number) => {
+    setAnnouncements(prev => prev.filter(a => a.id !== announcementId));
+    setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
   const handleSearch = (route: string) => {
@@ -475,19 +460,6 @@ const Navbar = () => {
 
         {/* Right Section - Icons and User */}
         <div className="flex items-center gap-2">
-          {/* Messages Button */}
-          {/* Messages Button */}
-          <Link href="/list/messages">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative p-2.5 rounded-xl bg-slate-50 hover:bg-CPENavy/10 border border-transparent hover:border-CPENavy/20 transition-all duration-200 group"
-            >
-              <MessageSquare className="w-5 h-5 text-slate-500 group-hover:text-CPENavy transition-colors" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-CPEGold rounded-full" />
-            </motion.div>
-          </Link>
-
           {/* Announcements Button */}
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -622,51 +594,53 @@ const Navbar = () => {
             </>
           )}
         </AnimatePresence>
-      </motion.div>
+      </motion.div >
 
       {/* Mobile Search Modal */}
       <AnimatePresence>
-        {showMobileSearch && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 md:hidden"
-          >
+        {
+          showMobileSearch && (
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-white m-4 rounded-2xl shadow-2xl overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 md:hidden"
             >
-              {/* Search Input */}
-              <form onSubmit={handleSearchSubmit} className="flex items-center gap-3 p-4 border-b border-slate-100">
-                <Search className="w-5 h-5 text-CPENavy" />
-                <input
-                  ref={mobileSearchInputRef}
-                  type="text"
-                  placeholder="Search students, classes, lessons..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent outline-none text-base text-slate-700 placeholder:text-slate-400"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowMobileSearch(false)}
-                  className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-                >
-                  <X className="w-5 h-5 text-slate-400" />
-                </button>
-              </form>
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="bg-white m-4 rounded-2xl shadow-2xl overflow-hidden"
+              >
+                {/* Search Input */}
+                <form onSubmit={handleSearchSubmit} className="flex items-center gap-3 p-4 border-b border-slate-100">
+                  <Search className="w-5 h-5 text-CPENavy" />
+                  <input
+                    ref={mobileSearchInputRef}
+                    type="text"
+                    placeholder="Search students, classes, lessons..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 bg-transparent outline-none text-base text-slate-700 placeholder:text-slate-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowMobileSearch(false)}
+                    className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                  >
+                    <X className="w-5 h-5 text-slate-400" />
+                  </button>
+                </form>
 
-              {/* Mobile Search Results */}
-              <div className="max-h-[60vh] overflow-y-auto">
-                <SearchResults isMobile />
-              </div>
+                {/* Mobile Search Results */}
+                <div className="max-h-[60vh] overflow-y-auto">
+                  <SearchResults isMobile />
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )
+        }
+      </AnimatePresence >
     </>
   );
 };
