@@ -1,12 +1,13 @@
 {
-  "name": "NutoPass",
+  "name": "nuto-pass",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@clerk/elements": "^0.14.6",
