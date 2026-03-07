@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
     try {
-        const { userId, sessionClaims } = auth();
+        let userId, sessionClaims; try { const a = auth(); userId = a.userId; sessionClaims = a.sessionClaims; } catch(e) {}
         const role = (sessionClaims?.metadata as { role?: string })?.role;
 
         if (!role || !userId) {
