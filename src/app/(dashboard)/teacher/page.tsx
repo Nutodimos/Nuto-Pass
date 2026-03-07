@@ -2,14 +2,14 @@ export const dynamic = "force-dynamic";
 import prisma from "@/lib/prisma";
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { Day, Prisma } from "@prisma/client";
 import Image from "next/image";
 import { Clock, BookOpen, ClipboardList, CalendarDays, ArrowRight, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 const TeacherPage = async () => {
-  const { userId } = auth();
+  const { userId } = auth(); const user = await currentUser();
 
   const teacher = await prisma.teacher.findUnique({
     where: { id: userId! },
@@ -92,7 +92,7 @@ const TeacherPage = async () => {
               </div>
               <div className="text-white">
                 <p className="text-white/80 text-sm font-medium mb-1 uppercase tracking-wider">Welcome back,</p>
-                <h1 className="text-3xl font-bold tracking-tight">{teacher?.name} {teacher?.surname}</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{teacher?.name || user?.firstName} {teacher?.surname || user?.lastName}</h1>
               </div>
             </div>
 
