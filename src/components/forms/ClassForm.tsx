@@ -38,7 +38,7 @@ const ClassForm = ({
   } = useForm<ClassSchema>({
     resolver: zodResolver(classSchema),
     defaultValues: {
-      gradeId: data?.gradeId || relatedData?.grades?.[0]?.id,
+      gradeId: 1, // Always use the single grade record
       supervisorId: data?.supervisorId || relatedData?.teachers?.[0]?.id,
       name: data?.name || "",
       id: data?.id,
@@ -72,7 +72,7 @@ const ClassForm = ({
     }
   }, [state, router, type, setOpen]);
 
-  const { teachers, grades } = relatedData;
+  const { teachers } = relatedData;
 
   return (
     <form className="flex flex-col gap-6" onSubmit={onSubmit}>
@@ -129,29 +129,8 @@ const ClassForm = ({
             </p>
           )}
         </div>
-        <div className="hidden">
-          <label className="text-sm font-medium text-CPENavyDark">Grade</label>
-          <select
-            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
-            {...register("gradeId")}
-            defaultValue={data?.gradeId || grades[0]?.id}
-          >
-            {grades.map((grade: { id: number; level: number }) => (
-              <option
-                value={grade.id}
-                key={grade.id}
-                selected={data && grade.id === data.gradeId}
-              >
-                {grade.level}
-              </option>
-            ))}
-          </select>
-          {errors.gradeId?.message && (
-            <p className="text-xs text-red-400">
-              {errors.gradeId.message.toString()}
-            </p>
-          )}
-        </div>
+        {/* gradeId is hardcoded to 1 — hidden input keeps schema happy */}
+        <input type="hidden" {...register("gradeId")} value={data?.gradeId ?? 1} />
       </div>
       {state.error && (
         <div className="flex flex-col gap-1 p-3 rounded-xl bg-red-50 border border-red-200">
