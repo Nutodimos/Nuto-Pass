@@ -93,7 +93,7 @@ const SubjectForm = ({
             multiple
             className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200 min-h-[100px]"
             {...register("teachers")}
-            defaultValue={data?.teachers}
+            defaultValue={data?.teachers?.map((t: { id: string }) => t.id) || []}
           >
             {teachers.map(
               (teacher: { id: string; name: string; surname: string }) => (
