@@ -244,7 +244,7 @@ const AttendanceClassListPage = async ({
     }
 
     // ========== ADMIN VIEW: Show Classes (original) ==========
-    const query: any = {};
+    const query: any = { isActive: true };
 
     if (queryParams) {
         for (const [key, value] of Object.entries(queryParams)) {

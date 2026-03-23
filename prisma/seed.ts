@@ -3,63 +3,51 @@ const prisma = new PrismaClient();
 
 async function main() {
   // ADMIN
-  await prisma.admin.create({
-    data: {
-      id: "admin1",
-      username: "admin1",
-    },
-  });
-  await prisma.admin.create({
-    data: {
-      id: "admin2",
-      username: "admin2",
-    },
-  });
+  await prisma.admin.upsert({ where: { id: "admin1" }, update: {}, create: { id: "admin1", username: "admin1" } });
+  await prisma.admin.upsert({ where: { id: "admin2" }, update: {}, create: { id: "admin2", username: "admin2" } });
 
-  // GRADE (Internal - corresponds to 100L, 200L, etc.)
+  // GRADE — always seed levels (100L–500L). id=1 is relied on by ClassForm.
   const levels = [100, 200, 300, 400, 500];
   for (const level of levels) {
-    await prisma.grade.create({
-      data: {
-        level: level,
-      },
+    await prisma.grade.upsert({
+      where: { level },
+      update: {},
+      create: { level },
     });
   }
 
-  // CLASS (Level names visible to users)
-  const gradeRecords = await prisma.grade.findMany({ orderBy: { level: 'asc' } });
+  // CLASS — one per grade (e.g. "100L", "200L", etc.)
+  const gradeRecords = await prisma.grade.findMany({ orderBy: { level: "asc" } });
   for (const grade of gradeRecords) {
-    await prisma.class.create({
-      data: {
-        name: `${grade.level}L`,
-        gradeId: grade.id,
-      },
+    const name = `${grade.level}L`;
+    await prisma.class.upsert({
+      where: { name },
+      update: {},
+      create: { name, gradeId: grade.id },
     });
   }
 
   // SUBJECT
-  const subjectData = [
-    { name: "Mathematics" },
-    { name: "Science" },
-    { name: "English" },
-    { name: "History" },
-    { name: "Geography" },
-    { name: "Physics" },
-    { name: "Chemistry" },
-    { name: "Biology" },
-    { name: "Computer Science" },
-    { name: "Art" },
+  const subjectNames = [
+    "Mathematics", "Science", "English", "History", "Geography",
+    "Physics", "Chemistry", "Biology", "Computer Science", "Art",
   ];
-
-  for (const subject of subjectData) {
-    await prisma.subject.create({ data: subject });
+  for (const name of subjectNames) {
+    await prisma.subject.upsert({ where: { name }, update: {}, create: { name } });
   }
 
-  // TEACHER
+  // TEACHER — fetch real class/subject IDs dynamically
+  const classRecords = await prisma.class.findMany({ orderBy: { id: "asc" } });
+  const subjectRecords = await prisma.subject.findMany({ orderBy: { id: "asc" } });
+
   for (let i = 1; i <= 15; i++) {
-    await prisma.teacher.create({
-      data: {
-        id: `teacher${i}`, // Unique ID for the teacher
+    const classId = classRecords[(i % classRecords.length)]?.id;
+    const subjectId = subjectRecords[(i % subjectRecords.length)]?.id;
+    await prisma.teacher.upsert({
+      where: { id: `teacher${i}` },
+      update: {},
+      create: {
+        id: `teacher${i}`,
         username: `teacher${i}`,
         name: `TName${i}`,
         surname: `TSurname${i}`,
@@ -68,95 +56,106 @@ async function main() {
         address: `Address${i}`,
         bloodType: "A+",
         sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
-        subjects: { connect: [{ id: (i % 10) + 1 }] },
-        classes: { connect: [{ id: (i % 5) + 1 }] },
+        ...(subjectId ? { subjects: { connect: [{ id: subjectId }] } } : {}),
+        ...(classId ? { classes: { connect: [{ id: classId }] } } : {}),
         birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 30)),
       },
     });
   }
 
   // LESSON
+  const teacherRecords = await prisma.teacher.findMany({ orderBy: { id: "asc" } });
   for (let i = 1; i <= 30; i++) {
-    await prisma.lesson.create({
-      data: {
-        name: `Lesson${i}`,
-        day: Day[
-          Object.keys(Day)[
-          Math.floor(Math.random() * Object.keys(Day).length)
-          ] as keyof typeof Day
-        ],
-        startTime: new Date(new Date().setHours(new Date().getHours() + 1)),
-        endTime: new Date(new Date().setHours(new Date().getHours() + 3)),
-        subjectId: (i % 10) + 1,
-        classId: (i % 5) + 1,
-        teacherId: `teacher${(i % 15) + 1}`,
-      },
-    });
+    const existing = await prisma.lesson.findFirst({ where: { name: `Lesson${i}` } });
+    if (!existing) {
+      const cId = classRecords[(i % classRecords.length)]?.id;
+      const sId = subjectRecords[(i % subjectRecords.length)]?.id;
+      const tId = teacherRecords[(i % teacherRecords.length)]?.id;
+      if (!cId || !sId || !tId) continue;
+      await prisma.lesson.create({
+        data: {
+          name: `Lesson${i}`,
+          day: Day[Object.keys(Day)[Math.floor(Math.random() * Object.keys(Day).length)] as keyof typeof Day],
+          startTime: new Date(new Date().setHours(new Date().getHours() + 1)),
+          endTime: new Date(new Date().setHours(new Date().getHours() + 3)),
+          subjectId: sId,
+          classId: cId,
+          teacherId: tId,
+        },
+      });
+    }
   }
 
-
-
   // STUDENT
+  const firstGrade = gradeRecords[0];
+  const firstClass = classRecords[0];
   for (let i = 1; i <= 50; i++) {
-    await prisma.student.create({
-      data: {
+    const gId = gradeRecords[(i % gradeRecords.length)]?.id ?? firstGrade?.id;
+    const cId = classRecords[(i % classRecords.length)]?.id ?? firstClass?.id;
+    await prisma.student.upsert({
+      where: { id: `student${i}` },
+      update: {},
+      create: {
         id: `student${i}`,
         username: `student${i}`,
         name: `SName${i}`,
-        surname: `SSurname ${i}`,
+        surname: `SSurname${i}`,
         email: `student${i}@example.com`,
         phone: `987-654-321${i}`,
         address: `Address${i}`,
         bloodType: "O-",
         sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
-
-        gradeId: (i % 5) + 1,
-        classId: (i % 5) + 1,
-        birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 10)),
+        gradeId: gId,
+        classId: cId,
+        birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 20)),
       },
     });
   }
-
-
 
   // ASSIGNMENT
   for (let i = 1; i <= 10; i++) {
-    await prisma.assignment.create({
-      data: {
-        title: `Assignment ${i}`,
-        startDate: new Date(new Date().setHours(new Date().getHours() + 1)),
-        dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-        subjectId: (i % 10) + 1,
-      },
-    });
+    const existing = await prisma.assignment.findFirst({ where: { title: `Assignment ${i}` } });
+    if (!existing) {
+      await prisma.assignment.create({
+        data: {
+          title: `Assignment ${i}`,
+          startDate: new Date(new Date().setHours(new Date().getHours() + 1)),
+          dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+          subjectId: (i % 10) + 1,
+        },
+      });
+    }
   }
-
-
 
   // ATTENDANCE
-  for (let i = 1; i <= 10; i++) {
-    await prisma.attendance.create({
-      data: {
-        date: new Date(),
-        present: true,
-        studentId: `student${i}`,
-        lessonId: (i % 30) + 1,
-      },
-    });
+  const lessonRecords = await prisma.lesson.findMany({ orderBy: { id: "asc" } });
+  const studentRecords = await prisma.student.findMany({ orderBy: { id: "asc" } });
+  for (let i = 0; i < Math.min(10, lessonRecords.length, studentRecords.length); i++) {
+    const lessonId = lessonRecords[i]?.id;
+    const studentId = studentRecords[i]?.id;
+    if (!lessonId || !studentId) continue;
+    const existing = await prisma.attendance.findFirst({ where: { studentId, lessonId } });
+    if (!existing) {
+      await prisma.attendance.create({
+        data: { date: new Date(), present: true, studentId, lessonId },
+      });
+    }
   }
-
-
 
   // ANNOUNCEMENT
   for (let i = 1; i <= 5; i++) {
-    await prisma.announcement.create({
-      data: {
-        title: `Announcement ${i}`,
-        description: `Description for Announcement ${i}`,
-        date: new Date(),
-        classId: (i % 5) + 1,
-      },
-    });
+    const classId = classRecords[(i % classRecords.length)]?.id;
+    const existing = await prisma.announcement.findFirst({ where: { title: `Announcement ${i}` } });
+    if (!existing) {
+      await prisma.announcement.create({
+        data: {
+          title: `Announcement ${i}`,
+          description: `Description for Announcement ${i}`,
+          date: new Date(),
+          ...(classId ? { classId } : {}),
+        },
+      });
+    }
   }
 
   console.log("Seeding completed successfully.");
