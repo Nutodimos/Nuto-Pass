@@ -67,6 +67,8 @@ const ClassForm = ({
       toast(`Level has been ${type === "create" ? "created" : "updated"}!`);
       setOpen(false);
       router.refresh();
+    } else if (state.error) {
+      toast.error((state as any).messages ? (state as any).messages.join("\n") : "Something went wrong!");
     }
   }, [state, router, type, setOpen]);
 
@@ -152,7 +154,16 @@ const ClassForm = ({
         </div>
       </div>
       {state.error && (
-        <span className="text-red-500">Something went wrong!</span>
+        <div className="flex flex-col gap-1 p-3 rounded-xl bg-red-50 border border-red-200">
+          <p className="text-sm font-semibold text-red-700">Please fix the following errors:</p>
+          {(state as any).messages ? (
+            (state as any).messages.map((msg: string, i: number) => (
+              <p key={i} className="text-sm text-red-600">• {msg}</p>
+            ))
+          ) : (
+            <p className="text-sm text-red-600">• Something went wrong. Please try again.</p>
+          )}
+        </div>
       )}
       <button
         type="submit"
