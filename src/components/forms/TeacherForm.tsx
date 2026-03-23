@@ -145,7 +145,7 @@ const TeacherForm = ({
         <InputField
           label="Birthday (Optional)"
           name="birthday"
-          defaultValue={data?.birthday.toISOString().split("T")[0]}
+          defaultValue={data?.birthday ? new Date(data.birthday).toISOString().split("T")[0] : ""}
           register={register}
           error={errors.birthday}
           type="date"
