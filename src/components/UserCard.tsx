@@ -59,7 +59,7 @@ const UserCard = async ({
   const Icon = style.icon;
 
   return (
-    <div className="group relative rounded-2xl p-6 flex-1 min-w-[200px] overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+    <div className="group relative rounded-xl md:rounded-2xl p-3 md:p-6 flex-1 min-w-[100px] md:min-w-[200px] overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
       {/* Gradient Background */}
       <div className={`absolute inset-0 ${style.bg} opacity-100 group-hover:opacity-90 transition-opacity`}></div>
 
@@ -70,16 +70,16 @@ const UserCard = async ({
       {/* Content */}
       <div className="relative z-10">
         {/* Header */}
-        <div className="flex justify-between items-start mb-6">
-          <div className={`p-3 rounded-xl ${style.iconBg} backdrop-blur-sm`}>
-            <Icon className="w-6 h-6 text-white" />
+        <div className="flex justify-between items-start mb-2 md:mb-6">
+          <div className={`p-2 md:p-3 rounded-lg md:rounded-xl ${style.iconBg} backdrop-blur-sm`}>
+            <Icon className="w-4 h-4 md:w-6 md:h-6 text-white" />
           </div>
           <Link
             href={linkMap[type]}
-            className="p-2 hover:bg-white/20 rounded-lg transition-all duration-200 group/link"
+            className="p-1.5 md:p-2 hover:bg-white/20 rounded-lg transition-all duration-200 group/link"
           >
             <svg
-              className="w-5 h-5 text-white/70 group-hover/link:text-white transition-colors"
+              className="w-4 h-4 md:w-5 md:h-5 text-white/70 group-hover/link:text-white transition-colors"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -90,17 +90,17 @@ const UserCard = async ({
         </div>
 
         {/* Count */}
-        <div className="mb-4">
-          <h1 className="text-5xl font-extrabold text-white mb-1 tracking-tight">
+        <div className="mb-1 md:mb-4">
+          <h1 className="text-2xl md:text-5xl font-extrabold text-white mb-0.5 tracking-tight">
             {data}
           </h1>
-          <h2 className="text-white/90 text-sm font-medium uppercase tracking-wider">
+          <h2 className="text-white/90 text-[10px] md:text-sm font-medium uppercase tracking-wider">
             {style.label}
           </h2>
         </div>
 
         {/* Session & Semester Badges */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="hidden md:flex items-center gap-2 flex-wrap">
           <span className="text-[10px] bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-white font-medium">
             {sessionYear}
           </span>

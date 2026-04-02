@@ -81,18 +81,18 @@ const StudentPage = async () => {
   });
 
   return (
-    <div className="flex-1 p-4 flex gap-8 flex-col xl:flex-row bg-CPENavy/5 min-h-screen">
+    <div className="flex-1 p-3 md:p-4 flex gap-4 md:gap-8 flex-col xl:flex-row bg-CPENavy/5 min-h-screen">
       {/* LEFT COLUMN */}
-      <div className="w-full xl:w-2/3 flex flex-col gap-8">
+      <div className="w-full xl:w-2/3 flex flex-col gap-4 md:gap-8">
 
         {/* HERO SECTION */}
-        <div className="relative shrink-0 overflow-hidden rounded-3xl bg-gradient-to-br from-CPENavy to-CPENavyDark p-8 shadow-xl shadow-CPENavy/10 border border-CPENavy/20">
+        <div className="relative shrink-0 overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-CPENavy to-CPENavyDark p-4 md:p-8 shadow-xl shadow-CPENavy/10 border border-CPENavy/20">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full pointer-events-none filter blur-2xl transform translate-x-1/2 -translate-y-1/2"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-CPEGold/20 rounded-full pointer-events-none filter blur-2xl transform -translate-x-1/2 translate-y-1/2"></div>
 
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-6">
-              <div className="w-20 h-20 rounded-2xl bg-white/10 p-1 flex items-center justify-center backdrop-blur-sm border border-white/20">
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-6">
+            <div className="flex items-center gap-3 md:gap-6">
+              <div className="w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-2xl bg-white/10 p-1 flex items-center justify-center backdrop-blur-sm border border-white/20">
                 <div className="w-full h-full rounded-xl overflow-hidden relative">
                   <Image
                     src={student?.img || "/noAvatar.png"}
@@ -103,12 +103,12 @@ const StudentPage = async () => {
                 </div>
               </div>
               <div className="text-white">
-                <p className="text-white/80 text-sm font-medium mb-1 uppercase tracking-wider">Welcome back,</p>
-                <h1 className="text-3xl font-bold tracking-tight">{student?.name} {student?.surname}</h1>
+                <p className="text-white/80 text-xs md:text-sm font-medium mb-0.5 md:mb-1 uppercase tracking-wider">Welcome back,</p>
+                <h1 className="text-xl md:text-3xl font-bold tracking-tight">{student?.name} {student?.surname}</h1>
               </div>
             </div>
 
-            <div className="flex bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 items-center gap-4">
+            <div className="hidden md:flex bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 items-center gap-4">
               <div className="p-3 bg-white/20 rounded-xl">
                 <CalendarDays className="w-6 h-6 text-white" />
               </div>
@@ -123,40 +123,40 @@ const StudentPage = async () => {
         </div>
 
         {/* QUICK STATS */}
-        <div className="flex flex-col md:flex-row gap-6 shrink-0">
-          <Link href="/list/courses" className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-CPEGold/30 hover:-translate-y-1 transition-all group">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 shrink-0">
+          <Link href="/list/courses" className="flex-1 bg-white p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-CPEGold/30 hover:-translate-y-1 transition-all group">
             <div>
-              <p className="text-sm font-semibold text-gray-500 mb-1">Enrolled Courses</p>
-              <h2 className="text-3xl font-bold text-CPENavyDark group-hover:text-CPEGold transition-colors">{enrolledCourseCount}</h2>
+              <p className="text-xs md:text-sm font-semibold text-gray-500 mb-0.5 md:mb-1">Enrolled Courses</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-CPENavyDark group-hover:text-CPEGold transition-colors">{enrolledCourseCount}</h2>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-CPEGold/10 flex items-center justify-center group-hover:bg-CPEGold/20 transition-colors">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-CPEGold/10 flex items-center justify-center group-hover:bg-CPEGold/20 transition-colors">
               <BookOpen className="w-6 h-6 text-CPEGold" />
             </div>
           </Link>
 
-          <div className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-CPENavy/30 hover:-translate-y-1 transition-all group">
+          <div className="flex-1 bg-white p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-CPENavy/30 hover:-translate-y-1 transition-all group">
             <div>
-              <p className="text-sm font-semibold text-gray-500 mb-1">Attendance Rate</p>
-              <h2 className="text-3xl font-bold text-CPENavyDark group-hover:text-CPENavy transition-colors">{attendanceRate}%</h2>
+              <p className="text-xs md:text-sm font-semibold text-gray-500 mb-0.5 md:mb-1">Attendance Rate</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-CPENavyDark group-hover:text-CPENavy transition-colors">{attendanceRate}%</h2>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-CPENavy/10 flex items-center justify-center group-hover:bg-CPENavy/20 transition-colors">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-CPENavy/10 flex items-center justify-center group-hover:bg-CPENavy/20 transition-colors">
               <CheckCircle2 className="w-6 h-6 text-CPENavy" />
             </div>
           </div>
 
-          <Link href="/list/assignments" className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-green-300 hover:-translate-y-1 transition-all group">
+          <Link href="/list/assignments" className="col-span-2 md:col-span-1 bg-white p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-green-300 hover:-translate-y-1 transition-all group">
             <div>
-              <p className="text-sm font-semibold text-gray-500 mb-1">Pending Assignments</p>
-              <h2 className="text-3xl font-bold text-CPENavyDark group-hover:text-green-600 transition-colors">{assignmentsCount}</h2>
+              <p className="text-xs md:text-sm font-semibold text-gray-500 mb-0.5 md:mb-1">Pending Assignments</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-CPENavyDark group-hover:text-green-600 transition-colors">{assignmentsCount}</h2>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">
               <ClipboardList className="w-6 h-6 text-green-500" />
             </div>
           </Link>
         </div>
 
         {/* CALENDAR SECTION */}
-        <div className="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 min-h-[500px]">
+        <div className="hidden md:block flex-1 bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 min-h-[350px] md:min-h-[500px]">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-xl font-bold text-CPENavyDark">Your Schedule {student?.class && `(${student.class.name})`}</h1>
             <Link href="/list/lessons" className="text-sm font-medium text-CPENavy hover:underline flex items-center gap-1">
@@ -176,7 +176,7 @@ const StudentPage = async () => {
       </div>
 
       {/* RIGHT COLUMN */}
-      <div className="w-full xl:w-1/3 flex flex-col gap-8">
+      <div className="w-full xl:w-1/3 flex flex-col gap-4 md:gap-8">
 
         {/* TODAY'S LESSONS WIDGET */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">

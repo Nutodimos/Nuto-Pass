@@ -261,7 +261,7 @@ const AnnouncementListPage = async ({
       {/* FLOATING ACTION BUTTON (FAB) - For admin and teacher */}
       {
         (role === "admin" || role === "teacher") && (
-          <div className="fixed bottom-8 right-8 z-50 group">
+          <div className="fixed bottom-24 md:bottom-8 right-8 z-50 group">
             <div className="relative">
               {/* Pulsing ring effect */}
               <div className="absolute inset-0 bg-CPEGold rounded-full animate-ping opacity-75"></div>

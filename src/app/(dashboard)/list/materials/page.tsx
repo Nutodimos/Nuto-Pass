@@ -258,7 +258,7 @@ const MaterialListPage = async ({
 
             {/* FLOATING ACTION BUTTON */}
             {(role === "admin" || role === "teacher") && (
-                <div className="fixed bottom-8 right-8 z-50 group">
+                <div className="fixed bottom-24 md:bottom-8 right-8 z-50 group">
                     <div className="relative">
                         <div className="absolute inset-0 bg-CPEGold rounded-full animate-ping opacity-75"></div>
                         <div className="relative">
