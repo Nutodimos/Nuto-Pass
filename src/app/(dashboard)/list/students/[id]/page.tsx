@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 import prisma from "@/lib/prisma";
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";

@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { BookOpen, Users, Calendar, FileText, GraduationCap, Download, ExternalLink } from "lucide-react";

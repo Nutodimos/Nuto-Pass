@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 import prisma from "@/lib/prisma";
 import SettingsForm from "@/components/forms/SettingsForm";
 import ProfileSettings from "@/components/forms/ProfileSettings";

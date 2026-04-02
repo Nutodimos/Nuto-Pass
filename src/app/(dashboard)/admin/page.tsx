@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+import prisma from "@/lib/prisma";
 import Announcements from "@/components/Announcements";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import UserCard from "@/components/UserCard";

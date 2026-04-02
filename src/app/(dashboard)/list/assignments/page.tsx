@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 import prisma from "@/lib/prisma";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
