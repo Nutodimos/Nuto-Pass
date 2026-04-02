@@ -289,6 +289,10 @@ const Navbar = () => {
       }
     };
     fetchAnnouncements();
+
+    // Listen for custom event triggered by external read-receipt buttons
+    window.addEventListener("refresh-notifications", fetchAnnouncements);
+    return () => window.removeEventListener("refresh-notifications", fetchAnnouncements);
   }, []);
 
   const markAsRead = async (announcementId: number) => {

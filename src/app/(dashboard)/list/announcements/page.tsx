@@ -1,4 +1,4 @@
-﻿import prisma from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { Prisma } from "@prisma/client";
 import Image from "next/image";
@@ -12,10 +12,7 @@ import {
   Plus,
   Check,
 } from "lucide-react";
-import {
-  markAnnouncementAsRead,
-  markAllAnnouncementsAsRead,
-} from "@/lib/actions";
+import MarkReadButton from "@/components/MarkReadButton";
 
 const AnnouncementListPage = async ({
   searchParams,
@@ -101,7 +98,7 @@ const AnnouncementListPage = async ({
         },
       },
       reads: {
-        where: { userId: currentUserId },
+        where: { userId: currentUserId || "" },
         select: { id: true },
       },
     },
@@ -153,15 +150,7 @@ const AnnouncementListPage = async ({
         </div>
 
         {currentUserId && data.length > 0 && (
-          <form action={markAllAnnouncementsAsRead}>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-lg bg-CPENavy text-white font-medium text-sm hover:bg-CPENavyDark transition-colors flex items-center gap-2"
-            >
-              <Check className="w-4 h-4" />
-              Mark All as Read
-            </button>
-          </form>
+          <MarkReadButton isAll />
         )}
       </div>
 
@@ -231,19 +220,7 @@ const AnnouncementListPage = async ({
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     {!isRead && currentUserId && (
-                      <form
-                        action={async () => {
-                          "use server";
-                          await markAnnouncementAsRead(announcement.id);
-                        }}
-                      >
-                        <button
-                          type="submit"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-3 py-1.5 rounded-lg bg-CPENavy/10 text-CPENavy hover:bg-CPENavy hover:text-white text-sm font-medium transition-colors"
-                        >
-                          Mark as Read
-                        </button>
-                      </form>
+                      <MarkReadButton announcementId={announcement.id} />
                     )}
                     {role === "admin" && (
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
