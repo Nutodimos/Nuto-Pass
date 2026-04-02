@@ -156,6 +156,24 @@ const TeacherPage = async () => {
             <BigCalendarContainer type="teacherId" id={userId!} />
           </Suspense>
         </div>
+
+        {/* MOBILE CALENDAR SHORTCUT */}
+        <div className="md:hidden flex-1 shrink-0">
+          <Link href="/list/lessons" className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md hover:border-CPENavy/30 hover:-translate-y-1 transition-all group">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-CPENavy/10 flex items-center justify-center group-hover:bg-CPENavy/20 transition-colors">
+                <CalendarDays className="w-6 h-6 text-CPENavy" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-CPENavyDark group-hover:text-CPENavy transition-colors">View Schedule</h2>
+                <p className="text-xs font-medium text-gray-500">Check your lessons</p>
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-CPENavy/10 transition-colors">
+              <ArrowRight className="w-4 h-4 text-CPENavy" />
+            </div>
+          </Link>
+        </div>
       </div>
 
       {/* RIGHT COLUMN */}

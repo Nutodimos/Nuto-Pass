@@ -18,10 +18,16 @@ const AdminPage = ({
       {/* LEFT COLUMN (2/3) */}
       <div className="w-full lg:w-2/3 flex flex-col gap-8">
         {/* USER CARDS SECTION */}
-        <div className="flex gap-3 md:gap-4 justify-between flex-wrap">
-          <UserCard type="admin" />
-          <UserCard type="teacher" />
-          <UserCard type="student" />
+        <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 md:pb-0 -mx-3 px-3 md:mx-0 md:px-0 md:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory">
+          <div className="snap-center shrink-0 w-[85%] md:w-auto md:flex-1">
+            <UserCard type="admin" />
+          </div>
+          <div className="snap-center shrink-0 w-[85%] md:w-auto md:flex-1">
+            <UserCard type="teacher" />
+          </div>
+          <div className="snap-center shrink-0 w-[85%] md:w-auto md:flex-1">
+            <UserCard type="student" />
+          </div>
         </div>
 
         {/* MIDDLE SECTION - ATTENDANCE OVERVIEW & CHART */}
