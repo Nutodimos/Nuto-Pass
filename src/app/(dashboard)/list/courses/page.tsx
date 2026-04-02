@@ -132,9 +132,6 @@ const CoursesPage = async ({
             <div className="bg-white/10 rounded-xl px-4 py-2">
               <TableSearch />
             </div>
-            {role === "admin" && (
-              <FormContainer table="subject" type="create" />
-            )}
           </div>
         </div>
       </div>
@@ -221,6 +218,26 @@ const CoursesPage = async ({
       <div className="bg-white rounded-2xl p-2">
         <Pagination page={p} count={count} />
       </div>
+
+      {/* FLOATING ACTION BUTTON */}
+      {role === "admin" && (
+        <div className="fixed bottom-8 right-8 z-50 group">
+          <div className="relative">
+            <div className="absolute inset-0 bg-CPEGold rounded-full animate-ping opacity-75"></div>
+            <div className="relative">
+              <FormContainer table="subject" type="create" />
+            </div>
+            <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+              <div className="bg-slate-800 text-white text-sm px-3 py-2 rounded-lg shadow-lg">
+                Create New Course
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                  <div className="border-8 border-transparent border-l-slate-800"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

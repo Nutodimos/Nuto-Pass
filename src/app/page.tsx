@@ -111,14 +111,14 @@ export default function Homepage() {
                             </a>
                         </div>
 
-                        <div className="mt-16 text-center">
+                        {/* <div className="mt-16 text-center">
                             <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-200/60">
                                 <span className="text-xl">🔒</span>
                                 <p className="text-sm font-medium text-slate-600">
                                     Account creation is restricted to System Administrators only.
                                 </p>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </main>
