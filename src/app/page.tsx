@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import LandingNavbar from "@/components/LandingNavbar";
+import { GraduationCap, Presentation } from "lucide-react";
 
 export default function Homepage() {
     const { userId, sessionClaims } = auth();
@@ -77,12 +78,12 @@ export default function Homepage() {
                             {/* Student Card - Modeled after dashboard UserCard */}
                             <a href="/sign-in" className="flex-1 group relative rounded-3xl p-8 overflow-hidden bg-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-100/50">
                                 <div className="absolute inset-0 bg-gradient-to-br from-CPEGold/5 to-CPEGold/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity duration-500 group-hover:scale-110 transform origin-top-right">
-                                    <span className="text-9xl">👨‍🎓</span>
+                                <div className="absolute -top-4 -right-4 p-8 opacity-[0.03] group-hover:opacity-10 transition-opacity duration-500 group-hover:scale-110 transform origin-top-right text-slate-900 pointer-events-none">
+                                    <GraduationCap size={180} strokeWidth={1} />
                                 </div>
                                 <div className="relative z-10 flex flex-col h-full">
-                                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-CPEGold/20 to-CPEGoldLight/30 text-CPEGoldDark flex items-center justify-center mb-8 text-3xl shadow-inner border border-CPEGold/10 group-hover:scale-110 transition-transform duration-300">
-                                        👨‍🎓
+                                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-CPEGold/20 to-CPEGoldLight/30 text-CPEGoldDark flex items-center justify-center mb-8 shadow-inner border border-CPEGold/10 group-hover:scale-110 transition-transform duration-300">
+                                        <GraduationCap className="w-8 h-8" strokeWidth={2} />
                                     </div>
                                     <h3 className="text-2xl font-bold text-slate-800 mb-3 group-hover:text-CPEGold transition-colors">Student Portal</h3>
                                     <p className="text-slate-600 leading-relaxed mb-6 flex-1">View your attendance records, verify your biometric check-ins, and track your academic progress across all enrolled courses.</p>
@@ -95,12 +96,12 @@ export default function Homepage() {
                             {/* Teacher Card - Modeled after dashboard UserCard */}
                             <a href="/sign-in" className="flex-1 group relative rounded-3xl p-8 overflow-hidden bg-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-100/50">
                                 <div className="absolute inset-0 bg-gradient-to-br from-CPENavy/5 to-CPENavy/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity duration-500 group-hover:scale-110 transform origin-top-right">
-                                    <span className="text-9xl">👨‍🏫</span>
+                                <div className="absolute -top-4 -right-4 p-8 opacity-[0.03] group-hover:opacity-10 transition-opacity duration-500 group-hover:scale-110 transform origin-top-right text-slate-900 pointer-events-none">
+                                    <Presentation size={180} strokeWidth={1} />
                                 </div>
                                 <div className="relative z-10 flex flex-col h-full">
-                                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-CPESlate/20 to-CPENavy/30 text-CPENavyDark flex items-center justify-center mb-8 text-3xl shadow-inner border border-CPENavy/10 group-hover:scale-110 transition-transform duration-300">
-                                        👨‍🏫
+                                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-CPESlate/20 to-CPENavy/30 text-CPENavyDark flex items-center justify-center mb-8 shadow-inner border border-CPENavy/10 group-hover:scale-110 transition-transform duration-300">
+                                        <Presentation className="w-8 h-8" strokeWidth={2} />
                                     </div>
                                     <h3 className="text-2xl font-bold text-slate-800 mb-3 group-hover:text-CPENavy transition-colors">Lecturer Portal</h3>
                                     <p className="text-slate-600 leading-relaxed mb-6 flex-1">Manage class attendance sessions, create analytical reports, and monitor student engagement seamlessly.</p>
