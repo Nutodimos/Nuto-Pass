@@ -12,6 +12,8 @@ import { BookOpen, Calendar, Mail, Phone, Droplets } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import LoadingSkeleton from "@/components/LoadingSkeleton";
 
 const SingleTeacherPage = async ({
   params: { id },
@@ -161,7 +163,9 @@ const SingleTeacherPage = async ({
           <div className="group cpe-card-indicator"></div>
           <h2 className="text-lg font-semibold text-CPENavyDark mb-4 relative z-10">Schedule</h2>
           <div className="relative z-10 flex-1">
-            <BigCalendarContainer type="teacherId" id={teacher.id} />
+            <Suspense fallback={<LoadingSkeleton type="calendar" />}>
+              <BigCalendarContainer type="teacherId" id={teacher.id} />
+            </Suspense>
           </div>
         </div>
       </div>
@@ -204,7 +208,9 @@ const SingleTeacherPage = async ({
         <TeacherPerformance teacherId={teacher.id} />
 
         {/* Announcements */}
-        <Announcements />
+        <Suspense fallback={<LoadingSkeleton type="announcements" />}>
+          <Announcements />
+        </Suspense>
       </div>
     </div>
   );

@@ -6,6 +6,8 @@ import { Day, Prisma } from "@prisma/client";
 import Image from "next/image";
 import { Clock, BookOpen, ClipboardList, CalendarDays, ArrowRight, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
+import LoadingSkeleton from "@/components/LoadingSkeleton";
 
 const StudentPage = async () => {
   const { userId } = auth();
@@ -162,7 +164,9 @@ const StudentPage = async () => {
             </Link>
           </div>
           {student?.classId ? (
-            <BigCalendarContainer type="classId" id={student.classId} />
+            <Suspense fallback={<LoadingSkeleton type="calendar" />}>
+              <BigCalendarContainer type="classId" id={student.classId} />
+            </Suspense>
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
               No class assigned.
@@ -241,7 +245,9 @@ const StudentPage = async () => {
           </div>
         </div>
 
-        <Announcements />
+        <Suspense fallback={<LoadingSkeleton type="announcements" />}>
+          <Announcements />
+        </Suspense>
       </div>
     </div>
   );

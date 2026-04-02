@@ -5,6 +5,8 @@ import UserCard from "@/components/UserCard";
 import AttendanceOverviewCard from "@/components/AttendanceOverviewCard";
 import RecentActivitiesCard from "@/components/RecentActivitiesCard";
 import QuickActionsCard from "@/components/QuickActionsCard";
+import LoadingSkeleton from "@/components/LoadingSkeleton";
+import { Suspense } from "react";
 
 const AdminPage = ({
   searchParams,
@@ -26,11 +28,15 @@ const AdminPage = ({
         <div className="flex gap-4 flex-col lg:flex-row">
           {/* ATTENDANCE OVERVIEW */}
           <div className="w-full lg:w-1/2">
-            <AttendanceOverviewCard />
+            <Suspense fallback={<LoadingSkeleton type="card" />}>
+              <AttendanceOverviewCard />
+            </Suspense>
           </div>
           {/* ATTENDANCE CHART (Replaces Activities) */}
           <div className="w-full lg:w-1/2 h-[450px]">
-            <AttendanceChartContainer />
+            <Suspense fallback={<LoadingSkeleton type="chart" />}>
+              <AttendanceChartContainer />
+            </Suspense>
           </div>
         </div>
 
@@ -42,7 +48,9 @@ const AdminPage = ({
 
       {/* RIGHT COLUMN (1/3) */}
       <div className="w-full lg:w-1/3 flex flex-col gap-8">
-        <Announcements />
+        <Suspense fallback={<LoadingSkeleton type="announcements" />}>
+          <Announcements />
+        </Suspense>
       </div>
     </div>
   );
