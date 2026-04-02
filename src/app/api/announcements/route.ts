@@ -5,45 +5,105 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  try {
+    let userId, sessionClaims;
     try {
-        let userId, sessionClaims; try { const a = auth(); userId = a.userId; sessionClaims = a.sessionClaims; } catch(e) {}
-        const role = (sessionClaims?.metadata as { role?: string })?.role;
+      const a = auth();
+      userId = a.userId;
+      sessionClaims = a.sessionClaims;
+    } catch (e) {}
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
 
-        if (!role || !userId) {
-            return NextResponse.json({ announcements: [], unreadCount: 0 }, { status: 200 });
-        }
-
-        const audienceFilter: any[] = [{ targetAudience: "all" }];
-
-        if (role === "student") {
-            audienceFilter.push({ targetAudience: "students" });
-        } else if (role === "teacher") {
-            audienceFilter.push({ targetAudience: "teachers" });
-        }
-
-        const announcements = await prisma.announcement.findMany({
-            where: {
-                OR: audienceFilter,
-            },
-            orderBy: {
-                date: "desc",
-            },
-            take: 10,
-            select: {
-                id: true,
-                title: true,
-                description: true,
-                date: true,
-                targetAudience: true,
-            },
-        });
-
-        return NextResponse.json({
-            announcements,
-            unreadCount: announcements.length
-        }, { status: 200 });
-    } catch (error) {
-        console.error("Error fetching announcements:", error);
-        return NextResponse.json({ announcements: [], unreadCount: 0 }, { status: 500 });
+    if (!role || !userId) {
+      return NextResponse.json(
+        { announcements: [], unreadCount: 0 },
+        { status: 200 },
+      );
     }
+
+    const audienceFilter: any[] = [{ targetAudience: "all" }];
+
+    if (role === "student") {
+      audienceFilter.push({ targetAudience: "students" });
+    } else if (role === "teacher") {
+      audienceFilter.push({ targetAudience: "teachers" });
+    }
+
+    const announcements = await prisma.announcement.findMany({
+      where: {
+        OR: audienceFilter,
+      },
+      orderBy: {
+        date: "desc",
+      },
+      take: 10,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        date: true,
+        targetAudience: true,
+        reads: {
+          where: { userId },
+          select: { id: true },
+        },
+      },
+    });
+
+    const unreadAnnouncements = announcements.filter(
+      (a) => a.reads.length === 0,
+    );
+
+    return NextResponse.json(
+      {
+        announcements: unreadAnnouncements.map(({ reads, ...rest }) => rest),
+        unreadCount: unreadAnnouncements.length,
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("Error fetching announcements:", error);
+    return NextResponse.json(
+      { announcements: [], unreadCount: 0 },
+      { status: 500 },
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    let userId, sessionClaims;
+    try {
+      const a = auth();
+      userId = a.userId;
+      sessionClaims = a.sessionClaims;
+    } catch (e) {}
+
+    if (!userId) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const { announcementId } = await req.json();
+
+    if (!announcementId) {
+      return NextResponse.json(
+        { error: "Missing announcementId" },
+        { status: 400 },
+      );
+    }
+
+    await prisma.announcementRead.upsert({
+      where: { announcementId_userId: { announcementId, userId } },
+      update: {},
+      create: { announcementId, userId },
+    });
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error("Error marking announcement as read:", error);
+    return NextResponse.json(
+      { error: "Failed to mark as read" },
+      { status: 500 },
+    );
+  }
 }

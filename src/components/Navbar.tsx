@@ -24,6 +24,7 @@ import {
   Fingerprint,
   Loader2,
   Presentation,
+  Settings,
 } from "lucide-react";
 
 interface SearchCategory {
@@ -77,9 +78,12 @@ const getTimeAgo = (date: Date): string => {
   const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
   if (diffInMinutes < 1) return "Just now";
-  if (diffInMinutes < 60) return `${diffInMinutes} min${diffInMinutes > 1 ? 's' : ''} ago`;
-  if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-  if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+  if (diffInMinutes < 60)
+    return `${diffInMinutes} min${diffInMinutes > 1 ? "s" : ""} ago`;
+  if (diffInHours < 24)
+    return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
+  if (diffInDays < 7)
+    return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
   return new Date(date).toLocaleDateString();
 };
 
@@ -102,7 +106,7 @@ const Navbar = () => {
   // Get user role
   const userRole = (user?.publicMetadata?.role as string) || "guest";
   const userId = user?.id || "";
-  const userUsername = user?.username || "";  // Matric/Staff ID for routing
+  const userUsername = user?.username || ""; // Matric/Staff ID for routing
 
   // Build categories based on role - Attendance is prioritized first
   const searchCategories: SearchCategory[] = useMemo(() => {
@@ -124,25 +128,76 @@ const Navbar = () => {
         name: "Attendance",
         route: attendanceRoute,
         icon: Fingerprint,
-        keywords: ["attendance", "present", "absent", "biometric", "scan", "fingerprint"],
+        keywords: [
+          "attendance",
+          "present",
+          "absent",
+          "biometric",
+          "scan",
+          "fingerprint",
+        ],
         description: attendanceDesc,
       },
-      { name: "Students", route: "/list/students", icon: GraduationCap, keywords: ["student", "pupils", "learner"], roles: ["admin", "teacher"] },
-      { name: "Lecturers", route: "/list/lecturers", icon: Users, keywords: ["lecturer", "teacher", "instructor", "professor"], roles: ["admin"] },
-      { name: "Classes", route: "/list/attendance", icon: Building2, keywords: ["class", "level", "grade"] },
-      { name: "Courses", route: "/list/courses", icon: BookOpen, keywords: ["subject", "course", "module"] },
-      { name: "Lessons", route: "/list/lessons", icon: Presentation, keywords: ["lesson", "schedule", "timetable"] },
-      { name: "Assignments", route: "/list/assignments", icon: ClipboardList, keywords: ["assignment", "homework", "task"] },
-      { name: "Announcements", route: "/list/announcements", icon: Megaphone, keywords: ["announcement", "notice", "news"] },
-      { name: "Events", route: "/list/events", icon: Calendar, keywords: ["event", "activity", "meeting"] },
-    ].filter(cat => {
+      {
+        name: "Students",
+        route: "/list/students",
+        icon: GraduationCap,
+        keywords: ["student", "pupils", "learner"],
+        roles: ["admin", "teacher"],
+      },
+      {
+        name: "Lecturers",
+        route: "/list/lecturers",
+        icon: Users,
+        keywords: ["lecturer", "teacher", "instructor", "professor"],
+        roles: ["admin"],
+      },
+      {
+        name: "Classes",
+        route: "/list/attendance",
+        icon: Building2,
+        keywords: ["class", "level", "grade"],
+      },
+      {
+        name: "Courses",
+        route: "/list/courses",
+        icon: BookOpen,
+        keywords: ["subject", "course", "module"],
+      },
+      {
+        name: "Lessons",
+        route: "/list/lessons",
+        icon: Presentation,
+        keywords: ["lesson", "schedule", "timetable"],
+      },
+      {
+        name: "Assignments",
+        route: "/list/assignments",
+        icon: ClipboardList,
+        keywords: ["assignment", "homework", "task"],
+      },
+      {
+        name: "Announcements",
+        route: "/list/announcements",
+        icon: Megaphone,
+        keywords: ["announcement", "notice", "news"],
+      },
+      {
+        name: "Events",
+        route: "/list/events",
+        icon: Calendar,
+        keywords: ["event", "activity", "meeting"],
+      },
+    ].filter((cat) => {
       // Filter by role if specified
       if (!cat.roles) return true;
       return cat.roles.includes(userRole);
     });
   }, [userRole, userId]);
 
-  const [filteredCategories, setFilteredCategories] = useState<SearchCategory[]>([]);
+  const [filteredCategories, setFilteredCategories] = useState<
+    SearchCategory[]
+  >([]);
 
   // Update time every minute
   useEffect(() => {
@@ -187,7 +242,7 @@ const Navbar = () => {
     const filtered = searchCategories.filter(
       (cat) =>
         cat.name.toLowerCase().includes(query) ||
-        cat.keywords.some((kw) => kw.includes(query))
+        cat.keywords.some((kw) => kw.includes(query)),
     );
     setFilteredCategories(filtered);
   }, [searchQuery, searchCategories]);
@@ -202,7 +257,9 @@ const Navbar = () => {
     const debounceTimer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+        const res = await fetch(
+          `/api/search?q=${encodeURIComponent(searchQuery)}`,
+        );
         if (res.ok) {
           const data = await res.json();
           setSearchResults(data.results || []);
@@ -234,13 +291,27 @@ const Navbar = () => {
     fetchAnnouncements();
   }, []);
 
-  const markAsRead = (announcementId: number) => {
-    setAnnouncements(prev => prev.filter(a => a.id !== announcementId));
-    setUnreadCount(prev => Math.max(0, prev - 1));
+  const markAsRead = async (announcementId: number) => {
+    // Update local state immediately for optimistic UI
+    setAnnouncements((prev) => prev.filter((a) => a.id !== announcementId));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+
+    // Persist to backend
+    try {
+      await fetch("/api/announcements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ announcementId }),
+      });
+    } catch (error) {
+      console.error("Error marking announcement as read:", error);
+    }
   };
 
   const handleSearch = (route: string) => {
-    const searchParam = searchQuery.trim() ? `?search=${encodeURIComponent(searchQuery)}` : "";
+    const searchParam = searchQuery.trim()
+      ? `?search=${encodeURIComponent(searchQuery)}`
+      : "";
     router.push(`${route}${searchParam}`);
     setSearchQuery("");
     setShowMobileSearch(false);
@@ -294,7 +365,9 @@ const Navbar = () => {
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
               {isSearching ? "Searching..." : `Results for "${searchQuery}"`}
             </p>
-            {isSearching && <Loader2 className="w-4 h-4 text-CPENavy animate-spin" />}
+            {isSearching && (
+              <Loader2 className="w-4 h-4 text-CPENavy animate-spin" />
+            )}
           </div>
 
           {!isSearching && searchResults.length === 0 && (
@@ -305,7 +378,8 @@ const Navbar = () => {
 
           {searchResults.map((result, i) => {
             const Icon = typeIcons[result.type] || Search;
-            const colorClass = typeColors[result.type] || "bg-slate-100 text-slate-600";
+            const colorClass =
+              typeColors[result.type] || "bg-slate-100 text-slate-600";
 
             return (
               <motion.button
@@ -330,10 +404,16 @@ const Navbar = () => {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-700 truncate">{result.title}</p>
-                  <p className="text-xs text-slate-400 truncate">{result.subtitle}</p>
+                  <p className="text-sm font-medium text-slate-700 truncate">
+                    {result.title}
+                  </p>
+                  <p className="text-xs text-slate-400 truncate">
+                    {result.subtitle}
+                  </p>
                 </div>
-                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${colorClass}`}>
+                <span
+                  className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${colorClass}`}
+                >
                   {result.type}
                 </span>
               </motion.button>
@@ -380,20 +460,17 @@ const Navbar = () => {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="relative flex items-center justify-between px-4 md:px-6 py-3 bg-white/80 backdrop-blur-md border-b border-slate-100"
+        className="sticky top-0 pt-[max(env(safe-area-inset-top),0.5rem)] flex items-center justify-between px-4 md:px-6 py-3 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm"
         style={{ zIndex: 100 }}
       >
         {/* Left Section - Mobile Menu and Search */}
         <div className="flex items-center gap-2">
-          {/* Mobile Menu (Hamburger) */}
-          <MobileMenuButton />
-
           {/* Mobile Search Icon */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowMobileSearch(true)}
-            className="md:hidden p-2.5 rounded-xl bg-slate-50 hover:bg-CPENavy/10 border border-transparent hover:border-CPENavy/20 transition-all duration-200"
+            className="md:hidden p-2.5 rounded-xl bg-slate-50 hover:bg-CPENavy/10 active:scale-95 border border-transparent hover:border-CPENavy/20 transition-all duration-200"
           >
             <Search className="w-5 h-5 text-slate-500" />
           </motion.button>
@@ -401,9 +478,14 @@ const Navbar = () => {
 
         {/* Center - Mobile Logo (only visible on small screens) */}
         <Link href="/" className="md:hidden">
-          <Image src="/cpeautomation-logo.png" alt="CPE Automation" width={70} height={70} className="mix-blend-multiply" />
+          <Image
+            src="/cpeautomation-logo.png"
+            alt="CPE Automation"
+            width={70}
+            height={70}
+            className="mix-blend-multiply"
+          />
         </Link>
-
 
         {/* Desktop Search Bar */}
         <div className="hidden md:block relative">
@@ -453,8 +535,12 @@ const Navbar = () => {
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-CPENavy/5 to-transparent"
           >
             <Sparkles className="w-4 h-4 text-CPEGold" />
-            <span className="text-slate-600 font-medium">{formatDate(currentTime)}</span>
-            <span className="text-CPENavy font-semibold">{formatTime(currentTime)}</span>
+            <span className="text-slate-600 font-medium">
+              {formatDate(currentTime)}
+            </span>
+            <span className="text-CPENavy font-semibold">
+              {formatTime(currentTime)}
+            </span>
           </motion.div>
         </div>
 
@@ -465,7 +551,7 @@ const Navbar = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2.5 rounded-xl bg-slate-50 hover:bg-CPENavy/10 border border-transparent hover:border-CPENavy/20 transition-all duration-200 group"
+            className="relative p-2.5 rounded-xl bg-slate-50 hover:bg-CPENavy/10 active:scale-95 border border-transparent hover:border-CPENavy/20 transition-all duration-200 group"
           >
             <Bell className="w-5 h-5 text-slate-500 group-hover:text-CPENavy transition-colors" />
             {unreadCount > 0 && (
@@ -475,7 +561,7 @@ const Navbar = () => {
                   animate={{ scale: 1 }}
                   className="absolute -top-1 -right-1 flex items-center justify-center min-w-5 h-5 px-1 bg-gradient-to-br from-CPEGold to-CPEGoldDark text-white text-[10px] font-bold rounded-full shadow-lg shadow-CPEGold/30"
                 >
-                  {unreadCount > 9 ? '9+' : unreadCount}
+                  {unreadCount > 9 ? "9+" : unreadCount}
                 </motion.span>
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-CPEGold rounded-full animate-ping opacity-30" />
               </>
@@ -495,7 +581,8 @@ const Navbar = () => {
                 {user?.firstName || user?.username || "User"}
               </span>
               <span className="text-xs text-CPENavy font-medium capitalize">
-                {(userRole === "teacher" ? "Lecturer" : userRole) || (user?.username === "admin1" ? "Admin" : "Guest")}
+                {(userRole === "teacher" ? "Lecturer" : userRole) ||
+                  (user?.username === "admin1" ? "Admin" : "Guest")}
               </span>
             </div>
 
@@ -510,7 +597,15 @@ const Navbar = () => {
                       avatarBox: "w-9 h-9",
                     },
                   }}
-                />
+                >
+                  <UserButton.MenuItems>
+                    <UserButton.Link
+                      label="Settings"
+                      labelIcon={<Settings className="w-4 h-4" />}
+                      href="/settings"
+                    />
+                  </UserButton.MenuItems>
+                </UserButton>
               </motion.div>
               <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
             </div>
@@ -539,7 +634,9 @@ const Navbar = () => {
                   <div>
                     <h3 className="text-white font-semibold">Notifications</h3>
                     <p className="text-white/70 text-xs">
-                      {unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'No unread notifications'}
+                      {unreadCount > 0
+                        ? `You have ${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}`
+                        : "No unread notifications"}
                     </p>
                   </div>
                   <button
@@ -557,11 +654,12 @@ const Navbar = () => {
                   ) : (
                     announcements.map((announcement, i) => {
                       const timeAgo = getTimeAgo(new Date(announcement.date));
-                      const icon = announcement.targetAudience === "students"
-                        ? "👨‍🎓"
-                        : announcement.targetAudience === "teachers"
-                          ? "👨‍🏫"
-                          : "�";
+                      const icon =
+                        announcement.targetAudience === "students"
+                          ? "👨‍🎓"
+                          : announcement.targetAudience === "teachers"
+                            ? "👨‍🏫"
+                            : "�";
 
                       return (
                         <motion.div
@@ -574,9 +672,15 @@ const Navbar = () => {
                         >
                           <span className="text-2xl">{icon}</span>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-slate-700">{announcement.title}</p>
-                            <p className="text-xs text-slate-500">{announcement.description}</p>
-                            <p className="text-xs text-CPENavy mt-1">{timeAgo}</p>
+                            <p className="text-sm font-medium text-slate-700">
+                              {announcement.title}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {announcement.description}
+                            </p>
+                            <p className="text-xs text-CPENavy mt-1">
+                              {timeAgo}
+                            </p>
                           </div>
                         </motion.div>
                       );
@@ -584,7 +688,10 @@ const Navbar = () => {
                   )}
                 </div>
                 <div className="px-4 py-3 bg-slate-50 border-t border-slate-100">
-                  <Link href="/list/announcements" className="block w-full text-center">
+                  <Link
+                    href="/list/announcements"
+                    className="block w-full text-center"
+                  >
                     <span className="text-sm font-medium text-CPENavy hover:text-CPENavyDark transition-colors">
                       View all notifications
                     </span>
@@ -594,53 +701,58 @@ const Navbar = () => {
             </>
           )}
         </AnimatePresence>
-      </motion.div >
+      </motion.div>
 
       {/* Mobile Search Modal */}
       <AnimatePresence>
-        {
-          showMobileSearch && (
+        {showMobileSearch && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-white z-[150] md:hidden flex flex-col pt-[max(env(safe-area-inset-top),1rem)]"
+          >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 md:hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="flex flex-col h-full bg-slate-50 overflow-hidden"
             >
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="bg-white m-4 rounded-2xl shadow-2xl overflow-hidden"
+              {/* Search Input Area */}
+              <form
+                onSubmit={handleSearchSubmit}
+                className="flex items-center gap-3 p-4 border-b border-slate-200 bg-white shadow-sm shrink-0"
               >
-                {/* Search Input */}
-                <form onSubmit={handleSearchSubmit} className="flex items-center gap-3 p-4 border-b border-slate-100">
+                <div className="flex-1 flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 border-transparent focus-within:bg-white focus-within:border-CPENavy/30 focus-within:ring-2 focus-within:ring-CPENavy/10 transition-all">
                   <Search className="w-5 h-5 text-CPENavy" />
                   <input
                     ref={mobileSearchInputRef}
                     type="text"
-                    placeholder="Search students, classes, lessons..."
+                    placeholder="Search anything..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent outline-none text-base text-slate-700 placeholder:text-slate-400"
+                    className="flex-1 bg-transparent outline-none text-base text-slate-800 placeholder:text-slate-400 font-medium"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowMobileSearch(false)}
-                    className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-                  >
-                    <X className="w-5 h-5 text-slate-400" />
-                  </button>
-                </form>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowMobileSearch(false)}
+                  className="font-medium text-CPENavy px-2 active:scale-95 transition-transform"
+                >
+                  Cancel
+                </button>
+              </form>
 
-                {/* Mobile Search Results */}
-                <div className="max-h-[60vh] overflow-y-auto">
+              {/* Mobile Search Results */}
+              <div className="flex-1 overflow-y-auto bg-slate-50">
+                <div className="p-2 pb-32">
                   <SearchResults isMobile />
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
-          )
-        }
-      </AnimatePresence >
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

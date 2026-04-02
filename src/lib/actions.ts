@@ -24,17 +24,29 @@ type CurrentState = { success: boolean; error: boolean; messages?: string[] };
  * Returns the userId and role if authorized, otherwise returns an error state.
  */
 const requireRole = (
-  allowedRoles: string[]
-): { authorized: true; userId: string; role: string } | { authorized: false; error: CurrentState } => {
+  allowedRoles: string[],
+):
+  | { authorized: true; userId: string; role: string }
+  | { authorized: false; error: CurrentState } => {
   const { userId, sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 
   if (!userId || !role) {
-    return { authorized: false, error: { success: false, error: true, messages: ["Not authenticated"] } };
+    return {
+      authorized: false,
+      error: { success: false, error: true, messages: ["Not authenticated"] },
+    };
   }
 
   if (!allowedRoles.includes(role)) {
-    return { authorized: false, error: { success: false, error: true, messages: ["Unauthorized: insufficient permissions"] } };
+    return {
+      authorized: false,
+      error: {
+        success: false,
+        error: true,
+        messages: ["Unauthorized: insufficient permissions"],
+      },
+    };
   }
 
   return { authorized: true, userId, role };
@@ -42,7 +54,7 @@ const requireRole = (
 
 export const createSubject = async (
   currentState: CurrentState,
-  data: SubjectSchema
+  data: SubjectSchema,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -67,7 +79,7 @@ export const createSubject = async (
 
 export const updateSubject = async (
   currentState: CurrentState,
-  data: SubjectSchema
+  data: SubjectSchema,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -95,7 +107,7 @@ export const updateSubject = async (
 
 export const deleteSubject = async (
   currentState: CurrentState,
-  data: FormData
+  data: FormData,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -108,7 +120,7 @@ export const deleteSubject = async (
       },
       data: {
         isActive: false,
-      }
+      },
     });
 
     revalidatePath("/list/courses");
@@ -120,7 +132,7 @@ export const deleteSubject = async (
 
 export const createClass = async (
   currentState: CurrentState,
-  data: ClassSchema
+  data: ClassSchema,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -139,7 +151,7 @@ export const createClass = async (
 
 export const updateClass = async (
   currentState: CurrentState,
-  data: ClassSchema
+  data: ClassSchema,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -161,7 +173,7 @@ export const updateClass = async (
 
 export const deleteClass = async (
   currentState: CurrentState,
-  data: FormData
+  data: FormData,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -174,7 +186,7 @@ export const deleteClass = async (
       },
       data: {
         isActive: false,
-      }
+      },
     });
 
     revalidatePath("/list/levels");
@@ -186,7 +198,7 @@ export const deleteClass = async (
 
 export const createTeacher = async (
   currentState: CurrentState,
-  data: TeacherSchema
+  data: TeacherSchema,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -231,7 +243,7 @@ export const createTeacher = async (
 
 export const updateTeacher = async (
   currentState: CurrentState,
-  data: TeacherSchema
+  data: TeacherSchema,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -282,7 +294,7 @@ export const updateTeacher = async (
 
 export const deleteTeacher = async (
   currentState: CurrentState,
-  data: FormData
+  data: FormData,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -301,7 +313,7 @@ export const deleteTeacher = async (
       },
       data: {
         isActive: false,
-      }
+      },
     });
 
     revalidatePath("/list/lecturers");
@@ -313,7 +325,7 @@ export const deleteTeacher = async (
 
 export const createStudent = async (
   currentState: CurrentState,
-  data: StudentSchema
+  data: StudentSchema,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -322,9 +334,6 @@ export const createStudent = async (
       where: { id: data.classId },
       include: { _count: { select: { students: true } } },
     });
-
-
-
 
     const user = await clerkClient().users.createUser({
       username: data.username,
@@ -362,7 +371,7 @@ export const createStudent = async (
 
 export const updateStudent = async (
   currentState: CurrentState,
-  data: StudentSchema
+  data: StudentSchema,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -410,7 +419,7 @@ export const updateStudent = async (
 
 export const deleteStudent = async (
   currentState: CurrentState,
-  data: FormData
+  data: FormData,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -429,7 +438,7 @@ export const deleteStudent = async (
       },
       data: {
         isActive: false,
-      }
+      },
     });
 
     revalidatePath("/list/students");
@@ -439,10 +448,9 @@ export const deleteStudent = async (
   }
 };
 
-
 export const createAssignment = async (
   currentState: CurrentState,
-  data: AssignmentSchema
+  data: AssignmentSchema,
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -468,7 +476,7 @@ export const createAssignment = async (
 
 export const updateAssignment = async (
   currentState: CurrentState,
-  data: AssignmentSchema
+  data: AssignmentSchema,
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -497,7 +505,7 @@ export const updateAssignment = async (
 
 export const deleteAssignment = async (
   currentState: CurrentState,
-  data: FormData
+  data: FormData,
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -519,7 +527,7 @@ export const deleteAssignment = async (
 
 export const createAssignmentSubmission = async (
   currentState: CurrentState,
-  data: AssignmentSubmissionSchema
+  data: AssignmentSubmissionSchema,
 ) => {
   const authCheck = requireRole(["admin", "teacher", "student"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -554,7 +562,7 @@ export const createAssignmentSubmission = async (
 export const gradeAssignmentSubmission = async (
   submissionId: number,
   grade: number,
-  feedback?: string
+  feedback?: string,
 ) => {
   const authResult = requireRole(["admin", "teacher"]);
   if (!authResult.authorized) return authResult.error;
@@ -582,7 +590,7 @@ export const updateAttendance = async (
   lessonId: number,
   studentId: string,
   present: boolean,
-  dateStr?: string // Optional parameter for historical updates
+  dateStr?: string, // Optional parameter for historical updates
 ) => {
   const authResult = requireRole(["admin", "teacher"]);
   if (!authResult.authorized) return authResult.error;
@@ -637,11 +645,9 @@ export const updateAttendance = async (
   }
 };
 
-
-
 export const updateSchoolConfig = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -650,7 +656,11 @@ export const updateSchoolConfig = async (
   const currentSemester = formData.get("currentSemester") as string;
 
   if (!sessionYear) {
-    return { success: false, error: true, messages: ["Session year is required"] };
+    return {
+      success: false,
+      error: true,
+      messages: ["Session year is required"],
+    };
   }
 
   try {
@@ -676,13 +686,17 @@ export const updateSchoolConfig = async (
     return { success: true, error: false };
   } catch (err) {
     console.error(err);
-    return { success: false, error: true, messages: ["Failed to update settings"] };
+    return {
+      success: false,
+      error: true,
+      messages: ["Failed to update settings"],
+    };
   }
 };
 
 export const updateProfile = async (
   currentState: CurrentState,
-  formData: FormData
+  formData: FormData,
 ) => {
   const { userId, sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
@@ -728,20 +742,28 @@ export const updateProfile = async (
         },
       });
     } else {
-      return { success: false, error: true, messages: ["Admin profiles cannot be updated here"] };
+      return {
+        success: false,
+        error: true,
+        messages: ["Admin profiles cannot be updated here"],
+      };
     }
 
     revalidatePath("/settings");
     return { success: true, error: false };
   } catch (err) {
     console.error(err);
-    return { success: false, error: true, messages: ["Failed to update profile"] };
+    return {
+      success: false,
+      error: true,
+      messages: ["Failed to update profile"],
+    };
   }
 };
 
 export const createAnnouncement = async (
   currentState: CurrentState,
-  data: AnnouncementSchema
+  data: AnnouncementSchema,
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -767,7 +789,7 @@ export const createAnnouncement = async (
 
 export const updateAnnouncement = async (
   currentState: CurrentState,
-  data: AnnouncementSchema
+  data: AnnouncementSchema,
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -796,7 +818,7 @@ export const updateAnnouncement = async (
 
 export const deleteAnnouncement = async (
   currentState: CurrentState,
-  data: FormData
+  data: FormData,
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -818,7 +840,7 @@ export const deleteAnnouncement = async (
 
 export const createMaterial = async (
   currentState: CurrentState,
-  data: MaterialSchema
+  data: MaterialSchema,
 ) => {
   const { userId, sessionClaims } = await auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
@@ -877,11 +899,9 @@ export const createMaterial = async (
   }
 };
 
-
-
 export const deleteMaterial = async (
   currentState: CurrentState,
-  data: FormData
+  data: FormData,
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -904,7 +924,7 @@ export const deleteMaterial = async (
 
 export const createLesson = async (
   currentState: CurrentState,
-  data: LessonSchema
+  data: LessonSchema,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -912,8 +932,14 @@ export const createLesson = async (
   try {
     // Auto-generate lesson name from subject and class
     const [subject, classData] = await prisma.$transaction([
-      prisma.subject.findUnique({ where: { id: data.subjectId }, select: { name: true } }),
-      prisma.class.findUnique({ where: { id: data.classId }, select: { name: true } }),
+      prisma.subject.findUnique({
+        where: { id: data.subjectId },
+        select: { name: true },
+      }),
+      prisma.class.findUnique({
+        where: { id: data.classId },
+        select: { name: true },
+      }),
     ]);
 
     await prisma.lesson.create({
@@ -937,7 +963,7 @@ export const createLesson = async (
 
 export const updateLesson = async (
   currentState: CurrentState,
-  data: LessonSchema
+  data: LessonSchema,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -945,8 +971,14 @@ export const updateLesson = async (
   try {
     // Auto-generate lesson name from subject and class
     const [subject, classData] = await prisma.$transaction([
-      prisma.subject.findUnique({ where: { id: data.subjectId }, select: { name: true } }),
-      prisma.class.findUnique({ where: { id: data.classId }, select: { name: true } }),
+      prisma.subject.findUnique({
+        where: { id: data.subjectId },
+        select: { name: true },
+      }),
+      prisma.class.findUnique({
+        where: { id: data.classId },
+        select: { name: true },
+      }),
     ]);
 
     await prisma.lesson.update({
@@ -973,7 +1005,7 @@ export const updateLesson = async (
 
 export const deleteLesson = async (
   currentState: CurrentState,
-  data: FormData
+  data: FormData,
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
@@ -986,10 +1018,58 @@ export const deleteLesson = async (
       },
       data: {
         isActive: false,
-      }
+      },
     });
 
     revalidatePath("/list/lessons");
+    return { success: true, error: false };
+  } catch (err) {
+    return handleActionError(err);
+  }
+};
+
+export const markAnnouncementAsRead = async (announcementId: number) => {
+  const { userId } = auth();
+
+  if (!userId) {
+    return { success: false, error: true, messages: ["Not authenticated"] };
+  }
+
+  try {
+    await prisma.announcementRead.upsert({
+      where: { announcementId_userId: { announcementId, userId } },
+      update: {},
+      create: { announcementId, userId },
+    });
+
+    revalidatePath("/list/announcements");
+    return { success: true, error: false };
+  } catch (err) {
+    return handleActionError(err);
+  }
+};
+
+export const markAllAnnouncementsAsRead = async () => {
+  const { userId } = auth();
+
+  if (!userId) {
+    return { success: false, error: true, messages: ["Not authenticated"] };
+  }
+
+  try {
+    const announcements = await prisma.announcement.findMany({
+      select: { id: true },
+    });
+
+    await prisma.announcementRead.createMany({
+      data: announcements.map((a) => ({
+        announcementId: a.id,
+        userId,
+      })),
+      skipDuplicates: true,
+    });
+
+    revalidatePath("/list/announcements");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
