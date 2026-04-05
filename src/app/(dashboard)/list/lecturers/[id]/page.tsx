@@ -51,7 +51,7 @@ const SingleTeacherPage = async ({
       <div className="w-full xl:w-2/3 flex flex-col gap-4">
         {/* PROFILE CARD - CPE Theme */}
         <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-left">
             {/* Avatar */}
             <div className="flex-shrink-0">
               <div className="w-28 h-28 rounded-2xl overflow-hidden bg-white/20 p-1">
@@ -66,8 +66,8 @@ const SingleTeacherPage = async ({
             </div>
 
             {/* Info */}
-            <div className="flex-1 text-white">
-              <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 text-white w-full">
+              <div className="flex flex-col md:flex-row items-center gap-3 mb-4">
                 <h1 className="text-2xl font-bold">
                   {teacher.name} {teacher.surname}
                 </h1>
@@ -77,7 +77,7 @@ const SingleTeacherPage = async ({
               </div>
 
               {/* Contact Info Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full text-left">
                 <div className="flex items-center gap-2 text-sm text-white/90">
                   <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
                     <Mail className="w-4 h-4 text-white" />
@@ -110,7 +110,7 @@ const SingleTeacherPage = async ({
         </div>
 
         {/* STATS CARDS */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Courses Card */}
           <Link href={`/list/courses?teacherId=${teacher.id}`} className="bg-gradient-to-br from-CPESlate/20 to-CPENavy/10 p-5 rounded-2xl border border-CPENavy/20 flex items-center gap-4 hover:shadow-lg transition-all hover:scale-[1.02] cursor-pointer">
             <div className="w-12 h-12 rounded-xl bg-CPENavy flex items-center justify-center">
@@ -159,7 +159,7 @@ const SingleTeacherPage = async ({
         />
 
         {/* SCHEDULE */}
-        <div className="group cpe-card p-6 h-[600px] flex flex-col">
+        <div className="group cpe-card p-6 h-[400px] md:h-[600px] flex flex-col">
           <div className="group cpe-card-indicator"></div>
           <h2 className="text-lg font-semibold text-CPENavyDark mb-4 relative z-10">Schedule</h2>
           <div className="relative z-10 flex-1">

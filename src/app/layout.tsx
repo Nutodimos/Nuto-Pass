@@ -46,7 +46,7 @@ export default function RootLayout({
             </Suspense>
             {children}
 
-            <ToastContainer position="bottom-right" theme="dark" />
+            <ToastContainer position="top-right" theme="dark" />
           </ThemeProvider>
         </body>
       </html>

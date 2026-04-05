@@ -65,6 +65,7 @@ export const createSubject = async (
         name: data.name,
         title: data.title || null,
         credits: data.credits === "" ? null : data.credits,
+        level: !data.level || data.level === 0 ? null : data.level,
         semester: data.semester === "" ? null : data.semester,
         teachers: {
           connect: data.teachers.map((teacherId) => ({ id: teacherId })),
@@ -95,6 +96,7 @@ export const updateSubject = async (
         name: data.name,
         title: data.title || null,
         credits: data.credits === "" ? null : data.credits,
+        level: !data.level || data.level === 0 ? null : data.level,
         semester: data.semester === "" ? null : data.semester,
         teachers: {
           set: data.teachers.map((teacherId) => ({ id: teacherId })),
