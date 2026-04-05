@@ -22,18 +22,18 @@ export default function Homepage() {
                 <div className="absolute top-40 -left-20 w-80 h-80 bg-CPENavy/10 rounded-full blur-3xl pointer-events-none" />
 
                 {/* Hero Section */}
-                <div className="flex flex-col lg:flex-row items-center justify-between container mx-auto px-6 py-12 lg:py-24 gap-16 relative z-10">
+                <div className="flex flex-col lg:flex-row items-center justify-between container mx-auto px-6 py-6 sm:py-12 lg:py-24 gap-8 lg:gap-16 relative z-10">
                     <div className="flex-1 text-center lg:text-left space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-slate-200/60 backdrop-blur-md shadow-sm mb-4">
                             <span className="w-2 h-2 rounded-full bg-CPEGold animate-pulse" />
                             <span className="text-sm font-medium text-slate-600">Smart Campus Ready</span>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-2 sm:space-y-4">
                             <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-black text-slate-800 leading-[1.05] tracking-tight">
-                                <span className="block mb-2">Secure.</span>
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-CPENavy to-CPEGoldDark drop-shadow-sm">Fast.</span>
-                                <span className="block mt-2">Smart.</span>
+                                <span className="block mb-1 sm:mb-2 text-4xl sm:text-5xl md:text-6xl lg:text-7xl">Secure.</span>
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-CPENavy to-CPEGoldDark drop-shadow-sm text-5xl sm:text-6xl lg:text-7xl xl:text-8xl">Fast.</span>
+                                <span className="block mt-1 sm:mt-2 text-4xl sm:text-5xl md:text-6xl lg:text-7xl">Smart.</span>
                             </h1>
                         </div>
 
@@ -66,7 +66,7 @@ export default function Homepage() {
                 </div>
 
                 {/* Role Section */}
-                <div className="relative py-24 z-10">
+                <div className="relative py-12 sm:py-24 z-10">
                     <div className="absolute inset-0 bg-white/60 backdrop-blur-xl border-y border-slate-100/50" />
                     <div className="container mx-auto px-6 relative z-10">
                         <div className="text-center mb-16">
@@ -127,11 +127,11 @@ export default function Homepage() {
             {/* Footer */}
             <footer className="bg-white border-t border-slate-200 py-10">
                 <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all">
+                    <div className="flex items-center gap-2 grayscale hover:grayscale-0 transition-all">
                         <img src="/cpeautomation-logo.png" alt="logo" className="w-6 h-6 object-contain" />
-                        <span className="font-bold text-slate-700">CPE Automation</span>
+                        <span className="font-bold text-slate-700 text-xs sm:text-sm">CPE Automation</span>
                     </div>
-                    <p className="text-slate-500 text-sm font-medium">&copy; {new Date().getFullYear()} Nutodimos. All rights reserved.</p>
+                    <p className="text-slate-500 text-xs sm:text-sm font-medium text-center">&copy; {new Date().getFullYear()} Nutodimos. All rights reserved.</p>
                 </div>
             </footer>
         </div>
