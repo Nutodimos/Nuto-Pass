@@ -63,7 +63,7 @@ const AssignmentForm = ({
 
     useEffect(() => {
         if (state.success) {
-            toast.success(`Assignment has been ${type === "create" ? "created" : "updated"}!`);
+            toast.success(`Assignment ${type === "create" ? "created" : "updated"} successfully!`);
             setOpen(false);
             router.refresh();
         } else if (state.error) {

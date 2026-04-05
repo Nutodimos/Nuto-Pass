@@ -578,7 +578,7 @@ const Navbar = () => {
           {/* User Profile Section */}
           <motion.div
             whileHover={{ backgroundColor: "rgba(67, 98, 117, 0.05)" }}
-            className="flex items-center gap-3 pl-2 sm:pl-3 pr-2 py-1.5 rounded-xl cursor-pointer transition-colors"
+            className="hidden md:flex items-center gap-3 pl-2 sm:pl-3 pr-2 py-1.5 rounded-xl cursor-pointer transition-colors"
           >
             <div className="hidden sm:flex flex-col items-end">
               <span className="text-sm font-semibold text-slate-700 leading-tight">

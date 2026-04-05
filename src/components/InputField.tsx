@@ -12,6 +12,7 @@ type InputFieldProps = {
   defaultValue?: string;
   error?: FieldError;
   hidden?: boolean;
+  placeholder?: string;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 };
 
@@ -23,6 +24,7 @@ const InputField = ({
   defaultValue,
   error,
   hidden,
+  placeholder,
   inputProps,
 }: InputFieldProps) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -44,6 +46,7 @@ const InputField = ({
           className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
           {...inputProps}
           defaultValue={defaultValue}
+          placeholder={placeholder}
         />
         {isPassword && (
           <button

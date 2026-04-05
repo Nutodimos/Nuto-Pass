@@ -65,12 +65,24 @@ const SingleCoursePage = async ({
 
                         {/* Info */}
                         <div className="flex-1 text-white text-center md:text-left">
-                            <h1 className="text-2xl md:text-3xl font-bold mb-2">
+                            <h1 className="text-2xl md:text-3xl font-bold mb-1 tracking-wide">
                                 {course.name}
                             </h1>
-                            <p className="text-white/80 text-sm">
-                                Course materials, lessons, and lecturers
-                            </p>
+                            {course.title && (
+                                <p className="text-white/90 text-base md:text-lg font-light mb-2">
+                                    {course.title}
+                                </p>
+                            )}
+                            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 justify-center md:justify-start">
+                                {course.credits && (
+                                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-lg bg-white/20 text-white">
+                                        {course.credits} Credit{course.credits !== 1 ? "s" : ""}
+                                    </span>
+                                )}
+                                <span className="text-white/60 text-sm">
+                                    Course materials, lessons, and lecturers
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>

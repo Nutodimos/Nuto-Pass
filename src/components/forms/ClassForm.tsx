@@ -64,7 +64,7 @@ const ClassForm = ({
 
   useEffect(() => {
     if (state.success) {
-      toast(`Level has been ${type === "create" ? "created" : "updated"}!`);
+      toast.success(`Level ${type === "create" ? "created" : "updated"} successfully!`);
       setOpen(false);
       router.refresh();
     } else if (state.error) {

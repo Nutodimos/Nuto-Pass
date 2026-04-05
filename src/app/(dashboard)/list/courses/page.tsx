@@ -8,6 +8,7 @@ import { Prisma, Subject, Teacher } from "@prisma/client";
 import { BookOpen, Users, Calendar, FileText, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
+import CourseLevelFilter from "@/components/CourseLevelFilter";
 
 type SubjectWithCounts = Subject & {
   teachers: Teacher[];
@@ -61,13 +62,22 @@ const CoursesPage = async ({
             };
             break;
           case "search":
-            query.name = { contains: value, mode: "insensitive" };
+            query.OR = [
+              ...(query.OR || []),
+              { name: { contains: value, mode: "insensitive" } },
+              { title: { contains: value, mode: "insensitive" } },
+            ];
             break;
           default:
             break;
         }
       }
     }
+  }
+
+  const levelFilter = queryParams.level ? parseInt(queryParams.level as string) : null;
+  if (levelFilter) {
+    query.level = levelFilter;
   }
 
   // ROLE CONDITIONS
@@ -127,7 +137,8 @@ const CoursesPage = async ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+            <CourseLevelFilter />
             <div className="bg-white/10 rounded-xl px-4 py-2">
               <TableSearch />
             </div>
@@ -143,8 +154,33 @@ const CoursesPage = async ({
           <p className="text-sm text-gray-400">Try adjusting your search</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.map((course: SubjectWithCounts) => (
+        <div className="flex flex-col gap-8">
+          {Object.entries(
+            data.reduce((acc: Record<string, SubjectWithCounts[]>, course: SubjectWithCounts) => {
+              const sem =
+                course.semester === 1
+                  ? "Harmattan Semester"
+                  : course.semester === 2
+                  ? "Rain Semester"
+                  : "Both / Any";
+              if (!acc[sem]) acc[sem] = [];
+              acc[sem].push(course);
+              return acc;
+            }, {} as Record<string, SubjectWithCounts[]>)
+          )
+            .sort(([semA], [semB]) => {
+              if (semA === "Harmattan Semester") return -1;
+              if (semA === "Rain Semester" && semB === "Both / Any") return -1;
+              if (semA === "Both / Any") return 1;
+              return 0;
+            })
+            .map(([semesterName, courses]) => (
+              <div key={semesterName} className="flex flex-col gap-4">
+                <div className="sticky top-0 md:top-[64px] z-20 bg-gray-50/90 backdrop-blur-md py-3 mb-2">
+                  <h2 className="text-xl font-bold text-CPENavy">{semesterName}</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {(courses as SubjectWithCounts[]).map((course: SubjectWithCounts) => (
             <div
               key={course.id}
               className="group cpe-card p-5 flex flex-col"
@@ -209,7 +245,10 @@ const CoursesPage = async ({
                 )}
               </div>
             </div>
-          ))}
+                  ))}
+                </div>
+              </div>
+            ))}
         </div>
       )}
 

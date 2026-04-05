@@ -63,7 +63,7 @@ const AnnouncementForm = ({
 
     useEffect(() => {
         if (state.success) {
-            toast(`Announcement has been ${type === "create" ? "created" : "updated"}!`);
+            toast.success(`Announcement ${type === "create" ? "created" : "updated"} successfully!`);
             setOpen(false);
             router.refresh();
         } else if (state.error) {

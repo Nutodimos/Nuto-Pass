@@ -48,7 +48,7 @@ const SubjectForm = ({
 
   useEffect(() => {
     if (state.success) {
-      toast(`Course has been ${type === "create" ? "created" : "updated"}!`);
+      toast.success(`Course ${type === "create" ? "created" : "updated"} successfully!`);
       setOpen(false);
       router.refresh();
     } else if (state.error) {
@@ -71,11 +71,29 @@ const SubjectForm = ({
 
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Course Name"
+          label="Course Code"
           name="name"
           defaultValue={data?.name}
           register={register}
           error={errors?.name}
+          placeholder="e.g. CPE 501"
+        />
+        <InputField
+          label="Course Title"
+          name="title"
+          defaultValue={data?.title}
+          register={register}
+          error={errors?.title}
+          placeholder="e.g. Introduction to Computing"
+        />
+        <InputField
+          label="Credits"
+          name="credits"
+          type="number"
+          defaultValue={data?.credits}
+          register={register}
+          error={errors?.credits}
+          placeholder="e.g. 3"
         />
         {data && (
           <InputField
@@ -122,6 +140,27 @@ const SubjectForm = ({
           {errors.semester?.message && (
             <p className="text-xs text-red-400">
               {errors.semester.message.toString()}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-2 w-full md:w-[22%]">
+          <label className="text-sm font-medium text-CPENavyDark">Level</label>
+          <select
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
+            {...register("level")}
+            defaultValue={data?.level ?? ""}
+          >
+            <option value="">Any Level</option>
+            <option value="100">100 Level</option>
+            <option value="200">200 Level</option>
+            <option value="300">300 Level</option>
+            <option value="400">400 Level</option>
+            <option value="500">500 Level</option>
+            <option value="600">600 Level (PG)</option>
+          </select>
+          {errors.level?.message && (
+            <p className="text-xs text-red-400">
+              {errors.level.message.toString()}
             </p>
           )}
         </div>

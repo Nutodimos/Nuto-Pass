@@ -12,8 +12,12 @@ import {
   ClipboardList,
   Users,
   FileText,
+  Settings,
+  LogOut,
+  Megaphone,
 } from "lucide-react";
 import { useState } from "react";
+import { useClerk } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface Tab {
@@ -33,7 +37,7 @@ const roleTabs: Record<string, Tab[]> = {
     { icon: Home, label: "Home", href: "/teacher" },
     { icon: Fingerprint, label: "Attendance", href: "/list/attendance" },
     { icon: BookOpen, label: "Courses", href: "/list/courses" },
-    { icon: ClipboardList, label: "Tasks", href: "/list/assignments" },
+    { icon: ClipboardList, label: "Assignments", href: "/list/assignments" },
   ],
   student: [
     { icon: Home, label: "Home", href: "/student" },
@@ -49,11 +53,13 @@ const moreMenuItems = [
   { icon: BookOpen, label: "Lessons", href: "/list/lessons", roles: ["admin", "teacher", "student"] },
   { icon: ClipboardList, label: "Assignments", href: "/list/assignments", roles: ["admin", "student"] },
   { icon: FileText, label: "Materials", href: "/list/materials", roles: ["admin", "teacher"] },
+  { icon: Megaphone, label: "Announcements", href: "/list/announcements", roles: ["admin", "teacher", "student"] },
 ];
 
 export default function BottomTabBar() {
   const pathname = usePathname();
   const { user } = useUser();
+  const { signOut } = useClerk();
   const role = (user?.publicMetadata?.role as string) || "student";
   const tabs = roleTabs[role] || roleTabs.student;
   const [moreOpen, setMoreOpen] = useState(false);
@@ -99,17 +105,37 @@ export default function BottomTabBar() {
                         key={item.href}
                         href={item.href}
                         onClick={() => setMoreOpen(false)}
-                        className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all active:scale-95 ${
-                          active
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all active:scale-95 ${active
                             ? "bg-CPENavy/10 text-CPENavy"
                             : "text-gray-500 hover:bg-gray-50"
-                        }`}
+                          }`}
                       >
                         <Icon className="w-5 h-5" />
                         <span className="text-[11px] font-semibold">{item.label}</span>
                       </Link>
                     );
                   })}
+                </div>
+
+                <div className="w-full h-px bg-slate-100 my-4" />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Link
+                    href="/settings"
+                    onClick={() => setMoreOpen(false)}
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all active:scale-95 text-slate-500 hover:bg-slate-50 border border-slate-100"
+                  >
+                    <Settings className="w-5 h-5" />
+                    <span className="text-[11px] font-semibold">Settings</span>
+                  </Link>
+
+                  <button
+                    onClick={() => signOut({ redirectUrl: '/sign-in' })}
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all active:scale-95 text-red-500 hover:bg-red-50 border border-red-100"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span className="text-[11px] font-semibold">Logout</span>
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -129,9 +155,8 @@ export default function BottomTabBar() {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative transition-colors active:scale-95 ${
-                  active ? "text-CPENavy" : "text-gray-400"
-                }`}
+                className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative transition-colors active:scale-95 ${active ? "text-CPENavy" : "text-gray-400"
+                  }`}
               >
                 {active && (
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-CPEGold" />
@@ -147,9 +172,8 @@ export default function BottomTabBar() {
           {/* More tab */}
           <button
             onClick={() => setMoreOpen(!moreOpen)}
-            className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative transition-colors active:scale-95 ${
-              moreIsActive ? "text-CPENavy" : "text-gray-400"
-            }`}
+            className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative transition-colors active:scale-95 ${moreIsActive ? "text-CPENavy" : "text-gray-400"
+              }`}
           >
             {moreIsActive && !moreOpen && (
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-CPEGold" />

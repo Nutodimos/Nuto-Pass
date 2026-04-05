@@ -183,7 +183,8 @@ const FormModal = ({
 
     useEffect(() => {
       if (state.success) {
-        toast(`${table === "teacher" ? "lecturer" : table} has been deleted!`);
+        const entityName = table === "teacher" ? "Lecturer" : table.charAt(0).toUpperCase() + table.slice(1);
+        toast.success(`${entityName} deleted successfully!`);
         setOpen(false);
         router.refresh();
       } else if (state.error) {

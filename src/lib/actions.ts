@@ -63,6 +63,8 @@ export const createSubject = async (
     await prisma.subject.create({
       data: {
         name: data.name,
+        title: data.title || null,
+        credits: data.credits === "" ? null : data.credits,
         semester: data.semester === "" ? null : data.semester,
         teachers: {
           connect: data.teachers.map((teacherId) => ({ id: teacherId })),
@@ -91,6 +93,8 @@ export const updateSubject = async (
       },
       data: {
         name: data.name,
+        title: data.title || null,
+        credits: data.credits === "" ? null : data.credits,
         semester: data.semester === "" ? null : data.semester,
         teachers: {
           set: data.teachers.map((teacherId) => ({ id: teacherId })),

@@ -61,7 +61,7 @@ const MaterialForm = ({
 
     useEffect(() => {
         if (state.success) {
-            toast(`Material has been created!`);
+            toast.success(`Material created successfully!`);
             setOpen(false);
             router.refresh();
         } else if (state.error) {
