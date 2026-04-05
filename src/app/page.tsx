@@ -15,7 +15,7 @@ export default function Homepage() {
         <div data-theme="light" className="flex flex-col min-h-screen bg-[#F7F8FA] overflow-x-hidden selection:bg-CPEGold/20 selection:text-CPEGoldDark">
             <LandingNavbar />
 
-            <main className="flex-1 flex flex-col relative">
+            <main className="flex-1 hidden lg:flex flex-col relative">
                 {/* Global Background Elements for CPE Theme feel */}
                 <div className="absolute top-0 inset-x-0 h-[600px] bg-gradient-to-b from-CPENavy/5 via-white to-transparent pointer-events-none" />
                 <div className="absolute -top-40 -right-40 w-96 h-96 bg-CPEGold/10 rounded-full blur-3xl pointer-events-none" />
@@ -124,8 +124,67 @@ export default function Homepage() {
                 </div>
             </main>
 
+            {/* --- CUSTOM NATIVE MOBILE SPLASH SCREEN --- */}
+            <main className="flex lg:hidden flex-col min-h-[100dvh] bg-gradient-to-br from-CPENavy to-CPENavyDark overflow-hidden relative">
+                {/* Background Decor Elements */}
+                <div className="absolute top-[-10%] right-[-20%] w-96 h-96 bg-CPEGold/20 rounded-full blur-[100px] pointer-events-none animate-pulse" />
+                <div className="absolute bottom-[20%] left-[-20%] w-72 h-72 bg-white/10 rounded-full blur-[80px] pointer-events-none" />
+                
+                {/* Top Branding Section */}
+                <div className="flex-1 flex flex-col items-center justify-center p-8 z-10 animate-in fade-in slide-in-from-top-10 duration-1000 relative">
+                    <div className="relative w-32 h-32 mb-8 animate-float">
+                        <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl -z-10" />
+                        <img src="/cpeautomation-logo.png" alt="CPE Automation Logo" className="w-full h-full object-contain filter drop-shadow-2xl brightness-0 invert" />
+                    </div>
+                    
+                    <h1 className="text-4xl font-black text-white text-center tracking-tight mb-3">
+                        CPE Automation
+                    </h1>
+                    <p className="text-white/80 text-center font-medium px-4 text-sm sm:text-base leading-relaxed">
+                        Secure Biometric Identity & Attendance Core.
+                    </p>
+                </div>
+                
+                {/* Bottom Action Dock */}
+                <div className="w-full bg-white/10 backdrop-blur-3xl rounded-t-[2.5rem] p-8 pb-12 z-20 border-t border-white/20 shadow-2xl animate-in slide-in-from-bottom-full duration-1000 delay-300">
+                    <div className="max-w-sm mx-auto space-y-4">
+                        <div className="text-center mb-6">
+                            <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white/90 text-sm font-semibold tracking-wide border border-white/10 shadow-sm">
+                                Choose Your Access Point
+                            </span>
+                        </div>
+                        
+                        <a href="/sign-in" className="flex items-center gap-4 w-full p-4 rounded-3xl bg-CPEGold hover:bg-CPEGoldDark text-CPENavyDark transition-all duration-300 active:scale-95 group shadow-[0_8px_30px_rgba(255,193,7,0.3)]">
+                            <div className="w-12 h-12 rounded-xl bg-white/30 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                                <GraduationCap className="w-6 h-6" strokeWidth={2.5} />
+                            </div>
+                            <div className="flex-1 text-left">
+                                <h3 className="font-bold text-lg">Student Login</h3>
+                                <p className="text-CPENavyDark/70 text-xs font-semibold">Track your attendance records</p>
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-1 transition-transform">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+                            </div>
+                        </a>
+                        
+                        <a href="/sign-in" className="flex items-center gap-4 w-full p-4 rounded-3xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all duration-300 active:scale-95 group border border-white/10 hover:border-white/30">
+                            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                                <Presentation className="w-6 h-6" strokeWidth={2.5} />
+                            </div>
+                            <div className="flex-1 text-left">
+                                <h3 className="font-bold text-lg">Lecturer Login</h3>
+                                <p className="text-white/60 text-xs font-semibold">Manage your class sessions</p>
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:translate-x-1 transition-transform">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </main>
+
             {/* Footer */}
-            <footer className="bg-white border-t border-slate-200 py-10">
+            <footer className="hidden lg:block bg-white border-t border-slate-200 py-10">
                 <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2 grayscale hover:grayscale-0 transition-all">
                         <img src="/cpeautomation-logo.png" alt="logo" className="w-6 h-6 object-contain" />

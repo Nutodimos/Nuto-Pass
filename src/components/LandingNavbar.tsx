@@ -10,7 +10,7 @@ import Link from "next/link";
 
 export default function LandingNavbar() {
     return (
-        <header className="flex justify-between items-center px-4 sm:px-8 py-3 bg-transparent z-50 relative animate-in slide-in-from-top-4 duration-700 ease-out">
+        <header className="hidden lg:flex justify-between items-center px-4 sm:px-8 py-3 bg-transparent z-50 relative animate-in slide-in-from-top-4 duration-700 ease-out">
             <Link href="/" className="flex items-center gap-2 md:gap-4 group">
                 <div className="relative w-10 h-10 md:w-16 md:h-16 transition-transform group-hover:scale-110 duration-300">
                     <Image src="/cpeautomation-logo.png" alt="CPE Automation Logo" fill className="object-contain mix-blend-multiply" />
