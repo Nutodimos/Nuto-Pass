@@ -134,7 +134,9 @@ export default function Homepage() {
                 <div className="flex-1 flex flex-col items-center justify-center p-8 z-10 animate-in fade-in slide-in-from-top-10 duration-1000 relative">
                     <div className="relative w-32 h-32 mb-8 animate-float">
                         <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl -z-10" />
-                        <img src="/cpeautomation-logo.png" alt="CPE Automation Logo" className="w-full h-full object-contain filter drop-shadow-2xl brightness-0 invert" />
+                        <div className="w-full h-full bg-white rounded-3xl p-4 shadow-2xl border border-white/20 flex items-center justify-center">
+                            <img src="/cpeautomation-logo.png" alt="CPE Automation Logo" className="w-full h-full object-contain mix-blend-multiply" />
+                        </div>
                     </div>
                     
                     <h1 className="text-4xl font-black text-white text-center tracking-tight mb-3">
