@@ -69,7 +69,7 @@ export default function InstallPage() {
             <div className="bg-white/10 border border-white/20 p-6 rounded-2xl flex flex-col items-center gap-3 backdrop-blur-md">
               <h2 className="text-xl font-semibold">Desktop / Unsupported Browser</h2>
               <p className="text-sm text-white/70 text-center">
-                To install this app, please open this page on a supported mobile device (Chrome on Android or Safari on iOS), or use the install button in your desktop browser's address bar.
+                To install this app, please open this page on a supported mobile device (Chrome on Android or Safari on iOS), or use the install button in your desktop browser&apos;s address bar.
               </p>
             </div>
           )}
