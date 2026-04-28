@@ -193,7 +193,7 @@ const Navbar = () => {
       if (!cat.roles) return true;
       return cat.roles.includes(userRole);
     });
-  }, [userRole, userId]);
+  }, [userRole, userId, userUsername]);
 
   const [filteredCategories, setFilteredCategories] = useState<
     SearchCategory[]

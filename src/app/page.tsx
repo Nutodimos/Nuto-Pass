@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import LandingNavbar from "@/components/LandingNavbar";
 import { GraduationCap, Presentation } from "lucide-react";
+import Image from "next/image";
 
 export default function Homepage() {
     const { userId, sessionClaims } = auth();
@@ -56,9 +57,11 @@ export default function Homepage() {
                         <div className="relative w-full aspect-square md:aspect-auto md:h-[600px] animate-float">
                             {/* Decorative background for the image to give it a "dashboard" widget feel */}
                             <div className="absolute inset-4 bg-gradient-to-br from-white/40 to-white/10 rounded-[3rem] blur-2xl -z-10" />
-                            <img
+                            <Image
                                 src="/hero.png"
                                 alt="CPE Automation Dashboard Preview"
+                                width={800}
+                                height={800}
                                 className="object-contain w-full h-full drop-shadow-2xl hover:scale-[1.02] transition-transform duration-700 ease-in-out"
                             />
                         </div>
@@ -135,7 +138,7 @@ export default function Homepage() {
                     <div className="relative w-32 h-32 mb-8 animate-float">
                         <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl -z-10" />
                         <div className="w-full h-full bg-white rounded-3xl p-4 shadow-2xl border border-white/20 flex items-center justify-center">
-                            <img src="/cpeautomation-logo.png" alt="CPE Automation Logo" className="w-full h-full object-contain mix-blend-multiply" />
+                            <Image src="/cpeautomation-logo.png" alt="CPE Automation Logo" width={128} height={128} className="w-full h-full object-contain mix-blend-multiply" />
                         </div>
                     </div>
                     
@@ -189,7 +192,7 @@ export default function Homepage() {
             <footer className="hidden lg:block bg-white border-t border-slate-200 py-10">
                 <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2 grayscale hover:grayscale-0 transition-all">
-                        <img src="/cpeautomation-logo.png" alt="logo" className="w-6 h-6 object-contain" />
+                        <Image src="/cpeautomation-logo.png" alt="logo" width={24} height={24} className="object-contain" />
                         <span className="font-bold text-slate-700 text-xs sm:text-sm">CPE Automation</span>
                     </div>
                     <p className="text-slate-500 text-xs sm:text-sm font-medium text-center">&copy; {new Date().getFullYear()} Nutodimos. All rights reserved.</p>

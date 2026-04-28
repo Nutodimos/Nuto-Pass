@@ -54,10 +54,24 @@ const AttendanceSessionControl = ({
     const [elapsedTime, setElapsedTime] = useState("00:00:00");
     const [recentAttendees, setRecentAttendees] = useState<AttendanceRecord[]>([]);
 
+    const checkExistingSession = useCallback(async () => {
+        try {
+            const res = await fetch(`/api/attendance/session?lessonId=${lessonId}`);
+            const data = await res.json();
+            if (data && data.status === "OPEN") {
+                setSession(data);
+            }
+        } catch (error) {
+            console.error("Error checking session:", error);
+        } finally {
+            setCheckingSession(false);
+        }
+    }, [lessonId]);
+
     // Check for existing session on mount
     useEffect(() => {
         checkExistingSession();
-    }, [lessonId]);
+    }, [checkExistingSession]);
 
     // Timer effect
     useEffect(() => {
@@ -108,19 +122,7 @@ const AttendanceSessionControl = ({
         return () => clearInterval(pollInterval);
     }, [session, attendanceCount, recentAttendees.length]);
 
-    const checkExistingSession = async () => {
-        try {
-            const res = await fetch(`/api/attendance/session?lessonId=${lessonId}`);
-            const data = await res.json();
-            if (data && data.status === "OPEN") {
-                setSession(data);
-            }
-        } catch (error) {
-            console.error("Error checking session:", error);
-        } finally {
-            setCheckingSession(false);
-        }
-    };
+
 
     const startSession = async () => {
         setLoading(true);

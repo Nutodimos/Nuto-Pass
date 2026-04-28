@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Download, FileText, Eye, ExternalLink } from "lucide-react";
+import Image from "next/image";
 
 interface MaterialPreviewModalProps {
     isOpen: boolean;
@@ -81,9 +82,11 @@ const MaterialPreviewModal = ({ isOpen, onClose, filePath, title, fileType }: Ma
                                 />
                             ) : isImage ? (
                                 <div className="w-full h-full flex items-center justify-center p-4">
-                                    <img
+                                    <Image
                                         src={filePath}
                                         alt={title}
+                                        width={1200}
+                                        height={1200}
                                         className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
                                         onLoad={() => setIsLoading(false)}
                                     />
