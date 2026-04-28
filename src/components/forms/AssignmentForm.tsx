@@ -64,8 +64,10 @@ const AssignmentForm = ({
     useEffect(() => {
         if (state.success) {
             toast.success(`Assignment ${type === "create" ? "created" : "updated"} successfully!`);
-            setOpen(false);
-            router.refresh();
+            setTimeout(() => {
+                setOpen(false);
+                router.refresh();
+            }, 100);
         } else if (state.error) {
             toast.error("Something went wrong!");
         }

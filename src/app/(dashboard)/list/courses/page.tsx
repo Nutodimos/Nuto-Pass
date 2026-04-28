@@ -126,7 +126,8 @@ const CoursesPage = async ({
     <div className="flex-1 p-4 flex flex-col gap-4">
       {/* HEADER */}
       <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
               <BookOpen className="w-7 h-7 text-white" />
@@ -137,11 +138,15 @@ const CoursesPage = async ({
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
-            <CourseLevelFilter />
-            <div className="bg-white/10 rounded-xl px-4 py-2">
+            <div className="flex items-center gap-3">
+
+
               <TableSearch />
             </div>
+          </div>
+          <div className="w-full md:w-auto">
+            <CourseLevelFilter />
+
           </div>
         </div>
       </div>
@@ -176,7 +181,7 @@ const CoursesPage = async ({
             })
             .map(([semesterName, courses]) => (
               <div key={semesterName} className="flex flex-col gap-4">
-                <div className="sticky top-0 md:top-[64px] z-20 bg-gray-50/90 backdrop-blur-md py-3 mb-2">
+                <div className="sticky top-[60px] md:top-[64px] z-20 bg-[var(--bg-navbar)] backdrop-blur-md py-3 mb-2 border-b border-[var(--border-secondary)] px-2">
                   <h2 className="text-xl font-bold text-CPENavy">{semesterName}</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

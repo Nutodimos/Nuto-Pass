@@ -44,22 +44,7 @@ const QuickActionsCard = () => {
             bg: "bg-purple-50",
             hoverBg: "group-hover:bg-purple-100",
         },
-        {
-            label: "Manage Events",
-            href: "/list/events",
-            icon: CalendarDays,
-            color: "text-pink-500",
-            bg: "bg-pink-50",
-            hoverBg: "group-hover:bg-pink-100",
-        },
-        {
-            label: "View Reports",
-            href: "/list/results",
-            icon: FileText,
-            color: "text-green-500",
-            bg: "bg-green-50",
-            hoverBg: "group-hover:bg-green-100",
-        },
+
         {
             label: "Settings",
             href: "/settings",

@@ -40,18 +40,23 @@ const SubjectForm = ({
   );
 
   const onSubmit = handleSubmit((data) => {
-
+    console.log("Form Submitted:", data);
     formAction(data);
   });
 
   const router = useRouter();
 
   useEffect(() => {
+    console.log("Form State:", state);
     if (state.success) {
+      console.log("Action Success! Triggering Toast...");
       toast.success(`Course ${type === "create" ? "created" : "updated"} successfully!`);
-      setOpen(false);
-      router.refresh();
+      setTimeout(() => {
+        setOpen(false);
+        router.refresh();
+      }, 100);
     } else if (state.error) {
+      console.log("Action Error!", state);
       toast.error(`Something went wrong!`);
     }
   }, [state, router, type, setOpen]);
@@ -64,7 +69,13 @@ const SubjectForm = ({
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-CPEGold to-CPEGoldDark flex items-center justify-center">
           <span className="text-white font-bold">C</span>
         </div>
-        <h1 className="text-xl font-bold text-CPENavyDark">
+        <h1 
+          className="text-xl font-bold text-CPENavyDark cursor-pointer" 
+          onClick={() => {
+            console.log("Manual Toast Triggered");
+            toast.info("Manual Toast Test");
+          }}
+        >
           {type === "create" ? "Create New Course" : "Update Course"}
         </h1>
       </div>

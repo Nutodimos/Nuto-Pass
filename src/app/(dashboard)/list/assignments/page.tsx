@@ -109,7 +109,7 @@ const AssignmentListPage = async ({
 
       {/* HEADER */}
       <div className="bg-gradient-to-r from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
               <ClipboardList className="w-7 h-7 text-white" />
@@ -121,9 +121,9 @@ const AssignmentListPage = async ({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="bg-white/10 rounded-xl px-4 py-2">
+
               <TableSearch />
-            </div>
+
           </div>
         </div>
       </div>

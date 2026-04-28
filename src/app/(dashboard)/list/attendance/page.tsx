@@ -174,7 +174,7 @@ const AttendanceClassListPage = async ({
             <div className="flex-1 p-4 flex flex-col gap-4">
                 {/* HEADER */}
                 <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
                                 <ClipboardCheck className="w-7 h-7 text-white" />
@@ -186,9 +186,7 @@ const AttendanceClassListPage = async ({
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <div className="bg-white/10 rounded-xl px-4 py-2">
                                 <TableSearch />
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -275,7 +273,7 @@ const AttendanceClassListPage = async ({
         <div className="flex-1 p-4 flex flex-col gap-4">
             {/* HEADER */}
             <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
                             <ClipboardCheck className="w-7 h-7 text-white" />
@@ -287,9 +285,7 @@ const AttendanceClassListPage = async ({
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <div className="bg-white/10 rounded-xl px-4 py-2">
                             <TableSearch />
-                        </div>
                     </div>
                 </div>
             </div>
@@ -298,7 +294,7 @@ const AttendanceClassListPage = async ({
             {data.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl">
                     <GraduationCap className="w-16 h-16 text-gray-300 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-500">No classes found</h3>
+                    <h3 className="text-lg font-medium text-gray-500">No Levels found</h3>
                     <p className="text-sm text-gray-400">Try adjusting your search</p>
                 </div>
             ) : (

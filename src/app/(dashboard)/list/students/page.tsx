@@ -179,7 +179,7 @@ const StudentListPage = async ({
       <div className="flex-1 p-4 flex flex-col gap-8">
         {/* HEADER */}
         <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
                 <Users className="w-7 h-7 text-white" />
@@ -190,9 +190,9 @@ const StudentListPage = async ({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="bg-white/10 rounded-xl px-4 py-2">
+
                 <TableSearch />
-              </div>
+
             </div>
           </div>
         </div>
@@ -314,7 +314,7 @@ const StudentListPage = async ({
     <div className="flex-1 p-4 flex flex-col gap-4">
       {/* HEADER */}
       <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
               <GraduationCap className="w-7 h-7 text-white" />
@@ -326,9 +326,9 @@ const StudentListPage = async ({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="bg-white/10 rounded-xl px-4 py-2">
+
               <TableSearch />
-            </div>
+
           </div>
         </div>
       </div>

@@ -54,8 +54,8 @@
   --bg-accent-soft: rgba(112, 150, 171, 0.1);
 
   --text-primary: #E8EDF2;
-  --text-secondary: #94A3B8;
-  --text-tertiary: #64748B;
+  --text-secondary: #B0B7C3;
+  --text-tertiary: #808A9D;
   --text-inverse: #0F1419;
 
   --border-primary: #2A3A4E;
@@ -87,8 +87,8 @@
   --bg-accent-soft: rgba(112, 150, 171, 0.08);
 
   --text-primary: #F0F6FC;
-  --text-secondary: #8B949E;
-  --text-tertiary: #484F58;
+  --text-secondary: #B1BAC4;
+  --text-tertiary: #6E7681;
   --text-inverse: #000000;
 
   --border-primary: #1C2128;
@@ -366,6 +366,60 @@ html {
 
 [data-theme="midnight"] .border-slate-200\/60 {
   border-color: var(--border-primary) !important;
+}
+
+/* Accent text overrides for better legibility on dark backgrounds */
+[data-theme="dark"] .text-emerald-600,
+[data-theme="dark"] .text-emerald-700,
+[data-theme="midnight"] .text-emerald-600,
+[data-theme="midnight"] .text-emerald-700 {
+  color: #34D399 !important; /* emerald-400 */
+}
+
+[data-theme="dark"] .text-blue-500,
+[data-theme="dark"] .text-blue-600,
+[data-theme="dark"] .text-blue-700,
+[data-theme="midnight"] .text-blue-500,
+[data-theme="midnight"] .text-blue-600,
+[data-theme="midnight"] .text-blue-700 {
+  color: #60A5FA !important; /* blue-400 */
+}
+
+[data-theme="dark"] .text-purple-500,
+[data-theme="dark"] .text-purple-600,
+[data-theme="midnight"] .text-purple-500,
+[data-theme="midnight"] .text-purple-600 {
+  color: #A78BFA !important; /* purple-400 */
+}
+
+[data-theme="dark"] .text-orange-500,
+[data-theme="dark"] .text-orange-600,
+[data-theme="midnight"] .text-orange-500,
+[data-theme="midnight"] .text-orange-600 {
+  color: #FB923C !important; /* orange-400 */
+}
+
+[data-theme="dark"] .text-amber-600,
+[data-theme="dark"] .text-amber-700,
+[data-theme="midnight"] .text-amber-600,
+[data-theme="midnight"] .text-amber-700 {
+  color: #FBBF24 !important; /* amber-400 */
+}
+
+/* Brand color text overrides for dark backgrounds */
+[data-theme="dark"] .text-CPENavy,
+[data-theme="midnight"] .text-CPENavy {
+  color: #7096AB !important; /* Lighter slate blue */
+}
+
+[data-theme="dark"] .text-CPENavyDark,
+[data-theme="midnight"] .text-CPENavyDark {
+  color: #A0AEC0 !important;
+}
+
+[data-theme="dark"] .text-CPEGold,
+[data-theme="midnight"] .text-CPEGold {
+  color: #D4B473 !important; /* CPEGoldLight */
 }
 
 /* Border dashed on empty states */

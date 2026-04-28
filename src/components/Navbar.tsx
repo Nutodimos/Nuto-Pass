@@ -153,8 +153,8 @@ const Navbar = () => {
         roles: ["admin"],
       },
       {
-        name: "Classes",
-        route: "/list/attendance",
+        name: "Levels",
+        route: "/list/levels",
         icon: Building2,
         keywords: ["class", "level", "grade"],
       },
@@ -464,7 +464,7 @@ const Navbar = () => {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="sticky top-0 pt-[max(env(safe-area-inset-top),0.5rem)] flex items-center justify-between px-4 md:px-6 py-3 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm"
+        className="sticky top-0 pt-[max(env(safe-area-inset-top),0.5rem)] flex items-center justify-between px-4 md:px-6 py-3 bg-[var(--bg-navbar)] backdrop-blur-md border-b border-[var(--border-secondary)] shadow-sm"
         style={{ zIndex: 100 }}
       >
         {/* Left Section - Mobile Menu and Search */}
@@ -474,9 +474,9 @@ const Navbar = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowMobileSearch(true)}
-            className="md:hidden p-2.5 rounded-xl bg-slate-50 hover:bg-CPENavy/10 active:scale-95 border border-transparent hover:border-CPENavy/20 transition-all duration-200"
+            className="md:hidden p-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-CPENavy/10 active:scale-95 border border-transparent hover:border-CPENavy/20 transition-all duration-200"
           >
-            <Search className="w-5 h-5 text-slate-500" />
+            <Search className="w-5 h-5 text-[var(--text-tertiary)]" />
           </motion.button>
         </div>
 

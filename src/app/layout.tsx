@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import NavigationProgress from "@/components/NavigationProgress";
 import { Suspense } from "react";
 import ThemeProvider from "@/components/ThemeProvider";
+import PwaInstallProvider from "@/components/PwaInstallProvider";
 
 import {
   ClerkProvider,
@@ -40,14 +41,15 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
         <body className={`${inter.variable} antialiased`}>
-          <ThemeProvider>
-            <Suspense fallback={null}>
-              <NavigationProgress />
-            </Suspense>
-            {children}
-
-            <ToastContainer position="top-right" theme="dark" />
-          </ThemeProvider>
+          <PwaInstallProvider>
+            <ThemeProvider>
+              <Suspense fallback={null}>
+                <NavigationProgress />
+              </Suspense>
+              {children}
+            </ThemeProvider>
+          </PwaInstallProvider>
+          <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
         </body>
       </html>
     </ClerkProvider>

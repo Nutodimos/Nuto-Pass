@@ -84,8 +84,8 @@ const AssignmentDetailsPage = async ({ params }: { params: { id: string } }) => 
                     <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none group-hover:bg-white/20 transition-all duration-700" />
 
                     <div className="relative z-10 flex flex-col h-full justify-between gap-6">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-4 text-center md:text-left">
+                            <div className="flex flex-col md:flex-row items-center gap-4">
                                 <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl font-bold shadow-inner border border-white/10 shrink-0">
                                     <FileText className="w-8 h-8 text-white" />
                                 </div>
@@ -137,11 +137,11 @@ const AssignmentDetailsPage = async ({ params }: { params: { id: string } }) => 
                 {/* Dashboard Metric Widgets */}
                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between">
                     <div className="flex justify-between items-start">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 ${isPastDue ? 'bg-red-50 text-red-500' : 'bg-CPEGold/10 text-CPEGold'}`}>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mx-auto md:mx-0 ${isPastDue ? 'bg-red-50 text-red-500' : 'bg-CPEGold/10 text-CPEGold'}`}>
                             <CalendarDays className="w-6 h-6" />
                         </div>
                     </div>
-                    <div className="mt-4">
+                    <div className="mt-4 text-center md:text-left">
                         <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Due Date</p>
                         <h2 className={`text-2xl font-black leading-none ${isPastDue ? 'text-red-500' : 'text-slate-800'}`}>
                             {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(assignment.dueDate)}
@@ -157,11 +157,11 @@ const AssignmentDetailsPage = async ({ params }: { params: { id: string } }) => 
                     {(role === "admin" || role === "teacher") ? (
                         <>
                             <div className="flex justify-between items-start">
-                                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mx-auto md:mx-0">
                                     <CheckCircle2 className="w-6 h-6" />
                                 </div>
                             </div>
-                            <div className="mt-4">
+                            <div className="mt-4 text-center md:text-left">
                                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Submissions</p>
                                 <div className="flex items-end gap-2">
                                     <h2 className="text-3xl font-black text-slate-800 leading-none">{totalSubmissions}</h2>
@@ -180,7 +180,7 @@ const AssignmentDetailsPage = async ({ params }: { params: { id: string } }) => 
                         // Student View
                         <>
                             <div className="flex justify-between items-start">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 ${mySubmission ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-100 text-slate-400'}`}>
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mx-auto md:mx-0 ${mySubmission ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-100 text-slate-400'}`}>
                                     {mySubmission ? <CheckCircle2 className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
                                 </div>
                             </div>

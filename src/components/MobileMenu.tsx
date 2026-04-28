@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Home, Users, GraduationCap, BookOpen, Calendar, ClipboardList, Fingerprint, MessageSquare, Megaphone, Settings, LogOut, Layers, Presentation } from "lucide-react";
+import { Menu, X, Home, Users, GraduationCap, BookOpen, Calendar, ClipboardList, Fingerprint, MessageSquare, Megaphone, Settings, LogOut, Layers, Presentation, Download } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton, useUser } from "@clerk/nextjs";
 import Image from "next/image";
-
+import { usePwaInstall } from "./PwaInstallProvider";
 interface MenuItem {
     icon: React.ComponentType<{ className?: string }>;
     label: string;
@@ -50,6 +50,7 @@ const MobileMenu = () => {
     const pathname = usePathname();
     const { user } = useUser();
     const role = (user?.publicMetadata?.role as string) || "guest";
+    const { isInstallable, promptInstall } = usePwaInstall();
 
     const isActive = (href: string) => {
         if (href === "/") return pathname === "/";
@@ -63,9 +64,9 @@ const MobileMenu = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(true)}
-                className="md:hidden p-2.5 rounded-xl bg-slate-50 hover:bg-CPENavy/10 border border-transparent hover:border-CPENavy/20 transition-all duration-200"
+                className="md:hidden p-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-CPENavy/10 border border-transparent hover:border-CPENavy/20 transition-all duration-200"
             >
-                <Menu className="w-5 h-5 text-slate-600" />
+                <Menu className="w-5 h-5 text-[var(--text-secondary)]" />
             </motion.button>
 
             {/* Overlay and Drawer */}
@@ -87,10 +88,10 @@ const MobileMenu = () => {
                             animate={{ x: 0 }}
                             exit={{ x: "-100%" }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                            className="fixed top-0 left-0 bottom-0 w-[280px] bg-white shadow-2xl z-[201] overflow-y-auto"
+                            className="fixed top-0 left-0 bottom-0 w-[280px] bg-[var(--bg-card)] shadow-2xl z-[201] overflow-y-auto"
                         >
                             {/* Header */}
-                            <div className="flex items-center justify-between p-4 border-b border-slate-100">
+                            <div className="flex items-center justify-between p-4 border-b border-[var(--border-secondary)]">
                                 <Link href="/" onClick={() => setIsOpen(false)} className="flex items-center gap-2">
                                     <Image src="/cpeautomation-logo.png" alt="logo" width={32} height={32} className="mix-blend-multiply" />
                                     <span className="font-bold text-CPENavy">CPE Automation</span>
@@ -99,21 +100,21 @@ const MobileMenu = () => {
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
                                     onClick={() => setIsOpen(false)}
-                                    className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                                    className="p-2 rounded-lg hover:bg-[var(--bg-card-hover)] transition-colors"
                                 >
-                                    <X className="w-5 h-5 text-slate-500" />
+                                    <X className="w-5 h-5 text-[var(--text-tertiary)]" />
                                 </motion.button>
                             </div>
 
                             {/* User Info */}
                             {user && (
-                                <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-CPENavy/5 to-transparent">
+                                <div className="p-4 border-b border-[var(--border-secondary)] bg-gradient-to-r from-CPENavy/5 to-transparent">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-CPENavy/20 flex items-center justify-center text-CPENavy font-bold">
                                             {user.firstName?.[0] || user.username?.[0] || "U"}
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-slate-700">
+                                            <p className="font-semibold text-[var(--text-primary)]">
                                                 {user.firstName || user.username || "User"}
                                             </p>
                                             <p className="text-xs text-CPENavy capitalize">{role}</p>
@@ -126,7 +127,7 @@ const MobileMenu = () => {
                             <div className="p-4">
                                 {menuItems.map((section) => (
                                     <div key={section.title} className="mb-6">
-                                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">
+                                        <p className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wide mb-3">
                                             {section.title}
                                         </p>
                                         <div className="space-y-1">
@@ -148,7 +149,7 @@ const MobileMenu = () => {
                                                                 onClick={() => setIsOpen(false)}
                                                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${active
                                                                     ? "bg-CPENavy text-white shadow-lg shadow-CPENavy/30"
-                                                                    : "text-slate-600 hover:bg-CPENavy/10 hover:text-CPENavy"
+                                                                    : "text-[var(--text-secondary)] hover:bg-CPENavy/10 hover:text-CPENavy"
                                                                     }`}
                                                             >
                                                                 <Icon className="w-5 h-5" />
@@ -161,13 +162,27 @@ const MobileMenu = () => {
                                     </div>
                                 ))}
 
-                                {/* Logout */}
-                                <div className="pt-4 border-t border-slate-100">
+                                {/* Install App & Logout */}
+                                <div className="pt-4 border-t border-[var(--border-secondary)] space-y-2">
+                                    {isInstallable && (
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => {
+                                                setIsOpen(false);
+                                                promptInstall();
+                                            }}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-CPEGold hover:bg-CPEGold/10 transition-colors"
+                                        >
+                                            <Download className="w-5 h-5" />
+                                            <span className="font-medium">Install App</span>
+                                        </motion.button>
+                                    )}
                                     <SignOutButton>
                                         <motion.button
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
-                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-colors"
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-500/10 transition-colors"
                                         >
                                             <LogOut className="w-5 h-5" />
                                             <span className="font-medium">Logout</span>
