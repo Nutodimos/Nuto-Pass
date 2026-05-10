@@ -212,6 +212,8 @@ enum Day {
   WEDNESDAY
   THURSDAY
   FRIDAY
+  SATURDAY
+  SUNDAY
 }
 
 model AttendanceSession {
@@ -276,4 +278,19 @@ model CourseEnrollment {
   @@unique([studentId, subjectId])
   @@index([studentId])
   @@index([subjectId])
+}
+
+model DeviceHeartbeat {
+  id        Int      @id @default(autoincrement())
+  deviceId  String   @unique
+  lastSeen  DateTime @default(now())
+  mode      String   @default("UNKNOWN")
+  wifiRSSI  Int?
+  freeHeap  Int?
+  sdReady   Boolean  @default(false)
+  sensorStatus Boolean @default(false)
+  uptime    Int      @default(0)
+  pendingCommand String?
+
+  @@index([deviceId])
 }

@@ -1,104 +1,252 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { Fingerprint, Loader2, CheckCircle2 } from "lucide-react";
+import { createPortal } from "react-dom";
 
 const BiometricRegistrationButton = ({ studentId }: { studentId: string }) => {
     const [open, setOpen] = useState(false);
-    const [biometricId, setBiometricId] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState<"idle" | "initiating" | "waiting" | "success" | "error">("idle");
+    const [slotId, setSlotId] = useState<number | null>(null);
+    const [mounted, setMounted] = useState(false);
+    const [deviceStatus, setDeviceStatus] = useState<"online" | "idle" | "offline" | "loading">("loading");
+    const [sensorStatus, setSensorStatus] = useState<boolean>(true);
     const router = useRouter();
+    const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const statusPollRef = useRef<NodeJS.Timeout | null>(null);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
+    // Clean up polling on unmount or modal close
+    useEffect(() => {
+        setMounted(true);
+        return () => {
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+            if (statusPollRef.current) clearInterval(statusPollRef.current);
+        };
+    }, []);
+
+    // Poll for device status when modal opens
+    useEffect(() => {
+        if (open) {
+            checkDeviceStatus();
+            statusPollRef.current = setInterval(checkDeviceStatus, 5000);
+        } else {
+            if (statusPollRef.current) clearInterval(statusPollRef.current);
+        }
+        return () => {
+            if (statusPollRef.current) clearInterval(statusPollRef.current);
+        };
+    }, [open]);
+
+    const checkDeviceStatus = async () => {
+        try {
+            const res = await fetch("/api/esp32/events");
+            if (res.ok) {
+                const data = await res.json();
+                setDeviceStatus(data.device?.status || "offline");
+                setSensorStatus(data.device?.sensorStatus ?? false);
+            }
+        } catch (error) {
+            setDeviceStatus("offline");
+        }
+    };
+
+    const handleStart = async () => {
+        setStatus("initiating");
 
         try {
-            const res = await fetch("/api/student/biometric", {
+            const res = await fetch("/api/student/biometric/initiate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ studentId, biometricId }),
+                body: JSON.stringify({ studentId }),
             });
 
             const data = await res.json();
 
             if (res.ok) {
-                toast.success(data.message);
-                setOpen(false);
-                setBiometricId("");
-                router.refresh();
+                setSlotId(data.slotId);
+                setStatus("waiting");
+                startPolling();
             } else {
                 toast.error(data.message);
+                setStatus("error");
             }
         } catch (error) {
-            toast.error("An error occurred");
-        } finally {
-            setLoading(false);
+            toast.error("Failed to connect to server");
+            setStatus("error");
         }
+    };
+
+    const startPolling = () => {
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+
+        pollIntervalRef.current = setInterval(async () => {
+            try {
+                const res = await fetch("/api/esp32/events");
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    // If the pending command is cleared, it means the ESP32 completed it!
+                    if (!data.device?.pendingCommand) {
+                        setStatus("success");
+                        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                        toast.success("Biometric registration complete!");
+                        router.refresh();
+                        
+                        // Auto-close after 2 seconds
+                        setTimeout(() => {
+                            setOpen(false);
+                            setStatus("idle");
+                        }, 2000);
+                    }
+                }
+            } catch (error) {
+                console.error("Polling error", error);
+            }
+        }, 2000); // Poll every 2 seconds during active registration
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+        setStatus("idle");
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
 
     return (
         <>
             <button
-                onClick={() => setOpen(true)}
-                className="w-7 h-7 flex items-center justify-center rounded-full bg-CPEGold"
+                type="button"
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpen(true);
+                }}
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-CPEGold transition-transform hover:scale-110"
                 title="Register Biometric ID"
             >
-                {/* Using a generic icon or the sort icon as placeholder if fingerprint not available */}
-                <span className="text-xs font-bold text-white">ID</span>
+                <Fingerprint className="w-4 h-4 text-white" />
             </button>
 
-            {open && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-md p-6 w-full max-w-md relative">
+            {mounted && open && createPortal(
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm relative shadow-2xl overflow-hidden border border-slate-100">
+                        {/* Header Background */}
+                        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-CPENavy to-CPENavyDark rounded-t-2xl -z-10" />
+                        
                         <button
-                            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-                            onClick={() => setOpen(false)}
+                            className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+                            onClick={handleClose}
                         >
                             ✕
                         </button>
-                        <h2 className="text-xl font-semibold mb-4">Register Biometric ID</h2>
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Biometric ID / Hash
-                                </label>
-                                <input
-                                    type="text"
-                                    value={biometricId}
-                                    onChange={(e) => setBiometricId(e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-CPENavy focus:border-transparent"
-                                    placeholder="Scan or enter ID..."
-                                    autoFocus
-                                    required
-                                />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Focus this field and use the scanner if applicable.
-                                </p>
+                        
+                        <div className="flex flex-col items-center mt-2 text-center">
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-lg ${
+                                status === "success" ? "bg-emerald-500" : 
+                                status === "error" ? "bg-red-500" : "bg-white"
+                            }`}>
+                                {status === "success" ? (
+                                    <CheckCircle2 className="w-8 h-8 text-white" />
+                                ) : status === "waiting" || status === "initiating" ? (
+                                    <Fingerprint className="w-8 h-8 text-CPENavy animate-pulse" />
+                                ) : (
+                                    <Fingerprint className="w-8 h-8 text-CPENavy" />
+                                )}
                             </div>
 
-                            <div className="flex justify-end gap-2 mt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setOpen(false)}
-                                    className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
-                                    disabled={loading}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 text-sm text-white bg-CPENavy rounded-md hover:opacity-90 disabled:opacity-50 btn-cpe"
-                                    disabled={loading}
-                                >
-                                    {loading ? "Registering..." : "Register"}
-                                </button>
+                            <h2 className={`text-xl font-bold mb-2 ${status === "idle" ? "text-white" : "text-slate-800"}`}>
+                                Remote Registration
+                            </h2>
+
+                            {/* Device Status Badge */}
+                            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-2 border ${
+                                deviceStatus === "online" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600" :
+                                deviceStatus === "idle" ? "bg-amber-500/10 border-amber-500/20 text-amber-600" :
+                                deviceStatus === "loading" ? "bg-slate-100 border-slate-200 text-slate-500" :
+                                "bg-red-500/10 border-red-500/20 text-red-600"
+                            }`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${
+                                    deviceStatus === "online" ? "bg-emerald-500 animate-pulse" :
+                                    deviceStatus === "idle" ? "bg-amber-500" :
+                                    deviceStatus === "loading" ? "bg-slate-400 animate-pulse" :
+                                    "bg-red-500"
+                                }`} />
+                                <span className="text-[10px] font-bold uppercase tracking-wider">
+                                    Device {deviceStatus}
+                                </span>
                             </div>
-                        </form>
+
+                            {/* Sensor Status Warning */}
+                            {deviceStatus !== "offline" && !sensorStatus && (
+                                <div className="mt-1 mb-3 px-3 py-1.5 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                    <span className="text-[10px] text-red-600 font-semibold uppercase">Scanner Disconnected</span>
+                                </div>
+                            )}
+
+                            {status === "idle" && (
+                                <div className="mt-4">
+                                    <p className="text-sm text-slate-500 mb-6">
+                                        Click below to wake up the biometric scanner. The device LED will turn <strong className="text-purple-600">purple</strong> when ready.
+                                    </p>
+                                    <button
+                                        onClick={handleStart}
+                                        disabled={deviceStatus === "offline" || !sensorStatus}
+                                        className={`w-full py-3 px-4 rounded-xl font-semibold transition-all shadow-lg ${
+                                            (deviceStatus === "offline" || !sensorStatus)
+                                            ? "bg-slate-200 text-slate-400 cursor-not-allowed" 
+                                            : "bg-CPENavy hover:bg-CPENavyDark text-white shadow-CPENavy/30"
+                                        }`}
+                                    >
+                                        {deviceStatus === "offline" ? "Device Offline" : !sensorStatus ? "Scanner Missing" : "Wake Device"}
+                                    </button>
+                                </div>
+                            )}
+
+                            {status === "initiating" && (
+                                <div className="mt-4">
+                                    <Loader2 className="w-6 h-6 text-CPENavy animate-spin mx-auto mb-3" />
+                                    <p className="text-sm text-slate-600 font-medium">Connecting to device...</p>
+                                </div>
+                            )}
+
+                            {status === "waiting" && (
+                                <div className="mt-4">
+                                    <p className="text-sm text-slate-600 font-medium mb-1">
+                                        Scanner is ready (Slot {slotId})
+                                    </p>
+                                    <p className="text-xs text-slate-500 mb-4">
+                                        Please place student's finger on the sensor <br/> <strong>twice</strong> to register.
+                                    </p>
+                                    <div className="flex justify-center gap-1">
+                                        <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: "0s" }} />
+                                        <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: "0.2s" }} />
+                                        <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: "0.4s" }} />
+                                    </div>
+                                    <button
+                                        onClick={handleClose}
+                                        className="mt-6 text-xs text-slate-400 hover:text-slate-600 underline"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            )}
+
+                            {status === "success" && (
+                                <div className="mt-4">
+                                    <p className="text-sm text-emerald-600 font-bold mb-1">
+                                        Fingerprint Saved!
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                        Student is now securely linked.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     );

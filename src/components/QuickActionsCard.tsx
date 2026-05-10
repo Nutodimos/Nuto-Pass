@@ -6,7 +6,8 @@ import {
     CalendarDays,
     Settings,
     FileText,
-    Fingerprint
+    Fingerprint,
+    ScanLine
 } from "lucide-react";
 
 const QuickActionsCard = () => {
@@ -43,6 +44,14 @@ const QuickActionsCard = () => {
             color: "text-purple-500",
             bg: "bg-purple-50",
             hoverBg: "group-hover:bg-purple-100",
+        },
+        {
+            label: "Biometric Reg.",
+            href: "/list/students",
+            icon: ScanLine,
+            color: "text-indigo-500",
+            bg: "bg-indigo-50",
+            hoverBg: "group-hover:bg-indigo-100",
         },
 
         {
