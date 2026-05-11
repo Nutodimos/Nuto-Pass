@@ -39,6 +39,7 @@ export const POST = async (req: NextRequest) => {
         const sdReady = body.sdReady ?? false;
         const sensorStatus = body.sensorStatus ?? false;
         const uptime = body.uptime ?? 0;
+        const templateCount = body.templateCount ?? null;
 
         const updated = await prisma.deviceHeartbeat.upsert({
             where: { deviceId },
@@ -50,6 +51,7 @@ export const POST = async (req: NextRequest) => {
                 sdReady,
                 sensorStatus,
                 uptime,
+                templateCount,
             },
             create: {
                 deviceId,
@@ -60,6 +62,7 @@ export const POST = async (req: NextRequest) => {
                 sdReady,
                 sensorStatus,
                 uptime,
+                templateCount,
             },
         });
 

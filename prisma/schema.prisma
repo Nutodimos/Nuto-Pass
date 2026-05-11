@@ -290,6 +290,7 @@ model DeviceHeartbeat {
   sdReady   Boolean  @default(false)
   sensorStatus Boolean @default(false)
   uptime    Int      @default(0)
+  templateCount Int?
   pendingCommand String?
 
   @@index([deviceId])

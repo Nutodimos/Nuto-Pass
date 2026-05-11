@@ -6,7 +6,6 @@ import AttendanceOverviewCard from "@/components/AttendanceOverviewCard";
 import RecentActivitiesCard from "@/components/RecentActivitiesCard";
 import QuickActionsCard from "@/components/QuickActionsCard";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
-import DeviceStatusCard from "@/components/DeviceStatusCard";
 import { Suspense } from "react";
 
 const AdminPage = ({
@@ -55,9 +54,6 @@ const AdminPage = ({
 
       {/* RIGHT COLUMN (1/3) */}
       <div className="w-full lg:w-1/3 flex flex-col gap-8">
-        {/* DEVICE STATUS */}
-        <DeviceStatusCard />
-
         <Suspense fallback={<LoadingSkeleton type="announcements" />}>
           <Announcements />
         </Suspense>

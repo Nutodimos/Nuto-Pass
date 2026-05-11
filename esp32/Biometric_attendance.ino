@@ -64,7 +64,8 @@ void sendHeartbeat() {
   unsigned long uptimeSec = (millis() - bootTime) / 1000;
   int rssi = WiFi.RSSI();
   int heap = ESP.getFreeHeap();
-  String json = "{\"deviceSecret\":\""+String(DEVICE_SECRET)+"\",\"deviceId\":\"ESP32_MAIN\",\"mode\":\""+String(modeToString(currentMode))+"\",\"rssi\":"+String(rssi)+",\"freeHeap\":"+String(heap)+",\"sdReady\":"+String(sdReady?"true":"false")+",\"sensorStatus\":"+String(sensorReady?"true":"false")+",\"uptime\":"+String(uptimeSec)+"}";
+  finger.getTemplateCount(); // Update the count before sending
+  String json = "{\"deviceSecret\":\""+String(DEVICE_SECRET)+"\",\"deviceId\":\"ESP32_MAIN\",\"mode\":\""+String(modeToString(currentMode))+"\",\"rssi\":"+String(rssi)+",\"freeHeap\":"+String(heap)+",\"sdReady\":"+String(sdReady?"true":"false")+",\"sensorStatus\":"+String(sensorReady?"true":"false")+",\"uptime\":"+String(uptimeSec)+",\"templateCount\":"+String(finger.templateCount)+"}";
   int code = http.POST(json);
   if (code == 200) {
     String response = http.getString();
@@ -119,6 +120,23 @@ void sendHeartbeat() {
             if (currentMode == MODE_VERIFICATION) ledYellow();
             else ledBlue();
           }
+        }
+        // ── EMPTY_ALL — wipe all templates from sensor ──
+        else if (cmd == "EMPTY_ALL") {
+          Serial.println("[REMOTE] Clearing all templates...");
+          ledWhite();
+          uint8_t p = finger.emptyDatabase();
+          if (p == FINGERPRINT_OK) {
+            finger.getTemplateCount();
+            Serial.printf("[REMOTE] SUCCESS: All templates erased. Count: %d\n", finger.templateCount);
+            beepTimes(3,100,80);
+          } else {
+            Serial.printf("[REMOTE] FAILED to clear database (code %d)\n", p);
+            beepTimes(5,50,50);
+          }
+          delay(1000);
+          if (currentMode == MODE_VERIFICATION) ledYellow();
+          else ledBlue();
         }
         else {
           Serial.printf("[REMOTE] Unknown command: %s\n", cmd.c_str());
@@ -200,31 +218,21 @@ void handleEnrollment(){
     case ENROLL_FIRST_SCAN:{
       uint8_t conv=finger.image2Tz(1);
       if(conv==FINGERPRINT_OK){
-        Serial.println("[ENROLL] ✓ First scan captured — LIFT finger off sensor");
-        ledGreen();beep(60);delay(800);ledPurple();
-        enrollTimeout=now; enrollState=ENROLL_WAIT_LIFT;
+        Serial.println("[ENROLL] ✓ First scan captured!");
+        Serial.println("[ENROLL] LIFT finger off sensor now...");
+        ledGreen();beepTimes(1,150);
+        // Mandatory 3-second pause — gives user time to lift finger
+        // We don't rely on FINGERPRINT_NOFINGER because some R307 sensors
+        // never report it reliably (residual heat/moisture on sensor surface)
+        delay(3000);
+        Serial.println("[ENROLL] Now PLACE SAME FINGER again for second scan");
+        beepTimes(2,80,100);ledPurple();
+        enrollTimeout=now; enrollState=ENROLL_WAIT_SECOND;
       }else{
         Serial.println("[ENROLL] Poor quality first scan — try again");
         ledRed();beep(150);delay(500);ledPurple();
         enrollTimeout=now; enrollState=ENROLL_WAIT_FIRST;
       }break;}
-
-    case ENROLL_WAIT_LIFT:
-      if(now-enrollTimeout>15000){
-        Serial.println("[ENROLL] Timed out waiting for finger lift");
-        beepTimes(2,60,60);
-        if(wifiConnected) postToServer("ENROLL", enrollNewID, "FAILED");
-        enrollNewID=-1; currentMode=MODE_DEFAULT; ledBlue(); enrollState=ENROLL_IDLE; return;
-      }
-      // Require finger to be fully removed (double-check with 300ms gap)
-      if(finger.getImage()==FINGERPRINT_NOFINGER){
-        delay(300);
-        if(finger.getImage()==FINGERPRINT_NOFINGER){
-          Serial.println("[ENROLL] Finger lifted — now PLACE SAME FINGER again");
-          beepTimes(2,60,80);ledPurple();
-          enrollTimeout=now; enrollState=ENROLL_WAIT_SECOND;
-        }
-      }break;
 
     case ENROLL_WAIT_SECOND:
       if(now-enrollTimeout>30000){
@@ -258,7 +266,18 @@ void handleEnrollment(){
         Serial.printf("[ENROLL] storeModel FAILED (code %d)\n", p);
         enrollState=ENROLL_FAIL; break;
       }
-      enrollState=ENROLL_SUCCESS;
+      // Self-test: immediately try to find the just-stored template
+      Serial.println("[ENROLL] Running self-verification test...");
+      delay(200);
+      p = finger.loadModel(enrollNewID);
+      if(p == FINGERPRINT_OK){
+        finger.getTemplateCount();
+        Serial.printf("[ENROLL] Self-test PASSED — template stored. Total templates: %d\n", finger.templateCount);
+        enrollState=ENROLL_SUCCESS;
+      }else{
+        Serial.printf("[ENROLL] Self-test FAILED — loadModel returned %d\n", p);
+        enrollState=ENROLL_FAIL;
+      }
       break;}
 
     case ENROLL_SUCCESS:{
@@ -324,6 +343,9 @@ void setup(){
   if(finger.verifyPassword()){
     Serial.println("[INIT] Fingerprint sensor: OK");
     sensorReady=true;
+    // Lower security level for more reliable matching (1=least strict, 5=most strict)
+    finger.setSecurityLevel(2);
+    Serial.println("[INIT] Security level set to 2 (permissive)");
     // Print template count for diagnostics
     finger.getTemplateCount();
     Serial.printf("[INIT] Stored fingerprints: %d\n", finger.templateCount);
@@ -401,7 +423,14 @@ void loop(){
       currentMode=MODE_SLEEP;enterSleepMode();
     }
   }
-  if(!btnDown&&btnWasDown){btnWasDown=false;if(!longPressHandled){pressCount++;lastPressTime=now;}}
+  if(!btnDown&&btnWasDown){
+    btnWasDown=false;
+    if(!longPressHandled){
+      pressCount++;
+      lastPressTime=now;
+      Serial.printf("[BUTTON] Press %d detected...\n", pressCount);
+    }
+  }
 
   if(!btnDown&&pressCount>0&&(now-lastPressTime>=MULTI_PRESS_WINDOW_MS)&&!longPressHandled){
     int count=pressCount;pressCount=0;
@@ -415,8 +444,22 @@ void loop(){
         Serial.println("[MODE] → DEFAULT (Blue LED)");
         ledBlue();beep(60);
       }
+    }else if(count==3){
+        Serial.println("[MANUAL] Triple-click detected: WIPING SENSOR DATABASE...");
+        ledWhite(); beepTimes(4,100,100);
+        uint8_t p = finger.emptyDatabase();
+        if(p == FINGERPRINT_OK){
+          finger.getTemplateCount();
+          Serial.printf("[MANUAL] SUCCESS: All templates erased. Count: %d\n", finger.templateCount);
+          ledGreen(); beep(500);
+        } else {
+          Serial.printf("[MANUAL] FAILED to wipe (code %d)\n", p);
+          ledRed(); beepTimes(5,50,50);
+        }
+        delay(2000);
+        ledBlue();
     }else if(count>=2){
-        Serial.println("[MODE] Manual registration disabled. Use NutoPass Dashboard.");
+        Serial.println("[MODE] Double-click: No action defined.");
         beepTimes(2,80,100);ledBlue();
     }
   }
@@ -431,13 +474,17 @@ void loop(){
         ledRed();beepTimes(2,80,80);delay(1500);ledYellow();return;
       }
       if(conv==FINGERPRINT_OK){
-        if(finger.fingerSearch()==FINGERPRINT_OK){
+        // Search the full library for a match
+        finger.getTemplateCount();
+        Serial.printf("[VERIFY] Searching %d templates...\n", finger.templateCount);
+        uint8_t searchResult = finger.fingerSearch();
+        if(searchResult==FINGERPRINT_OK){
           int fid=finger.fingerID;
           int conf=finger.confidence;
           Serial.printf("[VERIFY] Match found: ID=%d  Confidence=%d\n", fid, conf);
 
           // Reject low-confidence matches
-          if(conf < 30){
+          if(conf < 20){
             Serial.println("[VERIFY] Confidence too low — rejected");
             ledOrange();beepTimes(2,50,50);delay(1500);ledYellow();return;
           }
@@ -455,7 +502,7 @@ void loop(){
           ledGreen();beepTimes(1,120);delay(2500);ledYellow();
         }else{
           logToSD("VERIFY",-1,"FAILED",false);
-          Serial.println("[VERIFY] ✕ Fingerprint not recognized");
+          Serial.printf("[VERIFY] ✕ Fingerprint not recognized (search code: %d)\n", searchResult);
           ledRed();beepTimes(2,80,80);delay(2000);ledYellow();
         }
       }

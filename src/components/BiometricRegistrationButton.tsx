@@ -13,6 +13,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
     const [mounted, setMounted] = useState(false);
     const [deviceStatus, setDeviceStatus] = useState<"online" | "idle" | "offline" | "loading">("loading");
     const [sensorStatus, setSensorStatus] = useState<boolean>(true);
+    const [templateCount, setTemplateCount] = useState<number>(0);
     const [enrollStep, setEnrollStep] = useState<string>("");
     const router = useRouter();
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -46,6 +47,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                 const data = await res.json();
                 setDeviceStatus(data.device?.status || "offline");
                 setSensorStatus(data.device?.sensorStatus ?? false);
+                setTemplateCount(data.device?.templateCount ?? 0);
             }
         } catch (error) {
             setDeviceStatus("offline");
@@ -79,6 +81,30 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
             toast.error("Failed to connect to server");
             setStatus("error");
             setEnrollStep("");
+        }
+    };
+
+    const handleEmergencyWipe = async () => {
+        if (!confirm("⚠️ WARNING: This will ERASE ALL fingerprints from the scanner memory and clear all student links. This cannot be undone. Proceed?")) return;
+        
+        setStatus("deleting");
+        setEnrollStep("Sending wipe command...");
+        try {
+            const res = await fetch("/api/student/biometric/wipe", { method: "POST" });
+            const data = await res.json();
+            if (res.ok) {
+                toast.success("Wipe command sent to device");
+                router.refresh();
+                setTimeout(() => {
+                    handleClose();
+                }, 2000);
+            } else {
+                toast.error(data.message || "Failed to initiate wipe");
+                setStatus("idle");
+            }
+        } catch (error) {
+            toast.error("Network error");
+            setStatus("idle");
         }
     };
 
@@ -220,7 +246,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                             </div>
 
                             <h2 className={`text-xl font-bold mb-2 ${status === "idle" ? "text-white" : "text-slate-800"}`}>
-                                Remote Registration
+                                {status === "idle" ? "Biometric Settings" : "Remote Registration"}
                             </h2>
 
                             {/* Device Status Badge */}
@@ -241,16 +267,24 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                                 </span>
                             </div>
 
-                            {/* Sensor Status Warning */}
-                            {deviceStatus !== "offline" && !sensorStatus && (
-                                <div className="mt-1 mb-3 px-3 py-1.5 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                                    <span className="text-[10px] text-red-600 font-semibold uppercase">Scanner Disconnected</span>
+                            {/* Diagnostics Section (Only in IDLE) */}
+                            {status === "idle" && deviceStatus !== "offline" && (
+                                <div className="mt-1 mb-4 flex flex-col items-center gap-1 w-full">
+                                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg w-full justify-between">
+                                        <span className="text-[10px] text-slate-500 font-bold uppercase">Sensor Templates</span>
+                                        <span className="text-xs font-bold text-CPENavy">{templateCount} / 127</span>
+                                    </div>
+                                    {!sensorStatus && (
+                                        <div className="w-full px-3 py-1.5 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                            <span className="text-[10px] text-red-600 font-semibold uppercase">Scanner Disconnected</span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             {status === "idle" && hasBiometric && (
-                                <div className="mt-4 w-full">
+                                <div className="mt-2 w-full">
                                     <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mb-4">
                                         <p className="text-sm text-emerald-700 font-medium">Student is already registered.</p>
                                     </div>
@@ -258,7 +292,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                                         <button
                                             onClick={handleDelete}
                                             disabled={deviceStatus === "offline"}
-                                            className="flex-1 py-3 px-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-semibold transition-colors border border-red-200 flex items-center justify-center gap-2"
+                                            className="flex-1 py-3 px-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-semibold transition-colors border border-red-200 flex items-center justify-center gap-2 text-sm"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                             Delete
@@ -266,7 +300,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                                         <button
                                             onClick={handleStart}
                                             disabled={deviceStatus === "offline" || !sensorStatus}
-                                            className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all shadow-lg ${
+                                            className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all shadow-lg text-sm ${
                                                 (deviceStatus === "offline" || !sensorStatus)
                                                 ? "bg-slate-200 text-slate-400 cursor-not-allowed" 
                                                 : "bg-CPENavy hover:bg-CPENavyDark text-white shadow-CPENavy/30"
@@ -279,8 +313,8 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                             )}
 
                             {status === "idle" && !hasBiometric && (
-                                <div className="mt-4">
-                                    <p className="text-sm text-slate-500 mb-6">
+                                <div className="mt-2 w-full">
+                                    <p className="text-sm text-slate-500 mb-6 px-4">
                                         Click below to wake up the biometric scanner. The device LED will turn <strong className="text-purple-600">purple</strong> when ready.
                                     </p>
                                     <button
@@ -292,15 +326,26 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                                             : "bg-CPENavy hover:bg-CPENavyDark text-white shadow-CPENavy/30"
                                         }`}
                                     >
-                                        {deviceStatus === "offline" ? "Device Offline" : !sensorStatus ? "Scanner Missing" : "Wake Device"}
+                                        {deviceStatus === "offline" ? "Device Offline" : !sensorStatus ? "Scanner Missing" : "Start Registration"}
                                     </button>
                                 </div>
+                            )}
+
+                            {/* EMERGENCY WIPE BUTTON (Only if templateCount > 0 and idle) */}
+                            {status === "idle" && templateCount > 0 && (
+                                <button
+                                    onClick={handleEmergencyWipe}
+                                    className="mt-6 text-[10px] text-red-400 hover:text-red-600 font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5 opacity-60 hover:opacity-100"
+                                >
+                                    <Trash2 className="w-3 h-3" />
+                                    Emergency Wipe Sensor
+                                </button>
                             )}
 
                             {status === "deleting" && (
                                 <div className="mt-4">
                                     <Loader2 className="w-6 h-6 text-red-500 animate-spin mx-auto mb-3" />
-                                    <p className="text-sm text-slate-600 font-medium">Removing biometric data...</p>
+                                    <p className="text-sm text-slate-600 font-medium">{enrollStep || "Processing..."}</p>
                                 </div>
                             )}
 
@@ -319,8 +364,8 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                                     <p className="text-xs text-purple-600 font-semibold mb-2">
                                         {enrollStep}
                                     </p>
-                                    <p className="text-xs text-slate-500 mb-4">
-                                        Place finger on the sensor <strong>twice</strong> (lift between scans).
+                                    <p className="text-xs text-slate-500 mb-4 px-4">
+                                        Place finger on the sensor <strong>twice</strong>. Lift when the LED turns green, then place it again when it turns purple.
                                     </p>
                                     <div className="flex justify-center gap-1">
                                         <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: "0s" }} />
@@ -349,7 +394,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
 
                             {status === "error" && (
                                 <div className="mt-4">
-                                    <p className="text-sm text-red-600 font-bold mb-1">
+                                    <p className="text-sm text-red-600 font-bold mb-1 px-4">
                                         {enrollStep || "Registration failed"}
                                     </p>
                                     <button

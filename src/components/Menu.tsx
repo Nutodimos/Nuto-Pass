@@ -60,6 +60,12 @@ const menuItems = [
         visible: ["admin", "teacher"],
       },
       {
+        icon: "/fingerprint.png",
+        label: "Biometrics",
+        href: "/list/biometrics",
+        visible: ["admin", "teacher"],
+      },
+      {
         icon: "/calendar.png",
         label: "Events",
         href: "/list/events",

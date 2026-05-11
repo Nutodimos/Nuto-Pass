@@ -33,7 +33,7 @@ enum EnrollState {
 
 // ── Constants ──
 #define DUPLICATE_GUARD_MS    10000UL
-#define MULTI_PRESS_WINDOW_MS 600
+#define MULTI_PRESS_WINDOW_MS 1000
 #define LONG_PRESS_MS         3000
 #define HEARTBEAT_INTERVAL_MS 5000UL
 

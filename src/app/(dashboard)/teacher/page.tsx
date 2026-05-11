@@ -8,7 +8,6 @@ import { Clock, BookOpen, ClipboardList, CalendarDays, ArrowRight, CheckCircle2 
 import Link from "next/link";
 import { Suspense } from "react";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
-import DeviceStatusCard from "@/components/DeviceStatusCard";
 
 const TeacherPage = async () => {
   const { userId } = auth(); const user = await currentUser();
@@ -250,9 +249,6 @@ const TeacherPage = async () => {
         <Suspense fallback={<LoadingSkeleton type="announcements" />}>
           <Announcements />
         </Suspense>
-
-        {/* DEVICE STATUS */}
-        <DeviceStatusCard />
       </div>
     </div>
   );

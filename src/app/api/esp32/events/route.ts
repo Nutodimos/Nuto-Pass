@@ -98,6 +98,7 @@ export const GET = async (req: NextRequest) => {
                 sdReady: heartbeat?.sdReady ?? false,
                 sensorStatus: heartbeat?.sensorStatus ?? false,
                 uptime: heartbeat?.uptime || 0,
+                templateCount: heartbeat?.templateCount || 0,
                 pendingCommand: heartbeat?.pendingCommand || null,
             },
             stats: {
