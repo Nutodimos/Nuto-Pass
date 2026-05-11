@@ -17,6 +17,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
     const router = useRouter();
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const statusPollRef = useRef<NodeJS.Timeout | null>(null);
+    const hasEnteredRegRef = useRef<boolean>(false);
 
     useEffect(() => {
         setMounted(true);
@@ -83,6 +84,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
 
     const startPolling = (expectedSlot: number) => {
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        hasEnteredRegRef.current = false;
 
         let pollCount = 0;
         const MAX_POLLS = 60; // 60 * 3s = 3 minutes max
@@ -106,10 +108,10 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
 
                 // Track what the device is doing via its reported mode
                 if (mode === "REGISTRATION") {
+                    hasEnteredRegRef.current = true;
                     setEnrollStep("Device ready — place finger on the sensor...");
-                } else if (mode === "DEFAULT" || mode === "VERIFICATION") {
-                    // Device has left registration mode — check if it was success or failure.
-                    // We need to check the latest ESP32 event to know the result.
+                } else if (hasEnteredRegRef.current && (mode === "DEFAULT" || mode === "VERIFICATION")) {
+                    // Device was in REGISTRATION and now it's NOT. Enrollment is over.
                     const eventRes = await fetch(`/api/student/biometric/status?studentId=${studentId}`);
                     if (eventRes.ok) {
                         const eventData = await eventRes.json();
@@ -123,11 +125,12 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                         } else if (eventData.status === "FAILED") {
                             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
                             setStatus("error");
-                            setEnrollStep("Registration failed — the sensor could not match your prints. Try again.");
+                            setEnrollStep("Registration failed. Please try again.");
                             toast.error("Registration failed on device");
                         }
-                        // If status is "PENDING", device just hasn't reported yet — keep polling
                     }
+                } else if (!hasEnteredRegRef.current) {
+                    setEnrollStep("Waiting for device to acknowledge command...");
                 }
             } catch (error) {
                 console.error("Polling error", error);
