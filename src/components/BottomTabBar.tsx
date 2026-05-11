@@ -56,6 +56,7 @@ const moreMenuItems = [
   { icon: ClipboardList, label: "Assignments", href: "/list/assignments", roles: ["admin", "student"] },
   { icon: FileText, label: "Materials", href: "/list/materials", roles: ["admin", "teacher"] },
   { icon: Megaphone, label: "Announcements", href: "/list/announcements", roles: ["admin", "teacher", "student"] },
+  { icon: Fingerprint, label: "Biometrics", href: "/list/biometrics", roles: ["admin", "teacher"] },
 ];
 
 export default function BottomTabBar() {

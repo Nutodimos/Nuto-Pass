@@ -139,6 +139,17 @@ const Navbar = () => {
         description: attendanceDesc,
       },
       {
+        name: "Biometrics",
+        route: "/list/biometrics",
+        icon: Fingerprint,
+        keywords: ["biometric", "fingerprint", "sensor", "r307", "enrollment", "wipe"],
+        description: "Manage hardware and student biometrics",
+        roles: ["admin", "teacher"],
+
+
+
+      },
+      {
         name: "Students",
         route: "/list/students",
         icon: GraduationCap,

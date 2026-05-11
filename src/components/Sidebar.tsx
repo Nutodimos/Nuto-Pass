@@ -39,6 +39,7 @@ const menuItems: MenuSection[] = [
             { icon: BookOpen, label: "Materials", href: "/list/materials", visible: ["admin", "teacher", "student"] },
             { icon: ClipboardList, label: "Assignments", href: "/list/assignments", visible: ["admin", "teacher", "student"] },
             { icon: Megaphone, label: "Announcements", href: "/list/announcements", visible: ["admin", "teacher", "student"] },
+            { icon: Fingerprint, label: "Biometrics", href: "/list/biometrics", visible: ["admin", "teacher"] },
         ],
     },
     {
