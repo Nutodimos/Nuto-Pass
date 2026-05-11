@@ -36,10 +36,13 @@ export const DELETE = async (req: NextRequest) => {
         });
 
         // 2. Queue a DELETE command for the ESP32 to clear the slot
-        await prisma.deviceHeartbeat.updateMany({
-            where: { deviceId: "ESP32_MAIN" },
-            data: { pendingCommand: `DELETE:${student.biometricId}` },
-        });
+        const slotNum = parseInt(student.biometricId.replace("USER", ""), 10);
+        if (!isNaN(slotNum) && slotNum > 0) {
+            await prisma.deviceHeartbeat.updateMany({
+                where: { deviceId: "ESP32_MAIN" },
+                data: { pendingCommand: `DELETE:${slotNum}` },
+            });
+        }
 
         return NextResponse.json({ message: "Biometric data deleted successfully" }, { status: 200 });
     } catch (error) {
