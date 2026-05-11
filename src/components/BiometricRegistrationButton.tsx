@@ -217,7 +217,7 @@ const BiometricRegistrationButton = ({ studentId }: { studentId: string }) => {
                                         Scanner is ready (Slot {slotId})
                                     </p>
                                     <p className="text-xs text-slate-500 mb-4">
-                                        Please place student's finger on the sensor <br/> <strong>twice</strong> to register.
+                                        Please place student&apos;s finger on the sensor <br/> <strong>twice</strong> to register.
                                     </p>
                                     <div className="flex justify-center gap-1">
                                         <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: "0s" }} />

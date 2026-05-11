@@ -1,9 +1,10 @@
+#include "globals.h"
+
 /*
  * Smart Attendance System — ESP32 (Headless)
  * TFT display removed. Feedback via LED + Buzzer only.
  * Communicates directly with Next.js API via HTTP.
  */
-#include "globals.h"
 
 // ══════════ Global Variable Definitions ══════════
 HardwareSerial fpSerial(2);
@@ -307,8 +308,8 @@ void loop(){
     }
   }
 
-  // ── Heartbeat every 30s ──
-  if(wifiConnected&&now-lastHeartbeat>=HEARTBEAT_INTERVAL_MS){
+  // ── Heartbeat every 5s ──
+  if(wifiConnected&&now-lastHeartbeat>=5000UL){
     lastHeartbeat=now;sendHeartbeat();
   }
 
@@ -319,14 +320,14 @@ void loop(){
   bool btnDown=(digitalRead(BUTTON_PIN)==LOW);
   if(btnDown&&!btnWasDown){btnWasDown=true;btnDownTime=now;longPressHandled=false;}
   if(btnWasDown&&btnDown&&!longPressHandled){
-    if(now-btnDownTime>=LONG_PRESS_MS){
+    if(now-btnDownTime>=3000){
       longPressHandled=true;pressCount=0;
       currentMode=MODE_SLEEP;enterSleepMode();
     }
   }
   if(!btnDown&&btnWasDown){btnWasDown=false;if(!longPressHandled){pressCount++;lastPressTime=now;}}
 
-  if(!btnDown&&pressCount>0&&(now-lastPressTime>=MULTI_PRESS_WINDOW_MS)&&!longPressHandled){
+  if(!btnDown&&pressCount>0&&(now-lastPressTime>=600)&&!longPressHandled){
     int count=pressCount;pressCount=0;
     if(count==1){
       if(currentMode==MODE_DEFAULT){
@@ -357,7 +358,7 @@ void loop(){
       if(conv==FINGERPRINT_OK){
         if(finger.fingerSearch()==FINGERPRINT_OK){
           int fid=finger.fingerID;
-          if(fid==lastVerifiedID&&(now-lastVerifyTime)<DUPLICATE_GUARD_MS){
+          if(fid==lastVerifiedID&&(now-lastVerifyTime)<10000UL){
             Serial.printf("[VERIFY] Duplicate blocked: %s\n", makeUserID(fid).c_str());
             ledOrange();beep(300);delay(1500);ledYellow();return;
           }

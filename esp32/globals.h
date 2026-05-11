@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GLOBALS_H
+#define GLOBALS_H
 
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -70,3 +71,5 @@ void autoSyncToServer();
 void logToSD(String event, int id, String status, bool synced=false);
 void handleEnrollment();
 void enterSleepMode();
+
+#endif // GLOBALS_H
