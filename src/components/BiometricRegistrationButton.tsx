@@ -3,12 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { Fingerprint, Loader2, CheckCircle2 } from "lucide-react";
+import { Fingerprint, Loader2, CheckCircle2, Trash2 } from "lucide-react";
 import { createPortal } from "react-dom";
 
-const BiometricRegistrationButton = ({ studentId }: { studentId: string }) => {
+const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { studentId: string, hasBiometric?: boolean }) => {
     const [open, setOpen] = useState(false);
-    const [status, setStatus] = useState<"idle" | "initiating" | "waiting" | "success" | "error">("idle");
+    const [status, setStatus] = useState<"idle" | "initiating" | "waiting" | "success" | "error" | "deleting">("idle");
     const [slotId, setSlotId] = useState<number | null>(null);
     const [mounted, setMounted] = useState(false);
     const [deviceStatus, setDeviceStatus] = useState<"online" | "idle" | "offline" | "loading">("loading");
@@ -107,6 +107,32 @@ const BiometricRegistrationButton = ({ studentId }: { studentId: string }) => {
         }, 2000); // Poll every 2 seconds during active registration
     };
 
+    const handleDelete = async () => {
+        if (!confirm("Are you sure you want to delete this student's biometric data? They will need to re-register.")) return;
+        
+        setStatus("deleting");
+        try {
+            const res = await fetch("/api/student/biometric/delete", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ studentId }),
+            });
+
+            if (res.ok) {
+                toast.success("Biometric data deleted");
+                router.refresh();
+                handleClose();
+            } else {
+                const data = await res.json();
+                toast.error(data.message || "Failed to delete");
+                setStatus("idle");
+            }
+        } catch (error) {
+            toast.error("Network error");
+            setStatus("idle");
+        }
+    };
+
     const handleClose = () => {
         setOpen(false);
         setStatus("idle");
@@ -122,10 +148,12 @@ const BiometricRegistrationButton = ({ studentId }: { studentId: string }) => {
                     e.stopPropagation();
                     setOpen(true);
                 }}
-                className="w-7 h-7 flex items-center justify-center rounded-full bg-CPEGold transition-transform hover:scale-110"
-                title="Register Biometric ID"
+                className={`w-7 h-7 flex items-center justify-center rounded-full transition-transform hover:scale-110 ${
+                    hasBiometric ? "bg-emerald-500" : "bg-CPEGold"
+                }`}
+                title={hasBiometric ? "Biometric Registered (Click to edit)" : "Register Biometric ID"}
             >
-                <Fingerprint className="w-4 h-4 text-white" />
+                {hasBiometric ? <CheckCircle2 className="w-4 h-4 text-white" /> : <Fingerprint className="w-4 h-4 text-white" />}
             </button>
 
             {mounted && open && createPortal(
@@ -148,6 +176,8 @@ const BiometricRegistrationButton = ({ studentId }: { studentId: string }) => {
                             }`}>
                                 {status === "success" ? (
                                     <CheckCircle2 className="w-8 h-8 text-white" />
+                                ) : status === "deleting" ? (
+                                    <Trash2 className="w-8 h-8 text-red-500 animate-pulse" />
                                 ) : status === "waiting" || status === "initiating" ? (
                                     <Fingerprint className="w-8 h-8 text-CPENavy animate-pulse" />
                                 ) : (
@@ -185,7 +215,36 @@ const BiometricRegistrationButton = ({ studentId }: { studentId: string }) => {
                                 </div>
                             )}
 
-                            {status === "idle" && (
+                            {status === "idle" && hasBiometric && (
+                                <div className="mt-4 w-full">
+                                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mb-4">
+                                        <p className="text-sm text-emerald-700 font-medium">Student is already registered.</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleDelete}
+                                            disabled={deviceStatus === "offline"}
+                                            className="flex-1 py-3 px-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-semibold transition-colors border border-red-200 flex items-center justify-center gap-2"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            Delete
+                                        </button>
+                                        <button
+                                            onClick={handleStart}
+                                            disabled={deviceStatus === "offline" || !sensorStatus}
+                                            className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all shadow-lg ${
+                                                (deviceStatus === "offline" || !sensorStatus)
+                                                ? "bg-slate-200 text-slate-400 cursor-not-allowed" 
+                                                : "bg-CPENavy hover:bg-CPENavyDark text-white shadow-CPENavy/30"
+                                            }`}
+                                        >
+                                            Re-scan
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {status === "idle" && !hasBiometric && (
                                 <div className="mt-4">
                                     <p className="text-sm text-slate-500 mb-6">
                                         Click below to wake up the biometric scanner. The device LED will turn <strong className="text-purple-600">purple</strong> when ready.
@@ -201,6 +260,13 @@ const BiometricRegistrationButton = ({ studentId }: { studentId: string }) => {
                                     >
                                         {deviceStatus === "offline" ? "Device Offline" : !sensorStatus ? "Scanner Missing" : "Wake Device"}
                                     </button>
+                                </div>
+                            )}
+
+                            {status === "deleting" && (
+                                <div className="mt-4">
+                                    <Loader2 className="w-6 h-6 text-red-500 animate-spin mx-auto mb-3" />
+                                    <p className="text-sm text-slate-600 font-medium">Removing biometric data...</p>
                                 </div>
                             )}
 

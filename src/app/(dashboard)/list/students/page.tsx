@@ -104,7 +104,7 @@ const StudentListPage = async ({
         <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2 relative z-10">
           <FormContainer table="student" type="update" data={student} />
           {role === "admin" && <FormContainer table="student" type="delete" id={student.id} />}
-          <BiometricRegistrationButton studentId={student.id} />
+          <BiometricRegistrationButton studentId={student.id} hasBiometric={!!student.biometricId} />
         </div>
       )}
     </div>

@@ -117,6 +117,14 @@ void sendHeartbeat() {
           Serial.println("[REMOTE] Command received: VERIFY:STOP — returning to idle");
           ledBlue(); beep(60);
         }
+        else if (cmd.startsWith("DELETE:")) {
+          int slot = cmd.substring(7).toInt();
+          if (slot > 0) {
+            finger.deleteModel(slot);
+            Serial.printf("[REMOTE] Deleted fingerprint at slot %d\n", slot);
+            ledWhite(); beep(100);
+          }
+        }
       }
     }
   }
