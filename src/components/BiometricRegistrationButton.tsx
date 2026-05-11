@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { Fingerprint, Loader2, CheckCircle2, Trash2 } from "lucide-react";
+import { Fingerprint, Loader2, CheckCircle2, Trash2, XCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 
 const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { studentId: string, hasBiometric?: boolean }) => {
@@ -13,11 +13,11 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
     const [mounted, setMounted] = useState(false);
     const [deviceStatus, setDeviceStatus] = useState<"online" | "idle" | "offline" | "loading">("loading");
     const [sensorStatus, setSensorStatus] = useState<boolean>(true);
+    const [enrollStep, setEnrollStep] = useState<string>("");
     const router = useRouter();
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const statusPollRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Clean up polling on unmount or modal close
     useEffect(() => {
         setMounted(true);
         return () => {
@@ -26,7 +26,6 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
         };
     }, []);
 
-    // Poll for device status when modal opens
     useEffect(() => {
         if (open) {
             checkDeviceStatus();
@@ -54,6 +53,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
 
     const handleStart = async () => {
         setStatus("initiating");
+        setEnrollStep("Sending command to device...");
 
         try {
             const res = await fetch("/api/student/biometric/initiate", {
@@ -67,44 +67,72 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
             if (res.ok) {
                 setSlotId(data.slotId);
                 setStatus("waiting");
-                startPolling();
+                setEnrollStep("Waiting for device to enter registration mode...");
+                startPolling(data.slotId);
             } else {
                 toast.error(data.message);
                 setStatus("error");
+                setEnrollStep("");
             }
         } catch (error) {
             toast.error("Failed to connect to server");
             setStatus("error");
+            setEnrollStep("");
         }
     };
 
-    const startPolling = () => {
+    const startPolling = (expectedSlot: number) => {
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 
+        let pollCount = 0;
+        const MAX_POLLS = 60; // 60 * 3s = 3 minutes max
+
         pollIntervalRef.current = setInterval(async () => {
+            pollCount++;
+
+            if (pollCount > MAX_POLLS) {
+                if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                setStatus("error");
+                setEnrollStep("Registration timed out. Please try again.");
+                toast.error("Registration timed out");
+                return;
+            }
+
             try {
                 const res = await fetch("/api/esp32/events");
-                if (res.ok) {
-                    const data = await res.json();
-                    
-                    // If the pending command is cleared, it means the ESP32 completed it!
-                    if (!data.device?.pendingCommand) {
-                        setStatus("success");
-                        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-                        toast.success("Biometric registration complete!");
-                        router.refresh();
-                        
-                        // Auto-close after 2 seconds
-                        setTimeout(() => {
-                            setOpen(false);
-                            setStatus("idle");
-                        }, 2000);
+                if (!res.ok) return;
+                const data = await res.json();
+                const mode = data.device?.mode || "UNKNOWN";
+
+                // Track what the device is doing via its reported mode
+                if (mode === "REGISTRATION") {
+                    setEnrollStep("Device ready — place finger on the sensor...");
+                } else if (mode === "DEFAULT" || mode === "VERIFICATION") {
+                    // Device has left registration mode — check if it was success or failure.
+                    // We need to check the latest ESP32 event to know the result.
+                    const eventRes = await fetch(`/api/student/biometric/status?studentId=${studentId}`);
+                    if (eventRes.ok) {
+                        const eventData = await eventRes.json();
+                        if (eventData.status === "SUCCESS") {
+                            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                            setStatus("success");
+                            setEnrollStep("");
+                            toast.success("Biometric registration complete!");
+                            router.refresh();
+                            setTimeout(() => { setOpen(false); setStatus("idle"); }, 3000);
+                        } else if (eventData.status === "FAILED") {
+                            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                            setStatus("error");
+                            setEnrollStep("Registration failed — the sensor could not match your prints. Try again.");
+                            toast.error("Registration failed on device");
+                        }
+                        // If status is "PENDING", device just hasn't reported yet — keep polling
                     }
                 }
             } catch (error) {
                 console.error("Polling error", error);
             }
-        }, 2000); // Poll every 2 seconds during active registration
+        }, 3000);
     };
 
     const handleDelete = async () => {
@@ -136,6 +164,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
     const handleClose = () => {
         setOpen(false);
         setStatus("idle");
+        setEnrollStep("");
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
 
@@ -176,6 +205,8 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                             }`}>
                                 {status === "success" ? (
                                     <CheckCircle2 className="w-8 h-8 text-white" />
+                                ) : status === "error" ? (
+                                    <XCircle className="w-8 h-8 text-white" />
                                 ) : status === "deleting" ? (
                                     <Trash2 className="w-8 h-8 text-red-500 animate-pulse" />
                                 ) : status === "waiting" || status === "initiating" ? (
@@ -273,7 +304,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                             {status === "initiating" && (
                                 <div className="mt-4">
                                     <Loader2 className="w-6 h-6 text-CPENavy animate-spin mx-auto mb-3" />
-                                    <p className="text-sm text-slate-600 font-medium">Connecting to device...</p>
+                                    <p className="text-sm text-slate-600 font-medium">{enrollStep}</p>
                                 </div>
                             )}
 
@@ -282,8 +313,11 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                                     <p className="text-sm text-slate-600 font-medium mb-1">
                                         Scanner is ready (Slot {slotId})
                                     </p>
+                                    <p className="text-xs text-purple-600 font-semibold mb-2">
+                                        {enrollStep}
+                                    </p>
                                     <p className="text-xs text-slate-500 mb-4">
-                                        Please place student&apos;s finger on the sensor <br/> <strong>twice</strong> to register.
+                                        Place finger on the sensor <strong>twice</strong> (lift between scans).
                                     </p>
                                     <div className="flex justify-center gap-1">
                                         <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: "0s" }} />
@@ -307,6 +341,20 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                                     <p className="text-xs text-slate-500">
                                         Student is now securely linked.
                                     </p>
+                                </div>
+                            )}
+
+                            {status === "error" && (
+                                <div className="mt-4">
+                                    <p className="text-sm text-red-600 font-bold mb-1">
+                                        {enrollStep || "Registration failed"}
+                                    </p>
+                                    <button
+                                        onClick={() => { setStatus("idle"); setEnrollStep(""); }}
+                                        className="mt-4 py-2 px-6 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-semibold text-slate-700 transition-colors"
+                                    >
+                                        Try Again
+                                    </button>
                                 </div>
                             )}
                         </div>

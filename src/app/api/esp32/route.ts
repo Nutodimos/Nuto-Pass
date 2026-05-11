@@ -136,10 +136,31 @@ async function processEvent(payload: EventPayload) {
                 where: { deviceId: "ESP32_MAIN" },
                 data: { pendingCommand: null }
             });
+            return {
+                userID,
+                status: "ACK",
+                message: `Enrollment SUCCESS for ${userID}`,
+            };
         }
 
-        // Enrollment is handled locally on the ESP32 (fingerprint sensor storage).
-        // This log lets the dashboard know a new fingerprint was registered.
+        if (status === "FAILED") {
+            // Enrollment failed on the sensor — clear the student's biometricId
+            // so they can try again
+            await prisma.student.updateMany({
+                where: { biometricId },
+                data: { biometricId: null },
+            });
+            await prisma.deviceHeartbeat.updateMany({
+                where: { deviceId: "ESP32_MAIN" },
+                data: { pendingCommand: null }
+            });
+            return {
+                userID,
+                status: "ACK",
+                message: `Enrollment FAILED for ${userID} — biometricId cleared`,
+            };
+        }
+
         return {
             userID,
             status: "ACK",

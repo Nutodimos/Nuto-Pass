@@ -1,10 +1,9 @@
-#include "globals.h"
-
 /*
  * Smart Attendance System — ESP32 (Headless)
  * TFT display removed. Feedback via LED + Buzzer only.
  * Communicates directly with Next.js API via HTTP.
  */
+#include "globals.h"
 
 // ══════════ Global Variable Definitions ══════════
 HardwareSerial fpSerial(2);
@@ -46,23 +45,12 @@ bool postToServer(String event, int id, String status) {
   if (!wifiConnected) return false;
   HTTPClient http;
   String url = String(SERVER_URL) + String(API_PATH);
-  
-  WiFiClient* client = nullptr;
-  if (url.startsWith("https")) {
-    WiFiClientSecure* secureClient = new WiFiClientSecure();
-    secureClient->setInsecure();
-    client = secureClient;
-  } else {
-    client = new WiFiClient();
-  }
-
-  http.begin(*client, url); http.addHeader("Content-Type","application/json"); http.setTimeout(8000);
+  http.begin(url); http.addHeader("Content-Type","application/json"); http.setTimeout(8000);
   char ts[24]="unknown"; struct tm t;
   if(getLocalTime(&t)) snprintf(ts,sizeof(ts),"%04d-%02d-%02dT%02d:%02d:%02d",t.tm_year+1900,t.tm_mon+1,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
   String json="{\"deviceSecret\":\""+String(DEVICE_SECRET)+"\",\"event\":\""+event+"\",\"userID\":\""+makeUserID(id)+"\",\"status\":\""+status+"\",\"timestamp\":\""+String(ts)+"\"}";
   Serial.println("[POST] "+url+" → "+json);
   int code=http.POST(json); http.end();
-  delete client;
   Serial.printf("[POST] Response: %d\n", code);
   return(code>=200&&code<300);
 }
@@ -72,17 +60,7 @@ void sendHeartbeat() {
   if (!wifiConnected) return;
   HTTPClient http;
   String url = String(SERVER_URL) + "/api/esp32/heartbeat";
-  
-  WiFiClient* client = nullptr;
-  if (url.startsWith("https")) {
-    WiFiClientSecure* secureClient = new WiFiClientSecure();
-    secureClient->setInsecure();
-    client = secureClient;
-  } else {
-    client = new WiFiClient();
-  }
-
-  http.begin(*client, url); http.addHeader("Content-Type","application/json"); http.setTimeout(5000);
+  http.begin(url); http.addHeader("Content-Type","application/json"); http.setTimeout(5000);
   unsigned long uptimeSec = (millis() - bootTime) / 1000;
   int rssi = WiFi.RSSI();
   int heap = ESP.getFreeHeap();
@@ -97,40 +75,46 @@ void sendHeartbeat() {
       int endIdx = response.indexOf("\"", startIdx);
       if (endIdx > startIdx) {
         String cmd = response.substring(startIdx, endIdx);
+
+        // ── ENROLL:N — enter registration mode for slot N ──
         if (cmd.startsWith("ENROLL:") && currentMode != MODE_REGISTRATION) {
           int slot = cmd.substring(7).toInt();
           if (slot > 0) {
             enrollNewID = slot;
             currentMode = MODE_REGISTRATION;
-            enrollState = ENROLL_IDLE; // Reset FSM
-            Serial.printf("[REMOTE] Command received: ENROLL in slot %d\n", slot);
+            enrollState = ENROLL_IDLE;
+            Serial.printf("[REMOTE] Command: ENROLL in slot %d\n", slot);
             ledPurple(); beep(150);
           }
         }
+        // ── VERIFY:START — enter verification mode for attendance ──
         else if (cmd == "VERIFY:START" && currentMode != MODE_VERIFICATION) {
           currentMode = MODE_VERIFICATION;
-          Serial.println("[REMOTE] Command received: VERIFY:START — entering verification mode");
+          Serial.println("[REMOTE] Command: VERIFY:START — scanning for attendance");
           ledYellow(); beep(80);
         }
+        // ── VERIFY:STOP — return to idle ──
         else if (cmd == "VERIFY:STOP" && currentMode == MODE_VERIFICATION) {
           currentMode = MODE_DEFAULT;
-          Serial.println("[REMOTE] Command received: VERIFY:STOP — returning to idle");
+          Serial.println("[REMOTE] Command: VERIFY:STOP — back to idle");
           ledBlue(); beep(60);
         }
+        // ── DELETE:N — erase fingerprint from sensor slot N ──
         else if (cmd.startsWith("DELETE:")) {
           int slot = cmd.substring(7).toInt();
           if (slot > 0) {
             finger.deleteModel(slot);
-            Serial.printf("[REMOTE] Deleted fingerprint at slot %d\n", slot);
-            ledWhite(); beep(100);
+            Serial.printf("[REMOTE] Deleted fingerprint slot %d\n", slot);
+            ledWhite(); beep(100); delay(500);
+            // Return to whatever color the current mode expects
+            if (currentMode == MODE_VERIFICATION) ledYellow();
+            else ledBlue();
           }
         }
       }
     }
   }
   http.end();
-  delete client;
-  // Don't spam serial with heartbeat logs if it's every 5s unless it fails
   if (code != 200) {
     Serial.printf("[HEARTBEAT] FAILED: %d\n", code);
   }
@@ -154,17 +138,7 @@ void autoSyncToServer(){
   Serial.println("[SYNC] Starting offline sync...");
   blinkWhite(2,150,100); ledWhite();
   HTTPClient http; String url=String(SERVER_URL)+String(API_PATH);
-  
-  WiFiClient* client = nullptr;
-  if (url.startsWith("https")) {
-    WiFiClientSecure* secureClient = new WiFiClientSecure();
-    secureClient->setInsecure();
-    client = secureClient;
-  } else {
-    client = new WiFiClient();
-  }
-
-  http.begin(*client, url); http.addHeader("Content-Type","application/json"); http.setTimeout(15000);
+  http.begin(url); http.addHeader("Content-Type","application/json"); http.setTimeout(15000);
   String json="{\"deviceSecret\":\""+String(DEVICE_SECRET)+"\",\"records\":["; int added=0;
   SD.remove("/log_tmp.csv"); File dst=SD.open("/log_tmp.csv",FILE_WRITE); if(!dst){ledBlue();return;}
   for(int i=0;i<lineCount;i++){
@@ -176,7 +150,6 @@ void autoSyncToServer(){
     }else{dst.println(lines[i]);}
   }
   json+="]}"; if(added>0)http.POST(json); http.end(); dst.close();
-  delete client;
   SD.remove("/log.csv");
   File in2=SD.open("/log_tmp.csv",FILE_READ); File out2=SD.open("/log.csv",FILE_WRITE);
   if(in2&&out2){while(in2.available())out2.write(in2.read());}
@@ -190,77 +163,99 @@ void handleEnrollment(){
   unsigned long now=millis();
   switch(enrollState){
     case ENROLL_IDLE:
-      // In remote-driven registration, enrollNewID is already set by the heartbeat parser.
-      // We just need to wait for the first scan.
       if (enrollNewID <= 0 || enrollNewID > 127) {
         Serial.println("[ENROLL] Invalid slot ID!");
         ledRed();beepTimes(3,100,80);delay(2000);
-        currentMode=MODE_DEFAULT;ledBlue();return;
+        if(wifiConnected) postToServer("ENROLL", enrollNewID, "FAILED");
+        enrollNewID=-1; currentMode=MODE_DEFAULT; ledBlue(); return;
       }
       // Clear the slot if something exists there
       finger.deleteModel(enrollNewID);
-
-      Serial.printf("[ENROLL] Slot %d (%s) — place finger once\n", enrollNewID, makeUserID(enrollNewID).c_str());
-      ledYellow();beep(100);
-      enrollTimeout=now;enrollState=ENROLL_WAIT_FIRST;break;
+      Serial.printf("[ENROLL] Slot %d (%s) — place finger NOW\n", enrollNewID, makeUserID(enrollNewID).c_str());
+      ledPurple();beep(100);
+      enrollTimeout=now; enrollState=ENROLL_WAIT_FIRST; break;
 
     case ENROLL_WAIT_FIRST:
-      if(now-enrollTimeout>20000){
+      if(now-enrollTimeout>30000){
         Serial.println("[ENROLL] Timed out waiting for first scan");
-        beepTimes(2,60,60);enrollState=ENROLL_IDLE;return;
+        beepTimes(2,60,60);
+        if(wifiConnected) postToServer("ENROLL", enrollNewID, "FAILED");
+        enrollNewID=-1; currentMode=MODE_DEFAULT; ledBlue(); enrollState=ENROLL_IDLE; return;
       }
-      if(finger.getImage()==FINGERPRINT_OK)enrollState=ENROLL_FIRST_SCAN;break;
+      if(finger.getImage()==FINGERPRINT_OK) enrollState=ENROLL_FIRST_SCAN;
+      break;
 
     case ENROLL_FIRST_SCAN:{
       uint8_t conv=finger.image2Tz(1);
       if(conv==FINGERPRINT_OK){
-        Serial.println("[ENROLL] First scan OK — lift finger");
-        beep(60);enrollTimeout=now;enrollState=ENROLL_WAIT_LIFT;
+        Serial.println("[ENROLL] ✓ First scan OK — LIFT finger off sensor");
+        ledGreen();beep(60);delay(500);ledPurple();
+        enrollTimeout=now; enrollState=ENROLL_WAIT_LIFT;
       }else{
-        Serial.println("[ENROLL] Poor quality first scan");
-        ledRed();beep(150);delay(300);ledYellow();
-        enrollTimeout=now;enrollState=ENROLL_WAIT_FIRST;
+        Serial.println("[ENROLL] Poor quality first scan — try again");
+        ledRed();beep(150);delay(500);ledPurple();
+        enrollTimeout=now; enrollState=ENROLL_WAIT_FIRST;
       }break;}
 
     case ENROLL_WAIT_LIFT:
+      if(now-enrollTimeout>15000){
+        Serial.println("[ENROLL] Timed out waiting for finger lift");
+        beepTimes(2,60,60);
+        if(wifiConnected) postToServer("ENROLL", enrollNewID, "FAILED");
+        enrollNewID=-1; currentMode=MODE_DEFAULT; ledBlue(); enrollState=ENROLL_IDLE; return;
+      }
       if(finger.getImage()==FINGERPRINT_NOFINGER){
-        Serial.println("[ENROLL] Finger lifted — place same finger again");
-        beep(60);enrollTimeout=now;enrollState=ENROLL_WAIT_SECOND;
+        Serial.println("[ENROLL] Finger lifted — place SAME finger again");
+        beepTimes(2,60,80);ledPurple();
+        enrollTimeout=now; enrollState=ENROLL_WAIT_SECOND;
       }break;
 
     case ENROLL_WAIT_SECOND:
-      if(now-enrollTimeout>20000){
+      if(now-enrollTimeout>30000){
         Serial.println("[ENROLL] Timed out waiting for second scan");
-        beepTimes(2,60,60);enrollState=ENROLL_IDLE;return;
+        beepTimes(2,60,60);
+        if(wifiConnected) postToServer("ENROLL", enrollNewID, "FAILED");
+        enrollNewID=-1; currentMode=MODE_DEFAULT; ledBlue(); enrollState=ENROLL_IDLE; return;
       }
-      if(finger.getImage()==FINGERPRINT_OK)enrollState=ENROLL_SECOND_SCAN;break;
+      if(finger.getImage()==FINGERPRINT_OK) enrollState=ENROLL_SECOND_SCAN;
+      break;
 
     case ENROLL_SECOND_SCAN:{
       uint8_t conv=finger.image2Tz(2);
-      if(conv==FINGERPRINT_OK){enrollState=ENROLL_PROCESS;}
-      else{
-        Serial.println("[ENROLL] Poor quality second scan");
-        ledRed();beep(150);delay(300);ledYellow();
-        enrollTimeout=now;enrollState=ENROLL_WAIT_SECOND;
+      if(conv==FINGERPRINT_OK){
+        Serial.println("[ENROLL] ✓ Second scan OK — processing...");
+        enrollState=ENROLL_PROCESS;
+      }else{
+        Serial.println("[ENROLL] Poor quality second scan — try again");
+        ledRed();beep(150);delay(500);ledPurple();
+        enrollTimeout=now; enrollState=ENROLL_WAIT_SECOND;
       }break;}
 
     case ENROLL_PROCESS:
-      if(finger.createModel()==FINGERPRINT_OK&&finger.storeModel(enrollNewID)==FINGERPRINT_OK){
+      if(finger.createModel()==FINGERPRINT_OK && finger.storeModel(enrollNewID)==FINGERPRINT_OK){
         enrollState=ENROLL_SUCCESS;
-      }else{enrollState=ENROLL_FAIL;}break;
+      }else{
+        enrollState=ENROLL_FAIL;
+      }break;
 
     case ENROLL_SUCCESS:{
-      String uid=makeUserID(enrollNewID);bool online=wifiConnected;
+      String uid=makeUserID(enrollNewID);
+      bool online=wifiConnected;
       logToSD("ENROLL",enrollNewID,"SUCCESS",online);
-      if(online)postToServer("ENROLL",enrollNewID,"SUCCESS");
-      Serial.printf("[ENROLL] ✓ Success: %s\n", uid.c_str());
-      ledGreen();beepTimes(1,200);delay(2500);ledPurple();
-      enrollState=ENROLL_IDLE;break;}
+      if(online) postToServer("ENROLL",enrollNewID,"SUCCESS");
+      Serial.printf("[ENROLL] ✓ SUCCESS: %s stored in sensor\n", uid.c_str());
+      ledGreen();beepTimes(2,150,100);delay(3000);
+      enrollNewID=-1; currentMode=MODE_DEFAULT; ledBlue(); enrollState=ENROLL_IDLE;
+      break;}
 
-    case ENROLL_FAIL:
-      Serial.println("[ENROLL] ✕ Finger mismatch!");
-      ledRed();beepTimes(2,80,80);delay(2000);ledPurple();
-      enrollState=ENROLL_IDLE;break;
+    case ENROLL_FAIL:{
+      bool online=wifiConnected;
+      logToSD("ENROLL",enrollNewID,"FAILED",online);
+      if(online) postToServer("ENROLL",enrollNewID,"FAILED");
+      Serial.println("[ENROLL] ✕ FAILED — fingerprints did not match");
+      ledRed();beepTimes(3,100,80);delay(3000);
+      enrollNewID=-1; currentMode=MODE_DEFAULT; ledBlue(); enrollState=ENROLL_IDLE;
+      break;}
   }
 }
 
@@ -285,7 +280,7 @@ void setup(){
   pinMode(LED_RED,OUTPUT);pinMode(LED_GREEN,OUTPUT);pinMode(LED_BLUE,OUTPUT);
   digitalWrite(BUZZER_PIN,LOW);ledOff();
 
-  // Boot sequence — LED feedback
+  // Boot sequence
   blinkWhite(3,150,100);ledWhite();
 
   // SD Card
@@ -331,10 +326,9 @@ void setup(){
 
   // Ready
   currentMode=MODE_DEFAULT;
-  Serial.println("[READY] Mode: DEFAULT (Blue=idle, press button for options)");
-  Serial.println("  1 press  → toggle VERIFICATION mode");
-  Serial.println("  3 presses → REGISTRATION mode");
-  Serial.println("  Long press → SLEEP");
+  Serial.println("[READY] Mode: DEFAULT (Blue LED)");
+  Serial.println("  1 press  = toggle VERIFICATION");
+  Serial.println("  Long press = SLEEP");
   ledBlue();beep(100);
 
   lastTick=millis();lastWifiCheck=millis();lastSyncAttempt=millis();lastHeartbeat=millis();
@@ -360,7 +354,7 @@ void loop(){
   }
 
   // ── Heartbeat every 5s ──
-  if(wifiConnected&&now-lastHeartbeat>=5000UL){
+  if(wifiConnected&&now-lastHeartbeat>=HEARTBEAT_INTERVAL_MS){
     lastHeartbeat=now;sendHeartbeat();
   }
 
@@ -371,19 +365,19 @@ void loop(){
   bool btnDown=(digitalRead(BUTTON_PIN)==LOW);
   if(btnDown&&!btnWasDown){btnWasDown=true;btnDownTime=now;longPressHandled=false;}
   if(btnWasDown&&btnDown&&!longPressHandled){
-    if(now-btnDownTime>=3000){
+    if(now-btnDownTime>=LONG_PRESS_MS){
       longPressHandled=true;pressCount=0;
       currentMode=MODE_SLEEP;enterSleepMode();
     }
   }
   if(!btnDown&&btnWasDown){btnWasDown=false;if(!longPressHandled){pressCount++;lastPressTime=now;}}
 
-  if(!btnDown&&pressCount>0&&(now-lastPressTime>=600)&&!longPressHandled){
+  if(!btnDown&&pressCount>0&&(now-lastPressTime>=MULTI_PRESS_WINDOW_MS)&&!longPressHandled){
     int count=pressCount;pressCount=0;
     if(count==1){
       if(currentMode==MODE_DEFAULT){
         currentMode=MODE_VERIFICATION;
-        Serial.println("[MODE] → VERIFICATION (Yellow LED, waiting for scans)");
+        Serial.println("[MODE] → VERIFICATION (Yellow LED)");
         ledYellow();beep(80);
       }else if(currentMode==MODE_VERIFICATION){
         currentMode=MODE_DEFAULT;
@@ -391,7 +385,6 @@ void loop(){
         ledBlue();beep(60);
       }
     }else if(count>=2){
-        // Manual registration removed. Must be initiated from web app.
         Serial.println("[MODE] Manual registration disabled. Use NutoPass Dashboard.");
         beepTimes(2,80,100);ledBlue();
     }
@@ -409,7 +402,7 @@ void loop(){
       if(conv==FINGERPRINT_OK){
         if(finger.fingerSearch()==FINGERPRINT_OK){
           int fid=finger.fingerID;
-          if(fid==lastVerifiedID&&(now-lastVerifyTime)<10000UL){
+          if(fid==lastVerifiedID&&(now-lastVerifyTime)<DUPLICATE_GUARD_MS){
             Serial.printf("[VERIFY] Duplicate blocked: %s\n", makeUserID(fid).c_str());
             ledOrange();beep(300);delay(1500);ledYellow();return;
           }
