@@ -63,8 +63,17 @@ export const POST = async (req: NextRequest) => {
             },
         });
 
+        // Grab the pending command, then clear it so it's only sent once
+        const pendingCmd = updated.pendingCommand;
+        if (pendingCmd) {
+            await prisma.deviceHeartbeat.update({
+                where: { deviceId },
+                data: { pendingCommand: null },
+            });
+        }
+
         return NextResponse.json(
-            { status: "ok", command: updated.pendingCommand || "none", serverTime: new Date().toISOString() },
+            { status: "ok", command: pendingCmd || "none", serverTime: new Date().toISOString() },
             { status: 200 }
         );
     } catch (error) {

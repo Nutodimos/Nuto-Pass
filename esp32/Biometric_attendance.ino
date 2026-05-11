@@ -46,12 +46,23 @@ bool postToServer(String event, int id, String status) {
   if (!wifiConnected) return false;
   HTTPClient http;
   String url = String(SERVER_URL) + String(API_PATH);
-  http.begin(url); http.addHeader("Content-Type","application/json"); http.setTimeout(8000);
+  
+  WiFiClient* client = nullptr;
+  if (url.startsWith("https")) {
+    WiFiClientSecure* secureClient = new WiFiClientSecure();
+    secureClient->setInsecure();
+    client = secureClient;
+  } else {
+    client = new WiFiClient();
+  }
+
+  http.begin(*client, url); http.addHeader("Content-Type","application/json"); http.setTimeout(8000);
   char ts[24]="unknown"; struct tm t;
   if(getLocalTime(&t)) snprintf(ts,sizeof(ts),"%04d-%02d-%02dT%02d:%02d:%02d",t.tm_year+1900,t.tm_mon+1,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
   String json="{\"deviceSecret\":\""+String(DEVICE_SECRET)+"\",\"event\":\""+event+"\",\"userID\":\""+makeUserID(id)+"\",\"status\":\""+status+"\",\"timestamp\":\""+String(ts)+"\"}";
   Serial.println("[POST] "+url+" → "+json);
   int code=http.POST(json); http.end();
+  delete client;
   Serial.printf("[POST] Response: %d\n", code);
   return(code>=200&&code<300);
 }
@@ -61,7 +72,17 @@ void sendHeartbeat() {
   if (!wifiConnected) return;
   HTTPClient http;
   String url = String(SERVER_URL) + "/api/esp32/heartbeat";
-  http.begin(url); http.addHeader("Content-Type","application/json"); http.setTimeout(5000);
+  
+  WiFiClient* client = nullptr;
+  if (url.startsWith("https")) {
+    WiFiClientSecure* secureClient = new WiFiClientSecure();
+    secureClient->setInsecure();
+    client = secureClient;
+  } else {
+    client = new WiFiClient();
+  }
+
+  http.begin(*client, url); http.addHeader("Content-Type","application/json"); http.setTimeout(5000);
   unsigned long uptimeSec = (millis() - bootTime) / 1000;
   int rssi = WiFi.RSSI();
   int heap = ESP.getFreeHeap();
@@ -86,10 +107,21 @@ void sendHeartbeat() {
             ledPurple(); beep(150);
           }
         }
+        else if (cmd == "VERIFY:START" && currentMode != MODE_VERIFICATION) {
+          currentMode = MODE_VERIFICATION;
+          Serial.println("[REMOTE] Command received: VERIFY:START — entering verification mode");
+          ledYellow(); beep(80);
+        }
+        else if (cmd == "VERIFY:STOP" && currentMode == MODE_VERIFICATION) {
+          currentMode = MODE_DEFAULT;
+          Serial.println("[REMOTE] Command received: VERIFY:STOP — returning to idle");
+          ledBlue(); beep(60);
+        }
       }
     }
   }
   http.end();
+  delete client;
   // Don't spam serial with heartbeat logs if it's every 5s unless it fails
   if (code != 200) {
     Serial.printf("[HEARTBEAT] FAILED: %d\n", code);
@@ -114,7 +146,17 @@ void autoSyncToServer(){
   Serial.println("[SYNC] Starting offline sync...");
   blinkWhite(2,150,100); ledWhite();
   HTTPClient http; String url=String(SERVER_URL)+String(API_PATH);
-  http.begin(url); http.addHeader("Content-Type","application/json"); http.setTimeout(15000);
+  
+  WiFiClient* client = nullptr;
+  if (url.startsWith("https")) {
+    WiFiClientSecure* secureClient = new WiFiClientSecure();
+    secureClient->setInsecure();
+    client = secureClient;
+  } else {
+    client = new WiFiClient();
+  }
+
+  http.begin(*client, url); http.addHeader("Content-Type","application/json"); http.setTimeout(15000);
   String json="{\"deviceSecret\":\""+String(DEVICE_SECRET)+"\",\"records\":["; int added=0;
   SD.remove("/log_tmp.csv"); File dst=SD.open("/log_tmp.csv",FILE_WRITE); if(!dst){ledBlue();return;}
   for(int i=0;i<lineCount;i++){
@@ -126,6 +168,7 @@ void autoSyncToServer(){
     }else{dst.println(lines[i]);}
   }
   json+="]}"; if(added>0)http.POST(json); http.end(); dst.close();
+  delete client;
   SD.remove("/log.csv");
   File in2=SD.open("/log_tmp.csv",FILE_READ); File out2=SD.open("/log.csv",FILE_WRITE);
   if(in2&&out2){while(in2.available())out2.write(in2.read());}

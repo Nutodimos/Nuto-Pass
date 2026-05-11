@@ -4,9 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
 export const POST = async (req: NextRequest) => {
- 
- 
-
     const { sessionClaims } = auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
 
@@ -46,6 +43,12 @@ export const POST = async (req: NextRequest) => {
             },
         });
 
+        // Tell device to enter verification mode
+        await prisma.deviceHeartbeat.updateMany({
+            where: { deviceId: "ESP32_MAIN" },
+            data: { pendingCommand: "VERIFY:START" },
+        });
+
         return NextResponse.json(
             { message: "Session started", session: newSession },
             { status: 201 }
@@ -60,9 +63,6 @@ export const POST = async (req: NextRequest) => {
 };
 
 export const PUT = async (req: NextRequest) => {
- 
- 
-
     const { sessionClaims } = auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
 
@@ -86,6 +86,12 @@ export const PUT = async (req: NextRequest) => {
             },
         });
 
+        // Tell device to return to idle mode
+        await prisma.deviceHeartbeat.updateMany({
+            where: { deviceId: "ESP32_MAIN" },
+            data: { pendingCommand: "VERIFY:STOP" },
+        });
+
         return NextResponse.json(
             { message: "Session closed", session: updatedSession },
             { status: 200 }
@@ -100,9 +106,6 @@ export const PUT = async (req: NextRequest) => {
 };
 
 export const GET = async (req: NextRequest) => {
- 
- 
-
     const { sessionClaims } = auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
 
