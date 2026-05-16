@@ -1,25 +1,17 @@
-// ============================================================
-// config.h — WiFi & Server Configuration for ESP32
-// ============================================================
-#pragma once
+#ifndef CONFIG_H
+#define CONFIG_H
 
-// ── WiFi Credentials ────────────────────────────────────────
-// TODO: Update these with your actual WiFi credentials
-const char* ssid     = "YOUR_WIFI_SSID";
+// ── WiFi Credentials ──
+const char* ssid = "YOUR_WIFI_NAME";
 const char* password = "YOUR_WIFI_PASSWORD";
 
-// ── NTP Time Settings ───────────────────────────────────────
-// TODO: Update gmtOffset for your timezone (in seconds)
-// Example: WAT (West Africa Time) = +1 hour = 3600
-const long  gmtOffset       = 3600;
-const int   daylightOffset  = 0;
-
-// ── Next.js Server Settings ─────────────────────────────────
-// TODO: Update with your deployed Next.js URL
-// For local dev: "http://192.168.x.x:3000"
-// For production: "https://your-app.vercel.app"
-const char* SERVER_URL    = "http://192.168.1.100:3000";
-const char* DEVICE_SECRET = "your-device-secret-here";
-
-// API endpoint path
+// ── Server Configuration ──
+const char* SERVER_URL = "https://your-webapp-url.vercel.app"; // No trailing slash
 const char* API_PATH = "/api/esp32";
+const char* DEVICE_SECRET = "esp32-nutopass-secret-change-me";
+
+// ── NTP Settings ──
+const long gmtOffset = 3600;      // Adjust for your timezone (e.g., 3600 for GMT+1)
+const int daylightOffset = 0;
+
+#endif // CONFIG_H
