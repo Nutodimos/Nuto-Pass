@@ -1,18 +1,24 @@
 """
-NutoPass Biometric Matching Microservice
-FastAPI service that performs fingerprint minutiae extraction and matching.
-Receives two Base64-encoded R307 raw images and returns a match score.
+NutoPass Biometric Matching Microservice v2.0
+FastAPI service that performs fingerprint matching using multiple methods:
+  1. ORB feature matching (minutiae-like)
+  2. SSIM (Structural Similarity Index)
+  3. Histogram correlation
+The final score is a weighted combination for maximum reliability.
 """
 
 import base64
-import io
+import logging
 import numpy as np
 import cv2
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI(title="NutoPass Biometric Matcher", version="1.0.0")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("biometric")
+
+app = FastAPI(title="NutoPass Biometric Matcher", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,70 +28,62 @@ app.add_middleware(
 )
 
 # ── Configuration ──
-MATCH_THRESHOLD = 35.0   # Minimum score to consider a match
+MATCH_THRESHOLD = 40.0   # Combined score threshold (0-100)
 R307_WIDTH = 256
 R307_HEIGHT = 288
 R307_RAW_SIZE = (R307_WIDTH * R307_HEIGHT) // 2  # 36864 bytes (4-bit packed)
 
 
 class MatchRequest(BaseModel):
-    probe_base64: str       # Base64 of the live scan from ESP32
-    candidate_base64: str   # Base64 of the stored enrollment image
+    probe_base64: str
+    candidate_base64: str
 
 
 class MatchResponse(BaseModel):
     match: bool
     score: float
     threshold: float
+    orb_score: float = 0.0
+    ssim_score: float = 0.0
+    hist_score: float = 0.0
 
 
 # ══════════ Image Processing ══════════
 
 def decode_r307_image(base64_str: str) -> np.ndarray:
-    """
-    Decode a Base64-encoded R307 raw image into a 256x288 grayscale numpy array.
-    The R307 sends 4-bit packed pixels: two pixels per byte (upper nibble = first pixel).
-    We expand each 4-bit value to 8-bit (multiply by 17 to map 0-15 → 0-255).
-    """
+    """Decode Base64-encoded R307 4-bit packed image to 256x288 grayscale."""
     raw_bytes = base64.b64decode(base64_str)
+    logger.info(f"Decoded {len(raw_bytes)} raw bytes from Base64")
 
     if len(raw_bytes) < R307_RAW_SIZE // 2:
-        raise ValueError(f"Image data too small: {len(raw_bytes)} bytes (expected ~{R307_RAW_SIZE})")
+        raise ValueError(f"Image too small: {len(raw_bytes)} bytes (need >= {R307_RAW_SIZE // 2})")
 
-    # Unpack 4-bit pixels
-    pixels = []
-    for byte in raw_bytes[:R307_RAW_SIZE]:
-        high = (byte >> 4) & 0x0F  # First pixel
-        low = byte & 0x0F          # Second pixel
-        pixels.append(high * 17)   # Scale 0-15 → 0-255
-        pixels.append(low * 17)
+    # Fast numpy-based 4-bit unpacking
+    raw_arr = np.frombuffer(raw_bytes[:R307_RAW_SIZE], dtype=np.uint8)
+    high = ((raw_arr >> 4) & 0x0F).astype(np.uint8) * 17
+    low = (raw_arr & 0x0F).astype(np.uint8) * 17
+    pixels = np.column_stack((high, low)).flatten()
 
-    # Trim or pad to exact size
-    expected_pixels = R307_WIDTH * R307_HEIGHT
-    if len(pixels) > expected_pixels:
-        pixels = pixels[:expected_pixels]
-    elif len(pixels) < expected_pixels:
-        pixels.extend([0] * (expected_pixels - len(pixels)))
+    expected = R307_WIDTH * R307_HEIGHT
+    if len(pixels) > expected:
+        pixels = pixels[:expected]
+    elif len(pixels) < expected:
+        pixels = np.pad(pixels, (0, expected - len(pixels)))
 
-    img = np.array(pixels, dtype=np.uint8).reshape((R307_HEIGHT, R307_WIDTH))
+    img = pixels.reshape((R307_HEIGHT, R307_WIDTH))
+    logger.info(f"Image decoded: {img.shape}, range [{img.min()}-{img.max()}]")
     return img
 
 
 def enhance_fingerprint(img: np.ndarray) -> np.ndarray:
-    """
-    Enhance fingerprint image for better minutiae extraction.
-    Uses CLAHE for contrast, Gaussian blur for noise, and Gabor filtering.
-    """
-    # CLAHE (Contrast Limited Adaptive Histogram Equalization)
-    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
+    """Enhance fingerprint using CLAHE + Gabor filter bank."""
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
     enhanced = clahe.apply(img)
-
-    # Light Gaussian blur to reduce sensor noise
     enhanced = cv2.GaussianBlur(enhanced, (3, 3), 0)
 
-    # Gabor filter bank for ridge enhancement
+    # Gabor filter bank — 8 orientations
     gabor_sum = np.zeros_like(enhanced, dtype=np.float64)
-    for theta in np.arange(0, np.pi, np.pi / 8):  # 8 orientations
+    for theta in np.arange(0, np.pi, np.pi / 8):
         kernel = cv2.getGaborKernel(
             (21, 21), sigma=4.0, theta=theta,
             lambd=8.0, gamma=0.5, psi=0
@@ -93,43 +91,25 @@ def enhance_fingerprint(img: np.ndarray) -> np.ndarray:
         filtered = cv2.filter2D(enhanced, cv2.CV_64F, kernel)
         gabor_sum = np.maximum(gabor_sum, filtered)
 
-    # Normalize back to uint8
-    gabor_norm = cv2.normalize(gabor_sum, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-    return gabor_norm
+    result = cv2.normalize(gabor_sum, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+    return result
 
 
-def extract_minutiae(img: np.ndarray) -> list:
-    """
-    Extract minutiae-like keypoints from a fingerprint image.
-    Uses ORB (Oriented FAST and Rotated BRIEF) as a robust feature detector.
-    This is more reliable than manual thinning+bifurcation on low-quality R307 images.
-    """
-    enhanced = enhance_fingerprint(img)
+# ══════════ Matching Methods ══════════
 
-    # Binarize
-    _, binary = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+def orb_match_score(img1: np.ndarray, img2: np.ndarray) -> float:
+    """ORB feature-based matching. Returns 0-100."""
+    enh1 = enhance_fingerprint(img1)
+    enh2 = enhance_fingerprint(img2)
 
-    # ORB detector — tuned for fingerprint ridges
-    orb = cv2.ORB_create(
-        nfeatures=500,
-        scaleFactor=1.2,
-        nlevels=8,
-        edgeThreshold=15,
-        patchSize=31
-    )
+    orb = cv2.ORB_create(nfeatures=500, scaleFactor=1.2, nlevels=8,
+                         edgeThreshold=10, patchSize=31)
+    kp1, desc1 = orb.detectAndCompute(enh1, None)
+    kp2, desc2 = orb.detectAndCompute(enh2, None)
 
-    keypoints, descriptors = orb.detectAndCompute(enhanced, None)
-    return keypoints, descriptors
+    logger.info(f"ORB keypoints: {len(kp1) if kp1 else 0} vs {len(kp2) if kp2 else 0}")
 
-
-def match_minutiae(kp1, desc1, kp2, desc2) -> float:
-    """
-    Match two sets of ORB descriptors using Brute-Force Hamming distance.
-    Returns a score from 0-100 based on the ratio of good matches.
-    """
-    if desc1 is None or desc2 is None:
-        return 0.0
-    if len(desc1) < 5 or len(desc2) < 5:
+    if desc1 is None or desc2 is None or len(desc1) < 5 or len(desc2) < 5:
         return 0.0
 
     bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
@@ -138,54 +118,115 @@ def match_minutiae(kp1, desc1, kp2, desc2) -> float:
     except cv2.error:
         return 0.0
 
-    # Lowe's ratio test
-    good_matches = []
-    for match_pair in matches:
-        if len(match_pair) == 2:
-            m, n = match_pair
-            if m.distance < 0.75 * n.distance:
-                good_matches.append(m)
+    good = [m for m, n in matches if len([m, n]) == 2 and m.distance < 0.8 * n.distance]
+    # Also count all matches for secondary reference
+    good2 = [pair for pair in matches if len(pair) == 2]
+    good = [pair[0] for pair in good2 if pair[0].distance < 0.8 * pair[1].distance]
 
-    if len(good_matches) == 0:
-        return 0.0
-
-    # Score: percentage of good matches relative to the smaller descriptor set
     total = min(len(desc1), len(desc2))
-    score = (len(good_matches) / total) * 100.0
+    score = (len(good) / total) * 100.0 if total > 0 else 0.0
+    logger.info(f"ORB score: {score:.2f} ({len(good)} good matches / {total} total)")
     return round(score, 2)
+
+
+def ssim_score(img1: np.ndarray, img2: np.ndarray) -> float:
+    """Structural Similarity Index. Returns 0-100."""
+    enh1 = enhance_fingerprint(img1)
+    enh2 = enhance_fingerprint(img2)
+
+    # Compute SSIM manually using OpenCV (no skimage dependency)
+    C1 = (0.01 * 255) ** 2
+    C2 = (0.03 * 255) ** 2
+
+    img1f = enh1.astype(np.float64)
+    img2f = enh2.astype(np.float64)
+
+    mu1 = cv2.GaussianBlur(img1f, (11, 11), 1.5)
+    mu2 = cv2.GaussianBlur(img2f, (11, 11), 1.5)
+    mu1_sq = mu1 ** 2
+    mu2_sq = mu2 ** 2
+    mu1_mu2 = mu1 * mu2
+
+    sigma1_sq = cv2.GaussianBlur(img1f ** 2, (11, 11), 1.5) - mu1_sq
+    sigma2_sq = cv2.GaussianBlur(img2f ** 2, (11, 11), 1.5) - mu2_sq
+    sigma12 = cv2.GaussianBlur(img1f * img2f, (11, 11), 1.5) - mu1_mu2
+
+    ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / \
+               ((mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2))
+
+    raw_ssim = float(ssim_map.mean())  # -1 to 1
+    # Map to 0-100 scale (SSIM of 0.3+ is very similar for fingerprints)
+    score = max(0.0, raw_ssim) * 100.0
+    logger.info(f"SSIM raw: {raw_ssim:.4f}, score: {score:.2f}")
+    return round(score, 2)
+
+
+def histogram_score(img1: np.ndarray, img2: np.ndarray) -> float:
+    """Histogram correlation matching. Returns 0-100."""
+    enh1 = enhance_fingerprint(img1)
+    enh2 = enhance_fingerprint(img2)
+
+    # Divide image into a 4x4 grid and compare local histograms
+    rows, cols = 4, 4
+    h, w = enh1.shape
+    bh, bw = h // rows, w // cols
+    scores = []
+
+    for r in range(rows):
+        for c in range(cols):
+            block1 = enh1[r*bh:(r+1)*bh, c*bw:(c+1)*bw]
+            block2 = enh2[r*bh:(r+1)*bh, c*bw:(c+1)*bw]
+            hist1 = cv2.calcHist([block1], [0], None, [32], [0, 256])
+            hist2 = cv2.calcHist([block2], [0], None, [32], [0, 256])
+            cv2.normalize(hist1, hist1)
+            cv2.normalize(hist2, hist2)
+            corr = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
+            scores.append(max(0.0, corr))
+
+    avg = np.mean(scores) * 100.0
+    logger.info(f"Histogram score: {avg:.2f}")
+    return round(avg, 2)
 
 
 # ══════════ API Endpoints ══════════
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "NutoPass Biometric Matcher v1.0"}
+    return {"status": "ok", "service": "NutoPass Biometric Matcher v2.0", "threshold": MATCH_THRESHOLD}
 
 
 @app.post("/match", response_model=MatchResponse)
 def match_fingerprints(req: MatchRequest):
-    """
-    Compare two fingerprint images and return whether they match.
-    """
+    """Compare two fingerprint images using multi-method matching."""
     try:
         probe_img = decode_r307_image(req.probe_base64)
         candidate_img = decode_r307_image(req.candidate_base64)
     except Exception as e:
+        logger.error(f"Image decode error: {e}")
         raise HTTPException(status_code=400, detail=f"Image decode error: {str(e)}")
 
     try:
-        kp1, desc1 = extract_minutiae(probe_img)
-        kp2, desc2 = extract_minutiae(candidate_img)
+        orb = orb_match_score(probe_img, candidate_img)
+        ssim = ssim_score(probe_img, candidate_img)
+        hist = histogram_score(probe_img, candidate_img)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Feature extraction error: {str(e)}")
+        logger.error(f"Matching error: {e}")
+        raise HTTPException(status_code=500, detail=f"Matching error: {str(e)}")
 
-    score = match_minutiae(kp1, desc1, kp2, desc2)
-    is_match = score >= MATCH_THRESHOLD
+    # Weighted combination: SSIM is most reliable for same-sensor images
+    combined = (orb * 0.3) + (ssim * 0.4) + (hist * 0.3)
+    is_match = combined >= MATCH_THRESHOLD
 
-    return MatchResponse(match=is_match, score=score, threshold=MATCH_THRESHOLD)
+    logger.info(f"MATCH RESULT: ORB={orb:.1f} SSIM={ssim:.1f} HIST={hist:.1f} "
+                f"COMBINED={combined:.1f} threshold={MATCH_THRESHOLD} → {'MATCH' if is_match else 'NO MATCH'}")
+
+    return MatchResponse(
+        match=is_match, score=round(combined, 2), threshold=MATCH_THRESHOLD,
+        orb_score=orb, ssim_score=ssim, hist_score=hist
+    )
 
 
 if __name__ == "__main__":
     import uvicorn
-    print("Starting NutoPass Biometric Matcher on port 8001...")
+    print("Starting NutoPass Biometric Matcher v2.0 on port 8001...")
     uvicorn.run(app, host="0.0.0.0", port=8001)

@@ -120,17 +120,89 @@ bool postToServer(String event, int id, String status) {
   return(code>=200&&code<300);
 }
 
+// ══════════ Streaming POST Helper ══════════
+// Streams a large JSON body over HTTP(S) without duplicating the base64 data.
+// Sends: prefix + base64Data (in 1KB chunks) + suffix
+// Returns the HTTP response code and body via pointer.
+int streamPost(const char* path, const char* prefix, int prefixLen,
+               const char* base64Data, int base64Len,
+               const char* suffix, int suffixLen,
+               String* responseBody) {
+  String serverUrl = String(SERVER_URL);
+  bool isHttps = serverUrl.startsWith("https");
+  String host = serverUrl;
+  host.replace("https://", ""); host.replace("http://", "");
+  int port = isHttps ? 443 : 80;
+  int slashIdx = host.indexOf('/');
+  if (slashIdx > 0) host = host.substring(0, slashIdx);
+  int colonIdx = host.indexOf(':');
+  if (colonIdx > 0) { port = host.substring(colonIdx+1).toInt(); host = host.substring(0, colonIdx); }
+
+  WiFiClientSecure secClient;
+  WiFiClient plainClient;
+  Client* client;
+  if (isHttps) { secClient.setInsecure(); client = &secClient; }
+  else { client = &plainClient; }
+
+  Serial.printf("[STREAM] Connecting to %s:%d...\n", host.c_str(), port);
+  if (isHttps) { if (!secClient.connect(host.c_str(), port)) { Serial.println("[STREAM] TLS connect FAILED"); return -1; } }
+  else { if (!plainClient.connect(host.c_str(), port)) { Serial.println("[STREAM] connect FAILED"); return -1; } }
+
+  int contentLength = prefixLen + base64Len + suffixLen;
+  // Send HTTP headers
+  client->print("POST "); client->print(path); client->println(" HTTP/1.1");
+  client->print("Host: "); client->println(host);
+  client->println("Content-Type: application/json");
+  client->print("Content-Length: "); client->println(contentLength);
+  client->println("Connection: close");
+  client->println();
+
+  // Stream body in parts — no duplication!
+  client->write((const uint8_t*)prefix, prefixLen);
+  int sent = 0;
+  while (sent < base64Len) {
+    int chunk = (base64Len - sent > 1024) ? 1024 : (base64Len - sent);
+    client->write((const uint8_t*)(base64Data + sent), chunk);
+    sent += chunk;
+    if (sent % 8192 == 0) Serial.printf("[STREAM] Sent %d/%d bytes\n", sent, base64Len);
+  }
+  client->write((const uint8_t*)suffix, suffixLen);
+  Serial.printf("[STREAM] Body sent: %d bytes total\n", contentLength);
+
+  // Read response — skip headers, find body
+  unsigned long start = millis();
+  while (!client->available() && (millis() - start) < 30000) delay(10);
+  int statusCode = -1; bool headersEnded = false;
+  String body = "";
+  while (client->available() || (millis() - start) < 30000) {
+    String line = client->readStringUntil('\n'); line.trim();
+    if (!headersEnded) {
+      if (statusCode == -1 && line.startsWith("HTTP/")) {
+        int sp1 = line.indexOf(' '); statusCode = line.substring(sp1+1, sp1+4).toInt();
+      }
+      if (line.length() == 0) headersEnded = true;
+    } else {
+      body += line; break; // Read first line of body
+    }
+    if (!client->available()) { delay(50); if (!client->available()) break; }
+  }
+  // Read remaining body
+  while (client->available()) { body += (char)client->read(); }
+  client->stop();
+  if (responseBody) *responseBody = body;
+  return statusCode;
+}
+
 // ══════════ Cloud Enrollment POST ══════════
 bool postCloudEnroll(int slotId, const char* base64Data, int base64Len) {
   if (!wifiConnected) return false;
-  HTTPClient http;
-  String url = String(SERVER_URL) + "/api/esp32/cloud-enroll";
-  http.begin(url); http.addHeader("Content-Type", "application/json"); http.setTimeout(15000);
-  String json = "{\"deviceSecret\":\"" + String(DEVICE_SECRET) + "\",\"slotId\":" + String(slotId) + ",\"image_base64\":\"";
-  json.reserve(json.length() + base64Len + 4);
-  json += String(base64Data); json += "\"}";
-  Serial.printf("[CLOUD-ENROLL] POST %s (%d bytes)\n", url.c_str(), json.length());
-  int code = http.POST(json); String resp = http.getString(); http.end();
+  String prefix = "{\"deviceSecret\":\"" + String(DEVICE_SECRET) + "\",\"slotId\":" + String(slotId) + ",\"image_base64\":\"";
+  String suffix = "\"}";
+  String resp;
+  Serial.printf("[CLOUD-ENROLL] Streaming %d bytes to server...\n", base64Len);
+  int code = streamPost("/api/esp32/cloud-enroll",
+    prefix.c_str(), prefix.length(), base64Data, base64Len,
+    suffix.c_str(), suffix.length(), &resp);
   Serial.printf("[CLOUD-ENROLL] Response: %d — %s\n", code, resp.c_str());
   return (code >= 200 && code < 300);
 }
@@ -138,16 +210,14 @@ bool postCloudEnroll(int slotId, const char* base64Data, int base64Len) {
 // ══════════ Cloud Verification POST ══════════
 bool postCloudVerify(const char* base64Data, int base64Len) {
   if (!wifiConnected) return false;
-  HTTPClient http;
-  String url = String(SERVER_URL) + "/api/esp32/cloud-verify";
-  http.begin(url); http.addHeader("Content-Type", "application/json"); http.setTimeout(20000);
-  String json = "{\"deviceSecret\":\"" + String(DEVICE_SECRET) + "\",\"image_base64\":\"";
-  json.reserve(json.length() + base64Len + 4);
-  json += String(base64Data); json += "\"}";
-  Serial.printf("[CLOUD-VERIFY] POST %s (%d bytes)\n", url.c_str(), json.length());
-  int code = http.POST(json);
+  String prefix = "{\"deviceSecret\":\"" + String(DEVICE_SECRET) + "\",\"image_base64\":\"";
+  String suffix = "\"}";
+  String resp;
+  Serial.printf("[CLOUD-VERIFY] Streaming %d bytes to server...\n", base64Len);
+  int code = streamPost("/api/esp32/cloud-verify",
+    prefix.c_str(), prefix.length(), base64Data, base64Len,
+    suffix.c_str(), suffix.length(), &resp);
   if (code >= 200 && code < 300) {
-    String resp = http.getString(); http.end();
     if (resp.indexOf("\"match\":true") >= 0) {
       int ni = resp.indexOf("\"studentName\":\"");
       String name = "Unknown";
@@ -157,7 +227,7 @@ bool postCloudVerify(const char* base64Data, int base64Len) {
     }
     Serial.println("[CLOUD-VERIFY] ✕ No match"); return false;
   }
-  http.end(); Serial.printf("[CLOUD-VERIFY] Server error: %d\n", code); return false;
+  Serial.printf("[CLOUD-VERIFY] Server error: %d\n", code); return false;
 }
 
 // ══════════ Heartbeat ══════════
