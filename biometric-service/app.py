@@ -25,7 +25,7 @@ app.add_middleware(
 )
 
 # ── Configuration ──
-MATCH_THRESHOLD = 30.0
+MATCH_THRESHOLD = 25.0
 R307_WIDTH = 256
 R307_HEIGHT = 288
 R307_RAW_SIZE = (R307_WIDTH * R307_HEIGHT) // 2
@@ -233,8 +233,8 @@ def match_fingerprints(req: MatchRequest):
         logger.error(f"Matching error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Weighted: SSIM most important (aligned comparison)
-    combined = (orb * 0.2) + (ssim * 0.5) + (hist * 0.3)
+    # Weighted: Histogram is the best discriminator for R307 images
+    combined = (orb * 0.15) + (ssim * 0.15) + (hist * 0.70)
     is_match = combined >= MATCH_THRESHOLD
 
     logger.info(f"RESULT: ORB={orb:.1f} SSIM={ssim:.1f} HIST={hist:.1f} "
