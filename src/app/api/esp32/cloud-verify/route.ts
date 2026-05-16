@@ -36,8 +36,9 @@ export const POST = async (req: NextRequest) => {
         console.log(`[CLOUD-VERIFY] Matching probe against ${templates.length} templates...`);
 
         // 3. Iterate and match via Python Service
-        // For small student counts, we can do this sequentially.
         let matchResult = null;
+        let bestScore = 0;
+        let bestCandidate = "";
 
         for (const template of templates) {
             try {
@@ -56,6 +57,13 @@ export const POST = async (req: NextRequest) => {
                 }
 
                 const data = await response.json();
+                console.log(`[CLOUD-VERIFY] ${template.student.name}: score=${data.score} orb=${data.orb_score} ssim=${data.ssim_score} hist=${data.hist_score} match=${data.match}`);
+                
+                if (data.score > bestScore) {
+                    bestScore = data.score;
+                    bestCandidate = `${template.student.name} ${template.student.surname}`;
+                }
+
                 if (data.match) {
                     matchResult = {
                         studentId: template.studentId,
@@ -71,7 +79,8 @@ export const POST = async (req: NextRequest) => {
         }
 
         if (!matchResult) {
-            return NextResponse.json({ match: false }, { status: 200 });
+            console.log(`[CLOUD-VERIFY] No match. Best score: ${bestScore} (${bestCandidate})`);
+            return NextResponse.json({ match: false, bestScore, bestCandidate }, { status: 200 });
         }
 
         // 4. Record Attendance

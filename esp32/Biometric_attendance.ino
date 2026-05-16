@@ -217,6 +217,7 @@ bool postCloudVerify(const char* base64Data, int base64Len) {
   int code = streamPost("/api/esp32/cloud-verify",
     prefix.c_str(), prefix.length(), base64Data, base64Len,
     suffix.c_str(), suffix.length(), &resp);
+  Serial.printf("[CLOUD-VERIFY] HTTP %d — Response: %s\n", code, resp.c_str());
   if (code >= 200 && code < 300) {
     if (resp.indexOf("\"match\":true") >= 0) {
       int ni = resp.indexOf("\"studentName\":\"");
