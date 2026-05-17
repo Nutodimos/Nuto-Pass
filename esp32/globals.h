@@ -74,6 +74,9 @@ extern unsigned long lastPressTime, btnDownTime;
 extern int enrollNewID;
 extern unsigned long enrollTimeout;
 extern unsigned long bootTime;
+extern WiFiClientSecure persistentClient;
+extern bool persistentConnected;
+extern String persistentHost;
 
 // ── Function Declarations ──
 void setLED(bool r, bool g, bool b);

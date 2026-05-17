@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { Fingerprint, Loader2, CheckCircle2, Trash2, XCircle } from "lucide-react";
+import { Fingerprint, Loader2, CheckCircle2, Trash2, XCircle, Wifi, MousePointerClick, ScanLine, CloudUpload, Sparkles, Check } from "lucide-react";
 import { createPortal } from "react-dom";
 
 const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { studentId: string, hasBiometric?: boolean }) => {
@@ -54,9 +54,26 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
         }
     };
 
+    const enrollIcons = [
+        <Wifi key="wifi" className="w-3.5 h-3.5" />,
+        <MousePointerClick key="click" className="w-3.5 h-3.5" />,
+        <ScanLine key="scan" className="w-3.5 h-3.5" />,
+        <CloudUpload key="cloud" className="w-3.5 h-3.5" />,
+        <Sparkles key="sparkle" className="w-3.5 h-3.5" />,
+    ];
+    const enrollMessages = [
+        "Waking up biometric sensor...",
+        "Sensor ready — place your finger now",
+        "Hold still — scanning fingerprint...",
+        "Uploading scan to cloud...",
+        "Almost done — verifying quality...",
+    ];
+    const [enrollMsgIndex, setEnrollMsgIndex] = useState(0);
+
     const handleStart = async () => {
         setStatus("initiating");
-        setEnrollStep("Sending command to device...");
+        setEnrollStep("Connecting to biometric scanner...");
+        setEnrollMsgIndex(0);
 
         try {
             const res = await fetch("/api/student/biometric/initiate", {
@@ -70,7 +87,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
             if (res.ok) {
                 setSlotId(data.slotId);
                 setStatus("waiting");
-                setEnrollStep("Waiting for device to enter registration mode...");
+                setEnrollStep("Waiting for sensor to activate...");
                 startPolling(data.slotId);
             } else {
                 toast.error(data.message);
@@ -113,7 +130,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
         hasEnteredRegRef.current = false;
 
         let pollCount = 0;
-        const MAX_POLLS = 60; // 60 * 3s = 3 minutes max
+        const MAX_POLLS = 60;
 
         pollIntervalRef.current = setInterval(async () => {
             pollCount++;
@@ -126,37 +143,45 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                 return;
             }
 
+            // Cycle through engaging messages during waiting
+            if (!hasEnteredRegRef.current && pollCount > 1) {
+                setEnrollMsgIndex(Math.min(0, enrollMessages.length - 1));
+            }
+
             try {
                 const res = await fetch("/api/esp32/events");
                 if (!res.ok) return;
                 const data = await res.json();
                 const mode = data.device?.mode || "UNKNOWN";
 
-                // Track what the device is doing via its reported mode
                 if (mode === "REGISTRATION") {
                     hasEnteredRegRef.current = true;
-                    setEnrollStep("Device ready — place finger on the sensor...");
+                    setEnrollMsgIndex(1); // "Place your finger now"
+                    setEnrollStep("LED is purple — place your finger gently on the sensor");
                 } else if (hasEnteredRegRef.current && (mode === "DEFAULT" || mode === "VERIFICATION")) {
-                    // Device was in REGISTRATION and now it's NOT. Enrollment is over.
+                    setEnrollMsgIndex(3); // "Uploading to cloud"
+                    setEnrollStep("Uploading fingerprint to cloud...");
+
                     const eventRes = await fetch(`/api/student/biometric/status?studentId=${studentId}`);
                     if (eventRes.ok) {
                         const eventData = await eventRes.json();
                         if (eventData.status === "SUCCESS") {
                             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                            setEnrollMsgIndex(4);
                             setStatus("success");
                             setEnrollStep("");
-                            toast.success("Biometric registration complete!");
+                            toast.success("🎉 Fingerprint saved to cloud!");
                             router.refresh();
                             setTimeout(() => { setOpen(false); setStatus("idle"); }, 3000);
                         } else if (eventData.status === "FAILED") {
                             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
                             setStatus("error");
-                            setEnrollStep("Registration failed. Please try again.");
-                            toast.error("Registration failed on device");
+                            setEnrollStep("Scan failed — try pressing a bit firmer next time.");
+                            toast.error("Registration failed");
                         }
                     }
                 } else if (!hasEnteredRegRef.current) {
-                    setEnrollStep("Waiting for device to acknowledge command...");
+                    setEnrollStep("Waiting for sensor to wake up...");
                 }
             } catch (error) {
                 console.error("Polling error", error);
@@ -358,23 +383,48 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
 
                             {status === "waiting" && (
                                 <div className="mt-4">
-                                    <p className="text-sm text-slate-600 font-medium mb-1">
-                                        Scanner is ready (Slot {slotId})
-                                    </p>
-                                    <p className="text-xs text-purple-600 font-semibold mb-2">
+                                    {/* Progress Steps */}
+                                    <div className="flex justify-center gap-1 mb-4">
+                                        {enrollMessages.map((msg, i) => (
+                                            <div key={i} className={`flex flex-col items-center gap-1 transition-all duration-300 ${
+                                                i <= enrollMsgIndex ? "opacity-100" : "opacity-30"
+                                            }`}>
+                                                <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-500 ${
+                                                    i < enrollMsgIndex ? "bg-emerald-500 text-white scale-90" :
+                                                    i === enrollMsgIndex ? "bg-purple-500 text-white scale-110 ring-4 ring-purple-200 animate-pulse" :
+                                                    "bg-slate-200 text-slate-500"
+                                                }`}>
+                                                    {i < enrollMsgIndex ? <Check className="w-3.5 h-3.5" /> : enrollIcons[i]}
+                                                </div>
+                                                {i < enrollMessages.length - 1 && (
+                                                    <div className={`w-0.5 h-2 rounded-full ${
+                                                        i < enrollMsgIndex ? "bg-emerald-400" : "bg-slate-200"
+                                                    }`} />
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Current step message */}
+                                    <p className="text-sm text-purple-600 font-semibold mb-2 min-h-[20px]">
                                         {enrollStep}
                                     </p>
-                                    <p className="text-xs text-slate-500 mb-4 px-4">
-                                        Place finger on the sensor <strong>twice</strong>. Lift when the LED turns green, then place it again when it turns purple.
-                                    </p>
-                                    <div className="flex justify-center gap-1">
-                                        <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: "0s" }} />
-                                        <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: "0.2s" }} />
-                                        <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: "0.4s" }} />
+
+                                    {/* Animated fingerprint */}
+                                    <div className="relative w-16 h-16 mx-auto mb-3">
+                                        <Fingerprint className="w-16 h-16 text-purple-300 animate-pulse" />
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <div className="w-3 h-3 bg-purple-500 rounded-full animate-ping" />
+                                        </div>
                                     </div>
+
+                                    <p className="text-[11px] text-slate-400 mb-3 px-4">
+                                        Keep your finger steady on the sensor. The LED will change color as each step completes.
+                                    </p>
+
                                     <button
                                         onClick={handleClose}
-                                        className="mt-6 text-xs text-slate-400 hover:text-slate-600 underline"
+                                        className="mt-2 text-xs text-slate-400 hover:text-slate-600 underline"
                                     >
                                         Cancel
                                     </button>

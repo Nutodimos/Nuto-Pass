@@ -5,10 +5,12 @@ import { NextRequest, NextResponse } from "next/server";
 // POST /api/esp32/cloud-verify
 //
 // Receives a probe image from ESP32, matches it against all stored
-// templates via the Python microservice, and records attendance.
+// templates via the Python microservice using chunked parallel
+// bulk matching for O(1) network latency regardless of student count.
 // ─────────────────────────────────────────────────────────────────
 
-const BIOMETRIC_SERVICE_URL = process.env.BIOMETRIC_SERVICE_URL || "http://127.0.0.1:8001/match";
+const BIOMETRIC_SERVICE_URL = process.env.BIOMETRIC_SERVICE_URL || "http://127.0.0.1:8001";
+const BATCH_SIZE = 30; // Templates per batch — keeps each request under ~1.5MB
 
 export const POST = async (req: NextRequest) => {
     try {
@@ -33,48 +35,72 @@ export const POST = async (req: NextRequest) => {
             return NextResponse.json({ match: false, message: "No templates enrolled" }, { status: 200 });
         }
 
-        console.log(`[CLOUD-VERIFY] Matching probe against ${templates.length} templates...`);
+        console.log(`[CLOUD-VERIFY] Matching probe against ${templates.length} templates (batch size: ${BATCH_SIZE})...`);
 
-        // 3. Iterate and match via Python Service
-        let matchResult = null;
-        let bestScore = 0;
-        let bestCandidate = "";
+        // 3. Split templates into batches
+        const batches: typeof templates[] = [];
+        for (let i = 0; i < templates.length; i += BATCH_SIZE) {
+            batches.push(templates.slice(i, i + BATCH_SIZE));
+        }
 
-        for (const template of templates) {
+        console.log(`[CLOUD-VERIFY] Created ${batches.length} batch(es)`);
+
+        // 4. Fire all batches concurrently via /match-bulk
+        const batchPromises = batches.map(async (batch, batchIndex) => {
             try {
-                const response = await fetch(BIOMETRIC_SERVICE_URL, {
+                const response = await fetch(`${BIOMETRIC_SERVICE_URL}/match-bulk`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         probe_base64: image_base64,
-                        candidate_base64: template.imageBase64
+                        candidates: batch.map(t => ({
+                            id: t.studentId,
+                            name: `${t.student.name} ${t.student.surname}`,
+                            image_base64: t.imageBase64,
+                        })),
                     }),
                 });
 
                 if (!response.ok) {
-                    console.error(`[CLOUD-VERIFY] Biometric service error: ${response.status}`);
-                    continue;
+                    console.error(`[CLOUD-VERIFY] Batch ${batchIndex} service error: ${response.status}`);
+                    return null;
                 }
 
                 const data = await response.json();
-                console.log(`[CLOUD-VERIFY] ${template.student.name}: score=${data.score} orb=${data.orb_score} ssim=${data.ssim_score} hist=${data.hist_score} match=${data.match}`);
-                
-                if (data.score > bestScore) {
-                    bestScore = data.score;
-                    bestCandidate = `${template.student.name} ${template.student.surname}`;
-                }
-
-                if (data.match) {
-                    matchResult = {
-                        studentId: template.studentId,
-                        studentName: `${template.student.name} ${template.student.surname}`,
-                        score: data.score
-                    };
-                    break; // Found a match!
-                }
+                console.log(`[CLOUD-VERIFY] Batch ${batchIndex}: match=${data.match} best=${data.best_score} (${data.best_name}) checked=${data.candidates_checked}`);
+                return data;
             } catch (err) {
-                console.error(`[CLOUD-VERIFY] Failed to connect to biometric service:`, err);
-                return NextResponse.json({ message: "Biometric matching service unavailable" }, { status: 503 });
+                console.error(`[CLOUD-VERIFY] Batch ${batchIndex} failed:`, err);
+                return null;
+            }
+        });
+
+        // Wait for all batches to complete
+        const results = await Promise.all(batchPromises);
+
+        // 5. Find the best match across all batches
+        let matchResult: { studentId: string; studentName: string; score: number } | null = null;
+        let bestScore = 0;
+        let bestCandidate = "";
+
+        for (const result of results) {
+            if (!result) continue;
+
+            if (result.best_score > bestScore) {
+                bestScore = result.best_score;
+                bestCandidate = result.best_name || "";
+            }
+
+            if (result.match && !matchResult) {
+                // Find the matching student's ID from our templates
+                const matchedTemplate = templates.find(t => t.studentId === result.matched_id);
+                if (matchedTemplate) {
+                    matchResult = {
+                        studentId: result.matched_id,
+                        studentName: result.matched_name,
+                        score: result.score,
+                    };
+                }
             }
         }
 
@@ -83,23 +109,45 @@ export const POST = async (req: NextRequest) => {
             return NextResponse.json({ match: false, bestScore, bestCandidate }, { status: 200 });
         }
 
-        // 4. Record Attendance
-        // Find an active session for the student's class
+        // 6. Record Attendance
         const student = await prisma.student.findUnique({
             where: { id: matchResult.studentId },
             select: { id: true, classId: true }
         });
 
+        let attendanceRecorded = false;
+
         if (student) {
+            console.log(`[CLOUD-VERIFY] Looking for open session for classId=${student.classId}`);
+
             const activeSession = await prisma.attendanceSession.findFirst({
                 where: {
                     status: "OPEN",
                     lesson: { classId: student.classId },
                 },
+                include: { lesson: true },
             });
 
+            // Find a lesson to record against — active session first, fallback to most recent lesson
+            let lessonId: number | null = null;
+
             if (activeSession) {
-                // Guard against duplicate attendance for the same lesson today
+                lessonId = activeSession.lessonId;
+                console.log(`[CLOUD-VERIFY] Found active session for lesson: ${activeSession.lesson.name}`);
+            } else {
+                console.log(`[CLOUD-VERIFY] No active session — using fallback (most recent lesson)`);
+                const recentLesson = await prisma.lesson.findFirst({
+                    where: { classId: student.classId },
+                    orderBy: { id: "desc" },
+                });
+                if (recentLesson) {
+                    lessonId = recentLesson.id;
+                    console.log(`[CLOUD-VERIFY] Fallback lesson: ${recentLesson.name} (id=${recentLesson.id})`);
+                }
+            }
+
+            if (lessonId) {
+                // Guard against duplicate attendance today
                 const todayStart = new Date();
                 todayStart.setHours(0, 0, 0, 0);
                 const todayEnd = new Date();
@@ -108,7 +156,7 @@ export const POST = async (req: NextRequest) => {
                 const existing = await prisma.attendance.findFirst({
                     where: {
                         studentId: student.id,
-                        lessonId: activeSession.lessonId,
+                        lessonId: lessonId,
                         date: { gte: todayStart, lt: todayEnd },
                     },
                 });
@@ -119,18 +167,24 @@ export const POST = async (req: NextRequest) => {
                             date: new Date(),
                             present: true,
                             studentId: student.id,
-                            lessonId: activeSession.lessonId,
+                            lessonId: lessonId,
                         },
                     });
-                    console.log(`[CLOUD-VERIFY] Attendance recorded for ${matchResult.studentName}`);
+                    attendanceRecorded = true;
+                    console.log(`[CLOUD-VERIFY] ✓ Attendance recorded for ${matchResult.studentName}`);
+                } else {
+                    console.log(`[CLOUD-VERIFY] Attendance already exists for today — skipped`);
                 }
+            } else {
+                console.log(`[CLOUD-VERIFY] No lessons found for class — cannot record attendance`);
             }
         }
 
         return NextResponse.json({ 
             match: true, 
             studentName: matchResult.studentName,
-            confidence: matchResult.score
+            confidence: matchResult.score,
+            attendanceRecorded,
         }, { status: 200 });
 
     } catch (error) {

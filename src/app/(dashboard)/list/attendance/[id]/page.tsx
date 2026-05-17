@@ -199,28 +199,28 @@ const ClassAttendancePage = async ({
     }));
 
     return (
-        <div className="flex flex-col gap-6 p-4">
+        <div className="flex flex-col gap-4 sm:gap-6 p-3 sm:p-4">
             {/* Attendance Session Control Panel */}
             <AttendancePanel lessons={formattedLessons} className={className} totalStudents={count} />
 
             {/* Student List */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 {/* Header with Class Info and Search */}
-                <div className="bg-gradient-to-r from-CPENavy/5 to-CPEGold/5 p-5 border-b border-slate-100">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-CPENavy to-CPENavyDark flex items-center justify-center">
-                                <span className="text-white font-bold text-lg">{className.charAt(0)}</span>
+                <div className="bg-gradient-to-r from-CPENavy/5 to-CPEGold/5 p-4 sm:p-5 border-b border-slate-100">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-CPENavy to-CPENavyDark flex items-center justify-center shrink-0">
+                                <span className="text-white font-bold text-base sm:text-lg">{className.charAt(0)}</span>
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-CPENavyDark">
+                                <h2 className="text-lg sm:text-xl font-bold text-CPENavyDark">
                                     {className}
                                 </h2>
-                                <p className="text-sm text-gray-500">{count} students enrolled</p>
+                                <p className="text-xs sm:text-sm text-gray-500">{count} students enrolled</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 w-full md:w-auto">
-                            <div className="flex-1 md:flex-none bg-white rounded-xl border border-gray-200 px-4 py-2 shadow-sm">
+                        <div className="w-full sm:w-auto">
+                            <div className="bg-white rounded-xl border border-gray-200 px-4 py-2 shadow-sm">
                                 <TableSearch />
                             </div>
                         </div>
@@ -228,7 +228,7 @@ const ClassAttendancePage = async ({
                 </div>
 
                 {/* Table Content */}
-                <div className="p-4">
+                <div className="p-2 sm:p-4 overflow-x-auto">
                     <Table columns={columns} renderRow={renderRow} data={data} />
                     <Pagination page={p} count={count} />
                 </div>

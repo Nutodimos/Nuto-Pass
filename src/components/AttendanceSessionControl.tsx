@@ -205,7 +205,7 @@ const AttendanceSessionControl = ({
         >
             {/* Main Control Card */}
             <div
-                className={`relative rounded-2xl p-6 shadow-2xl transition-all duration-500 ${session?.status === "OPEN"
+                className={`relative rounded-2xl p-4 sm:p-6 shadow-2xl transition-all duration-500 ${session?.status === "OPEN"
                     ? "bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800"
                     : "bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950"
                     }`}
@@ -219,21 +219,21 @@ const AttendanceSessionControl = ({
                 {/* Content */}
                 <div className="relative z-10">
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+                        <div className="flex items-center gap-2 sm:gap-3">
                             <motion.div
                                 animate={session?.status === "OPEN" ? { scale: [1, 1.2, 1] } : {}}
                                 transition={{ repeat: Infinity, duration: 2 }}
-                                className={`p-3 rounded-xl ${session?.status === "OPEN"
+                                className={`p-2 sm:p-3 rounded-xl ${session?.status === "OPEN"
                                     ? "bg-white/20 text-white"
                                     : "bg-slate-700 text-slate-400"
                                     }`}
                             >
-                                <Fingerprint className="w-6 h-6" />
+                                <Fingerprint className="w-5 h-5 sm:w-6 sm:h-6" />
                             </motion.div>
                             <div>
-                                <h2 className="text-xl font-bold text-white">{lessonName}</h2>
-                                <p className="text-sm text-white/70">{className}</p>
+                                <h2 className="text-lg sm:text-xl font-bold text-white">{lessonName}</h2>
+                                <p className="text-xs sm:text-sm text-white/70">{className}</p>
                             </div>
                         </div>
 
@@ -244,62 +244,62 @@ const AttendanceSessionControl = ({
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.8 }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full"
+                                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-white/20 backdrop-blur-sm rounded-full"
                                 >
                                     <motion.div
                                         animate={{ opacity: [1, 0.5, 1] }}
                                         transition={{ repeat: Infinity, duration: 1 }}
-                                        className="w-3 h-3 bg-red-500 rounded-full"
+                                        className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 rounded-full"
                                     />
-                                    <span className="text-sm font-semibold text-white">LIVE</span>
+                                    <span className="text-xs sm:text-sm font-semibold text-white">LIVE</span>
                                 </motion.div>
                             )}
                         </AnimatePresence>
                     </div>
 
-                    {/* Stats Row - Now 3 columns */}
-                    <div className={`grid gap-4 mb-6 ${session?.status === "OPEN" ? "grid-cols-3" : "grid-cols-2"}`}>
+                    {/* Stats Row */}
+                    <div className={`grid gap-3 sm:gap-4 mb-4 sm:mb-6 ${session?.status === "OPEN" ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>
                         <motion.div
                             whileHover={{ scale: 1.02 }}
-                            className={`p-4 rounded-xl backdrop-blur-sm ${session?.status === "OPEN"
+                            className={`p-3 sm:p-4 rounded-xl backdrop-blur-sm ${session?.status === "OPEN"
                                 ? "bg-white/20"
                                 : "bg-slate-700/50"
                                 }`}
                         >
-                            <div className="flex items-center gap-2 text-white/70 mb-1">
-                                <Clock className="w-4 h-4" />
-                                <span className="text-xs uppercase tracking-wide">Duration</span>
+                            <div className="flex items-center gap-1.5 text-white/70 mb-1">
+                                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                <span className="text-[10px] sm:text-xs uppercase tracking-wide">Duration</span>
                             </div>
-                            <p className="text-2xl font-mono font-bold text-white">{elapsedTime}</p>
+                            <p className="text-xl sm:text-2xl font-mono font-bold text-white">{elapsedTime}</p>
                         </motion.div>
 
                         <motion.div
                             whileHover={{ scale: 1.02 }}
-                            className={`p-4 rounded-xl backdrop-blur-sm ${session?.status === "OPEN"
+                            className={`p-3 sm:p-4 rounded-xl backdrop-blur-sm ${session?.status === "OPEN"
                                 ? "bg-white/20"
                                 : "bg-slate-700/50"
                                 }`}
                         >
-                            <div className="flex items-center gap-2 text-white/70 mb-1">
-                                <UserCheck className="w-4 h-4" />
-                                <span className="text-xs uppercase tracking-wide">Present</span>
+                            <div className="flex items-center gap-1.5 text-white/70 mb-1">
+                                <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                <span className="text-[10px] sm:text-xs uppercase tracking-wide">Present</span>
                             </div>
-                            <p className="text-2xl font-bold text-white">{attendanceCount}</p>
+                            <p className="text-xl sm:text-2xl font-bold text-white">{attendanceCount}</p>
                         </motion.div>
 
-                        {/* Absent counter (only during active session) */}
+                        {/* Absent counter */}
                         {session?.status === "OPEN" && totalStudents > 0 && (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 whileHover={{ scale: 1.02 }}
-                                className="p-4 rounded-xl backdrop-blur-sm bg-red-500/20"
+                                className="p-3 sm:p-4 rounded-xl backdrop-blur-sm bg-red-500/20 col-span-2 sm:col-span-1"
                             >
-                                <div className="flex items-center gap-2 text-white/70 mb-1">
-                                    <UserX className="w-4 h-4" />
-                                    <span className="text-xs uppercase tracking-wide">Absent</span>
+                                <div className="flex items-center gap-1.5 text-white/70 mb-1">
+                                    <UserX className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                    <span className="text-[10px] sm:text-xs uppercase tracking-wide">Absent</span>
                                 </div>
-                                <p className="text-2xl font-bold text-white">{absentCount}</p>
+                                <p className="text-xl sm:text-2xl font-bold text-white">{absentCount}</p>
                             </motion.div>
                         )}
                     </div>
@@ -354,7 +354,7 @@ const AttendanceSessionControl = ({
                         whileTap={{ scale: 0.98 }}
                         onClick={session?.status === "OPEN" ? endSession : startSession}
                         disabled={loading}
-                        className={`w-full py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 ${loading
+                        className={`w-full py-3.5 sm:py-4 px-6 rounded-xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 ${loading
                             ? "bg-slate-600 cursor-not-allowed"
                             : session?.status === "OPEN"
                                 ? "bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-lg shadow-red-500/30"

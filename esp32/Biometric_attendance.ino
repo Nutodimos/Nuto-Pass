@@ -18,6 +18,11 @@ unsigned long lastPressTime=0, btnDownTime=0;
 int enrollNewID=-1; unsigned long enrollTimeout=0;
 unsigned long bootTime=0;
 
+// ── Persistent TLS Client (reused across scans) ──
+WiFiClientSecure persistentClient;
+bool persistentConnected = false;
+String persistentHost = "";
+
 // ══════════ LED / Buzzer ══════════
 void setLED(bool r,bool g,bool b){digitalWrite(LED_RED,r);digitalWrite(LED_GREEN,g);digitalWrite(LED_BLUE,b);}
 void ledOff(){setLED(0,0,0);} void ledWhite(){setLED(1,1,1);} void ledBlue(){setLED(0,0,1);}
@@ -138,15 +143,33 @@ int streamPost(const char* path, const char* prefix, int prefixLen,
   int colonIdx = host.indexOf(':');
   if (colonIdx > 0) { port = host.substring(colonIdx+1).toInt(); host = host.substring(0, colonIdx); }
 
-  WiFiClientSecure secClient;
-  WiFiClient plainClient;
   Client* client;
-  if (isHttps) { secClient.setInsecure(); client = &secClient; }
-  else { client = &plainClient; }
+  WiFiClient plainClient;
 
-  Serial.printf("[STREAM] Connecting to %s:%d...\n", host.c_str(), port);
-  if (isHttps) { if (!secClient.connect(host.c_str(), port)) { Serial.println("[STREAM] TLS connect FAILED"); return -1; } }
-  else { if (!plainClient.connect(host.c_str(), port)) { Serial.println("[STREAM] connect FAILED"); return -1; } }
+  if (isHttps) {
+    // Reuse persistent TLS connection if available
+    if (persistentConnected && persistentHost == host && persistentClient.connected()) {
+      Serial.println("[STREAM] Reusing TLS connection");
+      client = &persistentClient;
+    } else {
+      // Fresh connection
+      if (persistentConnected) { persistentClient.stop(); persistentConnected = false; }
+      persistentClient.setInsecure();
+      Serial.printf("[STREAM] New TLS connection to %s:%d...\n", host.c_str(), port);
+      if (!persistentClient.connect(host.c_str(), port)) {
+        Serial.println("[STREAM] TLS connect FAILED");
+        persistentConnected = false;
+        return -1;
+      }
+      persistentConnected = true;
+      persistentHost = host;
+      client = &persistentClient;
+    }
+  } else {
+    Serial.printf("[STREAM] Connecting to %s:%d...\n", host.c_str(), port);
+    if (!plainClient.connect(host.c_str(), port)) { Serial.println("[STREAM] connect FAILED"); return -1; }
+    client = &plainClient;
+  }
 
   int contentLength = prefixLen + base64Len + suffixLen;
   // Send HTTP headers
@@ -154,7 +177,7 @@ int streamPost(const char* path, const char* prefix, int prefixLen,
   client->print("Host: "); client->println(host);
   client->println("Content-Type: application/json");
   client->print("Content-Length: "); client->println(contentLength);
-  client->println("Connection: close");
+  client->println("Connection: keep-alive");
   client->println();
 
   // Stream body in parts — no duplication!
@@ -188,7 +211,11 @@ int streamPost(const char* path, const char* prefix, int prefixLen,
   }
   // Read remaining body
   while (client->available()) { body += (char)client->read(); }
-  client->stop();
+
+  // For plain HTTP, close the connection
+  if (!isHttps) plainClient.stop();
+  // For HTTPS, keep the persistent connection alive
+
   if (responseBody) *responseBody = body;
   return statusCode;
 }
@@ -387,8 +414,8 @@ void setup(){
   delay(300);
 
   // Fingerprint sensor (camera mode — DSP bypassed)
-  fpSerial.begin(57600, SERIAL_8N1, FP_RX, FP_TX);
-  finger.begin(57600);
+  fpSerial.begin(115200, SERIAL_8N1, FP_RX, FP_TX);
+  finger.begin(115200);
   if(finger.verifyPassword()){
     Serial.println("[INIT] R307 sensor: OK (camera mode — DSP bypassed)");
     sensorReady = true; ledGreen(); beep(60);

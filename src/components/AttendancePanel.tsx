@@ -33,42 +33,42 @@ const AttendancePanel = ({ lessons, className, totalStudents = 0 }: AttendancePa
             className="bg-white rounded-2xl shadow-xl overflow-hidden"
         >
             {/* Header */}
-            <div className="relative bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 px-6 py-8">
+            <div className="relative bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 px-4 py-5 sm:px-6 sm:py-8">
                 {/* Background decoration */}
                 <div className="absolute inset-0 overflow-hidden">
                     <div className="absolute -top-20 -right-20 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl" />
                     <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-blue-500/10 rounded-full blur-3xl" />
                 </div>
 
-                <div className="relative z-10 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
                         <motion.div
                             animate={{ rotate: [0, 10, -10, 0] }}
                             transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                            className="p-3 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg shadow-emerald-500/30"
+                            className="p-2.5 sm:p-3 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg shadow-emerald-500/30"
                         >
-                            <Fingerprint className="w-8 h-8 text-white" />
+                            <Fingerprint className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                         </motion.div>
                         <div>
-                            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                            <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
                                 Biometric Attendance
-                                <Sparkles className="w-5 h-5 text-yellow-400" />
+                                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
                             </h1>
-                            <p className="text-slate-400 text-sm mt-1">
+                            <p className="text-slate-400 text-xs sm:text-sm mt-0.5">
                                 {className} • Real-time fingerprint tracking
                             </p>
                         </div>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/10 rounded-xl backdrop-blur-sm">
-                        <Shield className="w-4 h-4 text-emerald-400" />
-                        <span className="text-sm text-white/80">Secure Mode</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-white/10 rounded-xl backdrop-blur-sm">
+                        <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
+                        <span className="text-xs sm:text-sm text-white/80">Secure Mode</span>
                     </div>
                 </div>
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Step 1: Select Lesson */}
                 <div>
                     <div className="flex items-center gap-2 mb-3">

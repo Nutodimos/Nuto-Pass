@@ -246,7 +246,91 @@ def match_fingerprints(req: MatchRequest):
     )
 
 
+# ══════════ Bulk Matching ══════════
+
+class CandidateEntry(BaseModel):
+    id: str
+    name: str
+    image_base64: str
+
+
+class BulkMatchRequest(BaseModel):
+    probe_base64: str
+    candidates: list[CandidateEntry]
+
+
+class BulkMatchResponse(BaseModel):
+    match: bool
+    matched_id: str | None = None
+    matched_name: str | None = None
+    score: float = 0.0
+    threshold: float = MATCH_THRESHOLD
+    candidates_checked: int = 0
+    best_score: float = 0.0
+    best_name: str | None = None
+
+
+@app.post("/match-bulk", response_model=BulkMatchResponse)
+def match_bulk(req: BulkMatchRequest):
+    """Match one probe against multiple candidates. Returns on first match (early exit)."""
+    try:
+        probe = decode_r307_image(req.probe_base64)
+    except Exception as e:
+        logger.error(f"Probe decode error: {e}")
+        raise HTTPException(status_code=400, detail=f"Probe decode error: {e}")
+
+    logger.info(f"BULK: Matching probe against {len(req.candidates)} candidates...")
+
+    best_score = 0.0
+    best_name = None
+    checked = 0
+
+    for candidate in req.candidates:
+        checked += 1
+        try:
+            cand_img = decode_r307_image(candidate.image_base64)
+        except Exception as e:
+            logger.warning(f"BULK: Skip {candidate.name} — decode error: {e}")
+            continue
+
+        try:
+            orb = orb_match_score(probe, cand_img)
+            ssim = ssim_score_aligned(probe, cand_img)
+            hist = histogram_score_aligned(probe, cand_img)
+        except Exception as e:
+            logger.warning(f"BULK: Skip {candidate.name} — match error: {e}")
+            continue
+
+        combined = (orb * 0.15) + (ssim * 0.15) + (hist * 0.70)
+        logger.info(f"BULK: {candidate.name}: ORB={orb:.1f} SSIM={ssim:.1f} HIST={hist:.1f} COMBINED={combined:.1f}")
+
+        if combined > best_score:
+            best_score = combined
+            best_name = candidate.name
+
+        if combined >= MATCH_THRESHOLD:
+            logger.info(f"BULK: ✓ MATCH — {candidate.name} (score={combined:.1f}) after {checked} checks")
+            return BulkMatchResponse(
+                match=True,
+                matched_id=candidate.id,
+                matched_name=candidate.name,
+                score=round(combined, 2),
+                candidates_checked=checked,
+                best_score=round(best_score, 2),
+                best_name=best_name,
+            )
+
+    logger.info(f"BULK: ✕ No match after {checked} checks. Best: {best_score:.1f} ({best_name})")
+    return BulkMatchResponse(
+        match=False,
+        candidates_checked=checked,
+        best_score=round(best_score, 2),
+        best_name=best_name,
+    )
+
+
 if __name__ == "__main__":
     import uvicorn
     print("Starting NutoPass Biometric Matcher v2.1 on port 8001...")
     uvicorn.run(app, host="0.0.0.0", port=8001)
+
