@@ -414,8 +414,8 @@ void setup(){
   delay(300);
 
   // Fingerprint sensor (camera mode — DSP bypassed)
-  fpSerial.begin(115200, SERIAL_8N1, FP_RX, FP_TX);
-  finger.begin(115200);
+  fpSerial.begin(57600, SERIAL_8N1, FP_RX, FP_TX);
+  finger.begin(57600);
   if(finger.verifyPassword()){
     Serial.println("[INIT] R307 sensor: OK (camera mode — DSP bypassed)");
     sensorReady = true; ledGreen(); beep(60);
