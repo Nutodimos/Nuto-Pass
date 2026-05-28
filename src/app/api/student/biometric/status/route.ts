@@ -71,17 +71,8 @@ export const GET = async (req: NextRequest) => {
             const lastSeenMs = Date.now() - new Date(heartbeat.lastSeen).getTime();
             if (lastSeenMs < 60000) {
                 // Device was recently seen and is no longer in registration
-                // Let's verify if a template was actually saved
-                const template = await prisma.biometricTemplate.findUnique({
-                    where: { studentId: studentId }
-                });
-
-                if (template) {
-                    return NextResponse.json({ status: "SUCCESS", deviceMode });
-                } else {
-                    // Device left registration but no template found -> it failed
-                    return NextResponse.json({ status: "FAILED", deviceMode });
-                }
+                // If the student still has a biometricId, enrollment succeeded
+                return NextResponse.json({ status: "SUCCESS", deviceMode });
             }
         }
 

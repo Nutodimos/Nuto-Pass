@@ -9,7 +9,7 @@ export default function Homepage() {
     const role = (sessionClaims?.metadata as { role?: string })?.role;
 
     if (userId && role) {
-        redirect(`/${role}`);
+        redirect(role === "super_admin" ? "/super-admin/dashboard" : `/${role}`);
     }
 
     return (

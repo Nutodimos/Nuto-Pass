@@ -21,6 +21,10 @@ export async function POST(req: NextRequest) {
         }
 
         const role = (sessionClaims?.metadata as { role?: string })?.role;
+        const organizationId = (sessionClaims?.metadata as any)?.organizationId;
+        if (!organizationId) {
+            return NextResponse.json({ error: "No organization context" }, { status: 400 });
+        }
 
         const formData = await req.formData();
         const file = formData.get("file") as File | null;
@@ -134,6 +138,7 @@ export async function POST(req: NextRequest) {
                     data: {
                         studentId: student.id,
                         subjectId: subjectId,
+                        organizationId: organizationId,
                     },
                 });
 

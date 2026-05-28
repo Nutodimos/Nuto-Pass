@@ -6,6 +6,15 @@ async function seedAnnouncements() {
     console.log('Seeding announcements...');
 
     try {
+        const defaultOrg = await prisma.organization.findFirst({
+            orderBy: { createdAt: "asc" }
+        });
+        const organizationId = defaultOrg?.id;
+        if (!organizationId) {
+            console.error("No organization found to associate announcements with.");
+            return;
+        }
+
         // Clear existing seed announcements (optional - comment out if you want to keep existing data)
         // await prisma.announcement.deleteMany({});
 
@@ -72,7 +81,10 @@ async function seedAnnouncements() {
         // Insert announcements
         for (const announcement of announcements) {
             await prisma.announcement.create({
-                data: announcement,
+                data: {
+                    ...announcement,
+                    organizationId,
+                },
             });
         }
 
@@ -142,6 +154,7 @@ async function createLessonAnnouncements() {
                         date: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
                         targetAudience: 'students',
                         classId: lesson.classId,
+                        organizationId: lesson.organizationId,
                     },
                 });
 
@@ -153,6 +166,7 @@ async function createLessonAnnouncements() {
                         date: new Date(Date.now() - 45 * 60 * 1000), // 45 minutes ago
                         targetAudience: 'teachers',
                         classId: lesson.classId,
+                        organizationId: lesson.organizationId,
                     },
                 });
 

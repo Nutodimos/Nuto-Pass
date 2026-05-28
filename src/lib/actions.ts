@@ -13,6 +13,7 @@ import {
   MaterialSchema,
 } from "./formValidationSchemas";
 import prisma from "./prisma";
+import { getTenantClient } from "./prisma-tenant";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Day } from "@prisma/client";
 import { handleActionError } from "./utils";
@@ -21,15 +22,17 @@ type CurrentState = { success: boolean; error: boolean; messages?: string[] };
 
 /**
  * Checks that the current user has one of the allowed roles.
- * Returns the userId and role if authorized, otherwise returns an error state.
+ * Returns the userId, role, and organizationId if authorized, otherwise returns an error state.
  */
 const requireRole = (
   allowedRoles: string[],
 ):
-  | { authorized: true; userId: string; role: string }
+  | { authorized: true; userId: string; role: string; organizationId: string }
   | { authorized: false; error: CurrentState } => {
   const { userId, sessionClaims } = auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  const metadata = sessionClaims?.metadata as { role?: string; organizationId?: string } | undefined;
+  const role = metadata?.role;
+  const organizationId = metadata?.organizationId;
 
   if (!userId || !role) {
     return {
@@ -49,7 +52,14 @@ const requireRole = (
     };
   }
 
-  return { authorized: true, userId, role };
+  if (!organizationId) {
+    return {
+      authorized: false,
+      error: { success: false, error: true, messages: ["No organization context"] },
+    };
+  }
+
+  return { authorized: true, userId, role, organizationId };
 };
 
 export const createSubject = async (
@@ -58,15 +68,17 @@ export const createSubject = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   try {
-    await prisma.subject.create({
+    await db.subject.create({
       data: {
         name: data.name,
         title: data.title || null,
         credits: data.credits === "" ? null : data.credits,
         level: !data.level || data.level === 0 ? null : data.level,
         semester: data.semester === "" ? null : data.semester,
+        organizationId: authCheck.organizationId,
         teachers: {
           connect: data.teachers.map((teacherId) => ({ id: teacherId })),
         },
@@ -86,9 +98,10 @@ export const updateSubject = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   try {
-    await prisma.subject.update({
+    await db.subject.update({
       where: {
         id: data.id,
       },
@@ -117,10 +130,11 @@ export const deleteSubject = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   const id = data.get("id") as string;
   try {
-    await prisma.subject.update({
+    await db.subject.update({
       where: {
         id: parseInt(id),
       },
@@ -142,10 +156,17 @@ export const createClass = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   try {
-    await prisma.class.create({
-      data,
+    await db.class.create({
+      data: {
+        name: data.name,
+        gradeId: data.gradeId,
+        id: data.id,
+        supervisorId: data.supervisorId,
+        organizationId: authCheck.organizationId,
+      },
     });
 
     revalidatePath("/list/levels");
@@ -161,9 +182,10 @@ export const updateClass = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   try {
-    await prisma.class.update({
+    await db.class.update({
       where: {
         id: data.id,
       },
@@ -183,10 +205,11 @@ export const deleteClass = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   const id = data.get("id") as string;
   try {
-    await prisma.class.update({
+    await db.class.update({
       where: {
         id: parseInt(id),
       },
@@ -208,6 +231,7 @@ export const createTeacher = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   try {
     const user = await clerkClient().users.createUser({
@@ -215,11 +239,11 @@ export const createTeacher = async (
       password: data.password,
       firstName: data.name,
       lastName: data.surname,
-      publicMetadata: { role: "teacher" },
+      publicMetadata: { role: "teacher", organizationId: authCheck.organizationId },
       ...(data.email ? { emailAddress: [data.email] } : {}),
     });
 
-    await prisma.teacher.create({
+    await db.teacher.create({
       data: {
         id: user.id,
         username: data.username,
@@ -232,6 +256,7 @@ export const createTeacher = async (
         bloodType: data.bloodType || null,
         sex: data.sex,
         birthday: data.birthday,
+        organizationId: authCheck.organizationId,
         subjects: {
           connect: data.subjects?.map((subjectId: string) => ({
             id: parseInt(subjectId),
@@ -253,6 +278,7 @@ export const updateTeacher = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   if (!data.id) {
     return { success: false, error: true };
@@ -269,7 +295,7 @@ export const updateTeacher = async (
       console.error("Clerk user update failed:", e);
     }
 
-    await prisma.teacher.update({
+    await db.teacher.update({
       where: {
         id: data.id,
       },
@@ -304,6 +330,7 @@ export const deleteTeacher = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   const id = data.get("id") as string;
   try {
@@ -313,7 +340,7 @@ export const deleteTeacher = async (
       console.error("Clerk user delete failed:", e);
     }
 
-    await prisma.teacher.update({
+    await db.teacher.update({
       where: {
         id: id,
       },
@@ -335,8 +362,9 @@ export const createStudent = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
   try {
-    const classItem = await prisma.class.findUnique({
+    const classItem = await db.class.findUnique({
       where: { id: data.classId },
       include: { _count: { select: { students: true } } },
     });
@@ -346,11 +374,11 @@ export const createStudent = async (
       password: data.password,
       firstName: data.name,
       lastName: data.surname,
-      publicMetadata: { role: "student" },
+      publicMetadata: { role: "student", organizationId: authCheck.organizationId },
       ...(data.email ? { emailAddress: [data.email] } : {}),
     });
 
-    await prisma.student.create({
+    await db.student.create({
       data: {
         id: user.id,
         username: data.username,
@@ -365,6 +393,7 @@ export const createStudent = async (
         birthday: data.birthday,
         gradeId: data.gradeId,
         classId: data.classId,
+        organizationId: authCheck.organizationId,
       },
     });
 
@@ -381,6 +410,7 @@ export const updateStudent = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   if (!data.id) {
     return { success: false, error: true };
@@ -397,7 +427,7 @@ export const updateStudent = async (
       console.error("Clerk user update failed:", e);
     }
 
-    await prisma.student.update({
+    await db.student.update({
       where: {
         id: data.id,
       },
@@ -429,6 +459,7 @@ export const deleteStudent = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   const id = data.get("id") as string;
   try {
@@ -438,7 +469,7 @@ export const deleteStudent = async (
       console.error("Clerk user delete failed (ignorable if user missing):", e);
     }
 
-    await prisma.student.update({
+    await db.student.update({
       where: {
         id: id,
       },
@@ -460,9 +491,10 @@ export const createAssignment = async (
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   try {
-    await prisma.assignment.create({
+    await db.assignment.create({
       data: {
         title: data.title,
         description: data.description || null,
@@ -470,6 +502,7 @@ export const createAssignment = async (
         startDate: data.startDate,
         dueDate: data.dueDate,
         subjectId: data.subjectId,
+        organizationId: authCheck.organizationId,
       },
     });
 
@@ -486,9 +519,10 @@ export const updateAssignment = async (
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   try {
-    await prisma.assignment.update({
+    await db.assignment.update({
       where: {
         id: data.id,
       },
@@ -515,10 +549,11 @@ export const deleteAssignment = async (
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   const id = data.get("id") as string;
   try {
-    await prisma.assignment.delete({
+    await db.assignment.delete({
       where: {
         id: parseInt(id),
       },
@@ -537,10 +572,11 @@ export const createAssignmentSubmission = async (
 ) => {
   const authCheck = requireRole(["admin", "teacher", "student"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   try {
     // Uses upsert so a student can re-submit and overwrite their previous submission URL
-    await prisma.assignmentSubmission.upsert({
+    await db.assignmentSubmission.upsert({
       where: {
         assignmentId_studentId: {
           assignmentId: data.assignmentId,
@@ -555,6 +591,7 @@ export const createAssignmentSubmission = async (
         assignmentId: data.assignmentId,
         studentId: data.studentId,
         submissionUrl: data.submissionUrl,
+        organizationId: authCheck.organizationId,
       },
     });
 
@@ -572,9 +609,10 @@ export const gradeAssignmentSubmission = async (
 ) => {
   const authResult = requireRole(["admin", "teacher"]);
   if (!authResult.authorized) return authResult.error;
+  const db = getTenantClient(authResult.organizationId);
 
   try {
-    await prisma.assignmentSubmission.update({
+    await db.assignmentSubmission.update({
       where: {
         id: submissionId,
       },
@@ -600,8 +638,9 @@ export const updateAttendance = async (
 ) => {
   const authResult = requireRole(["admin", "teacher"]);
   if (!authResult.authorized) return authResult.error;
+  const db = getTenantClient(authResult.organizationId);
   try {
-    const lesson = await prisma.lesson.findUnique({
+    const lesson = await db.lesson.findUnique({
       where: { id: lessonId },
     });
 
@@ -616,7 +655,7 @@ export const updateAttendance = async (
     const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
     const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
 
-    const attendance = await prisma.attendance.findFirst({
+    const attendance = await db.attendance.findFirst({
       where: {
         lessonId: lessonId,
         studentId: studentId,
@@ -628,18 +667,19 @@ export const updateAttendance = async (
     });
 
     if (attendance) {
-      await prisma.attendance.update({
+      await db.attendance.update({
         where: { id: attendance.id },
         data: { present },
       });
     } else {
-      await prisma.attendance.create({
+      await db.attendance.create({
         data: {
           lessonId,
           studentId,
           present,
           // Reset targetDate to avoid saving 23:59:59 if it hit the endOfDay logic
           date: dateStr ? new Date(dateStr) : new Date(),
+          organizationId: authResult.organizationId,
         },
       });
     }
@@ -657,6 +697,7 @@ export const updateSchoolConfig = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   const sessionYear = formData.get("sessionYear") as string;
   const currentSemester = formData.get("currentSemester") as string;
@@ -671,18 +712,18 @@ export const updateSchoolConfig = async (
 
   try {
     // Update session year
-    await prisma.schoolConfig.upsert({
-      where: { key: "sessionYear" },
+    await db.schoolConfig.upsert({
+      where: { organizationId_key: { organizationId: authCheck.organizationId, key: "sessionYear" } },
       update: { value: sessionYear },
-      create: { key: "sessionYear", value: sessionYear },
+      create: { key: "sessionYear", value: sessionYear, organizationId: authCheck.organizationId },
     });
 
     // Update current semester
     if (currentSemester) {
-      await prisma.schoolConfig.upsert({
-        where: { key: "currentSemester" },
+      await db.schoolConfig.upsert({
+        where: { organizationId_key: { organizationId: authCheck.organizationId, key: "currentSemester" } },
         update: { value: currentSemester },
-        create: { key: "currentSemester", value: currentSemester },
+        create: { key: "currentSemester", value: currentSemester, organizationId: authCheck.organizationId },
       });
     }
 
@@ -705,11 +746,18 @@ export const updateProfile = async (
   formData: FormData,
 ) => {
   const { userId, sessionClaims } = auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  const metadata = sessionClaims?.metadata as { role?: string; organizationId?: string } | undefined;
+  const role = metadata?.role;
+  const organizationId = metadata?.organizationId;
 
   if (!userId) {
     return { success: false, error: true, messages: ["Not authenticated"] };
   }
+  if (!organizationId) {
+    return { success: false, error: true, messages: ["No organization context"] };
+  }
+
+  const db = getTenantClient(organizationId);
 
   const email = (formData.get("email") as string) || null;
   const phone = (formData.get("phone") as string) || null;
@@ -722,7 +770,7 @@ export const updateProfile = async (
 
   try {
     if (role === "teacher") {
-      await prisma.teacher.update({
+      await db.teacher.update({
         where: { id: userId },
         data: {
           email,
@@ -735,7 +783,7 @@ export const updateProfile = async (
         },
       });
     } else if (role === "student") {
-      await prisma.student.update({
+      await db.student.update({
         where: { id: userId },
         data: {
           email,
@@ -773,9 +821,10 @@ export const createAnnouncement = async (
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   try {
-    await prisma.announcement.create({
+    await db.announcement.create({
       data: {
         title: data.title,
         description: data.description,
@@ -783,6 +832,7 @@ export const createAnnouncement = async (
         targetAudience: data.targetAudience,
         classId: data.classId || null,
         subjectId: data.subjectId || null,
+        organizationId: authCheck.organizationId,
       },
     });
 
@@ -799,9 +849,10 @@ export const updateAnnouncement = async (
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   try {
-    await prisma.announcement.update({
+    await db.announcement.update({
       where: {
         id: data.id,
       },
@@ -828,10 +879,11 @@ export const deleteAnnouncement = async (
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   const id = data.get("id") as string;
   try {
-    await prisma.announcement.delete({
+    await db.announcement.delete({
       where: {
         id: parseInt(id),
       },
@@ -849,15 +901,22 @@ export const createMaterial = async (
   data: MaterialSchema,
 ) => {
   const { userId, sessionClaims } = await auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  const metadata = sessionClaims?.metadata as { role?: string; organizationId?: string } | undefined;
+  const role = metadata?.role;
+  const organizationId = metadata?.organizationId;
   const currentUserId = userId;
+
+  if (!organizationId) {
+    return { success: false, error: true };
+  }
+  const db = getTenantClient(organizationId);
 
   try {
     const teacherId = role === "teacher" ? currentUserId : null;
     const isGeneral = data.isGeneral || false;
 
     // Create the material
-    const material = await prisma.material.create({
+    const material = await db.material.create({
       data: {
         title: data.title,
         filePath: data.filePath,
@@ -865,6 +924,7 @@ export const createMaterial = async (
         classId: isGeneral ? null : data.classId,
         teacherId: teacherId,
         isGeneral: isGeneral,
+        organizationId,
       },
       include: {
         subject: true,
@@ -874,25 +934,25 @@ export const createMaterial = async (
 
     // Create an announcement to notify users (shows in existing notification bell)
     if (isGeneral) {
-      // General document - notify all users
-      await prisma.announcement.create({
+      await db.announcement.create({
         data: {
           title: `📚 New General Document: ${material.title}`,
-          description: `A new document "${material.title}" has been uploaded in ${material.subject.name}. Check the Materials page to view it.`,
+          description: `A new document "${material.title}" has been uploaded in ${(material as any).subject.name}. Check the Materials page to view it.`,
           date: new Date(),
           targetAudience: "all",
           classId: null,
+          organizationId,
         },
       });
     } else if (data.classId) {
-      // Class-specific material - notify students in that class
-      await prisma.announcement.create({
+      await db.announcement.create({
         data: {
           title: `📄 New Course Material: ${material.title}`,
-          description: `New material "${material.title}" for ${material.subject.name} has been uploaded. Check the Materials page to view it.`,
+          description: `New material "${material.title}" for ${(material as any).subject.name} has been uploaded. Check the Materials page to view it.`,
           date: new Date(),
           targetAudience: "students",
           classId: data.classId,
+          organizationId,
         },
       });
     }
@@ -911,10 +971,11 @@ export const deleteMaterial = async (
 ) => {
   const authCheck = requireRole(["admin", "teacher"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   const id = data.get("id") as string;
   try {
-    await prisma.material.delete({
+    await db.material.delete({
       where: {
         id: parseInt(id),
       },
@@ -934,21 +995,22 @@ export const createLesson = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   try {
     // Auto-generate lesson name from subject and class
-    const [subject, classData] = await prisma.$transaction([
-      prisma.subject.findUnique({
+    const [subject, classData] = await Promise.all([
+      db.subject.findUnique({
         where: { id: data.subjectId },
         select: { name: true },
       }),
-      prisma.class.findUnique({
+      db.class.findUnique({
         where: { id: data.classId },
         select: { name: true },
       }),
     ]);
 
-    await prisma.lesson.create({
+    await db.lesson.create({
       data: {
         name: `${subject?.name || "Lesson"} - ${classData?.name || "Class"}`,
         day: data.day as Day,
@@ -957,6 +1019,7 @@ export const createLesson = async (
         subjectId: data.subjectId,
         classId: data.classId,
         teacherId: data.teacherId,
+        organizationId: authCheck.organizationId,
       },
     });
 
@@ -973,21 +1036,22 @@ export const updateLesson = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   try {
     // Auto-generate lesson name from subject and class
-    const [subject, classData] = await prisma.$transaction([
-      prisma.subject.findUnique({
+    const [subject, classData] = await Promise.all([
+      db.subject.findUnique({
         where: { id: data.subjectId },
         select: { name: true },
       }),
-      prisma.class.findUnique({
+      db.class.findUnique({
         where: { id: data.classId },
         select: { name: true },
       }),
     ]);
 
-    await prisma.lesson.update({
+    await db.lesson.update({
       where: {
         id: data.id,
       },
@@ -1015,10 +1079,11 @@ export const deleteLesson = async (
 ) => {
   const authCheck = requireRole(["admin"]);
   if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
 
   const id = data.get("id") as string;
   try {
-    await prisma.lesson.update({
+    await db.lesson.update({
       where: {
         id: parseInt(id),
       },
@@ -1035,17 +1100,23 @@ export const deleteLesson = async (
 };
 
 export const markAnnouncementAsRead = async (announcementId: number) => {
-  const { userId } = auth();
+  const { userId, sessionClaims } = auth();
+  const organizationId = (sessionClaims?.metadata as any)?.organizationId;
 
   if (!userId) {
     return { success: false, error: true, messages: ["Not authenticated"] };
   }
+  if (!organizationId) {
+    return { success: false, error: true, messages: ["No organization context"] };
+  }
+
+  const db = getTenantClient(organizationId);
 
   try {
-    await prisma.announcementRead.upsert({
+    await db.announcementRead.upsert({
       where: { announcementId_userId: { announcementId, userId } },
       update: {},
-      create: { announcementId, userId },
+      create: { announcementId, userId, organizationId },
     });
 
     revalidatePath("/list/announcements");
@@ -1056,21 +1127,28 @@ export const markAnnouncementAsRead = async (announcementId: number) => {
 };
 
 export const markAllAnnouncementsAsRead = async () => {
-  const { userId } = auth();
+  const { userId, sessionClaims } = auth();
+  const organizationId = (sessionClaims?.metadata as any)?.organizationId;
 
   if (!userId) {
     return { success: false, error: true, messages: ["Not authenticated"] };
   }
+  if (!organizationId) {
+    return { success: false, error: true, messages: ["No organization context"] };
+  }
+
+  const db = getTenantClient(organizationId);
 
   try {
-    const announcements = await prisma.announcement.findMany({
+    const announcements = await db.announcement.findMany({
       select: { id: true },
     });
 
-    await prisma.announcementRead.createMany({
+    await db.announcementRead.createMany({
       data: announcements.map((a) => ({
         announcementId: a.id,
         userId,
+        organizationId,
       })),
       skipDuplicates: true,
     });

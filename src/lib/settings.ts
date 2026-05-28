@@ -5,6 +5,7 @@ type RouteAccessMap = {
 };
 
 export const routeAccessMap: RouteAccessMap = {
+  "/super-admin(.*)": ["super_admin"],
   "/admin(.*)": ["admin"],
   "/student(.*)": ["student"],
   "/teacher(.*)": ["teacher"],

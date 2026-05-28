@@ -39,7 +39,30 @@ export const POST = async (req: NextRequest) => {
         const sdReady = body.sdReady ?? false;
         const sensorStatus = body.sensorStatus ?? false;
         const uptime = body.uptime ?? 0;
-        const templateCount = body.templateCount ?? null;
+
+
+        let orgId = body.organizationId;
+        if (!orgId) {
+            const existingHb = await prisma.deviceHeartbeat.findUnique({
+                where: { deviceId },
+                select: { organizationId: true }
+            });
+            if (existingHb) {
+                orgId = existingHb.organizationId;
+            } else {
+                const defaultOrg = await prisma.organization.findFirst({
+                    orderBy: { createdAt: "asc" }
+                });
+                orgId = defaultOrg?.id;
+            }
+        }
+
+        if (!orgId) {
+            return NextResponse.json(
+                { message: "No organization found for device registration" },
+                { status: 400 }
+            );
+        }
 
         const updated = await prisma.deviceHeartbeat.upsert({
             where: { deviceId },
@@ -51,7 +74,7 @@ export const POST = async (req: NextRequest) => {
                 sdReady,
                 sensorStatus,
                 uptime,
-                templateCount,
+
             },
             create: {
                 deviceId,
@@ -62,7 +85,8 @@ export const POST = async (req: NextRequest) => {
                 sdReady,
                 sensorStatus,
                 uptime,
-                templateCount,
+
+                organizationId: orgId,
             },
         });
 

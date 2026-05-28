@@ -15,8 +15,7 @@ export const POST = async (req: NextRequest) => {
             data: { pendingCommand: "EMPTY_ALL" },
         });
 
-        // Also clear all student biometricIds and stored templates
-        await prisma.biometricTemplate.deleteMany({});
+        // Also clear all student biometricIds
         await prisma.student.updateMany({
             where: { biometricId: { not: null } },
             data: { biometricId: null },

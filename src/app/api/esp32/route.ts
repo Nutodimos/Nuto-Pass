@@ -113,6 +113,7 @@ async function processEvent(payload: EventPayload) {
                 present: true,
                 studentId: student.id,
                 lessonId: activeSession.lessonId,
+                organizationId: student.organizationId,
             },
         });
 

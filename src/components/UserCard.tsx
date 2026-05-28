@@ -10,7 +10,7 @@ const UserCard = async ({
 }) => {
 
   const modelMap: Record<typeof type, any> = {
-    admin: prisma.admin,
+    admin: prisma.user,
     teacher: prisma.teacher,
     student: prisma.student,
   };
@@ -21,12 +21,14 @@ const UserCard = async ({
     student: "/list/students",
   };
 
-  const data = await modelMap[type].count();
+  const data = type === "admin"
+    ? await prisma.user.count({ where: { role: "ADMIN" } })
+    : await modelMap[type].count();
 
   // Fetch session year and semester
   const [sessionConfig, semesterConfig] = await Promise.all([
-    prisma.schoolConfig.findUnique({ where: { key: "sessionYear" } }),
-    prisma.schoolConfig.findUnique({ where: { key: "currentSemester" } }),
+    prisma.schoolConfig.findFirst({ where: { key: "sessionYear" } }),
+    prisma.schoolConfig.findFirst({ where: { key: "currentSemester" } }),
   ]);
 
   const sessionYear = sessionConfig?.value || "2024/25";

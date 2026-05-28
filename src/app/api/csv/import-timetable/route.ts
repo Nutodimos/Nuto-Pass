@@ -22,6 +22,10 @@ export async function POST(req: NextRequest) {
         }
 
         const role = (sessionClaims?.metadata as { role?: string })?.role;
+        const organizationId = (sessionClaims?.metadata as any)?.organizationId;
+        if (!organizationId) {
+            return NextResponse.json({ error: "No organization context" }, { status: 400 });
+        }
         if (role !== "admin") {
             return NextResponse.json(
                 { error: "Only administrators can import timetables." },
@@ -135,6 +139,7 @@ export async function POST(req: NextRequest) {
                         subjectId: subject.id,
                         classId: classItem.id,
                         teacherId: teacherId,
+                        organizationId: organizationId,
                     }
                 });
 

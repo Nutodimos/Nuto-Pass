@@ -2,43 +2,97 @@ import { Day, PrismaClient, UserSex } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  // ADMIN
-  await prisma.admin.upsert({ where: { id: "admin1" }, update: {}, create: { id: "admin1", username: "admin1" } });
-  await prisma.admin.upsert({ where: { id: "admin2" }, update: {}, create: { id: "admin2", username: "admin2" } });
+  // ── 1. Create test Organisation ──────────────────────────────
+  const org = await prisma.organization.upsert({
+    where: { slug: "unilorin-cpe" },
+    update: {},
+    create: {
+      name: "University of Ilorin — CPE",
+      slug: "unilorin-cpe",
+    },
+  });
+  console.log(`✅ Organization: ${org.name} (${org.id})`);
 
-  // GRADE — always seed levels (100L–500L). id=1 is relied on by ClassForm.
+  // ── 2. Create Super Admin user ───────────────────────────────
+  const superAdminClerkId = process.env.SUPER_ADMIN_CLERK_ID;
+  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
+
+  if (superAdminClerkId && superAdminEmail) {
+    await prisma.user.upsert({
+      where: { clerkId: superAdminClerkId },
+      update: {},
+      create: {
+        clerkId: superAdminClerkId,
+        email: superAdminEmail,
+        role: "SUPER_ADMIN",
+        organizationId: null,
+      },
+    });
+    console.log(`✅ Super Admin: ${superAdminEmail}`);
+  } else {
+    console.log("⚠️  Skipping Super Admin (set SUPER_ADMIN_CLERK_ID and SUPER_ADMIN_EMAIL env vars)");
+  }
+
+  // ── 3. Create test Admin for the org ─────────────────────────
+  await prisma.user.upsert({
+    where: { clerkId: "clerk_test_admin_id" },
+    update: {},
+    create: {
+      clerkId: "clerk_test_admin_id",
+      email: "admin@unilorin-cpe.edu.ng",
+      name: "Test Admin",
+      role: "ADMIN",
+      organizationId: org.id,
+    },
+  });
+  console.log("✅ Test Admin created");
+
+  // ── 4. GRADE — always seed levels (100L–500L) ───────────────
   const levels = [100, 200, 300, 400, 500];
   for (const level of levels) {
     await prisma.grade.upsert({
-      where: { level },
+      where: { organizationId_level: { organizationId: org.id, level } },
       update: {},
-      create: { level },
+      create: { level, organizationId: org.id },
     });
   }
 
-  // CLASS — one per grade (e.g. "100L", "200L", etc.)
-  const gradeRecords = await prisma.grade.findMany({ orderBy: { level: "asc" } });
+  // ── 5. CLASS — one per grade ─────────────────────────────────
+  const gradeRecords = await prisma.grade.findMany({
+    where: { organizationId: org.id },
+    orderBy: { level: "asc" },
+  });
   for (const grade of gradeRecords) {
     const name = `${grade.level}L`;
     await prisma.class.upsert({
-      where: { name },
+      where: { organizationId_name: { organizationId: org.id, name } },
       update: {},
-      create: { name, gradeId: grade.id },
+      create: { name, gradeId: grade.id, organizationId: org.id },
     });
   }
 
-  // SUBJECT
+  // ── 6. SUBJECT ───────────────────────────────────────────────
   const subjectNames = [
     "Mathematics", "Science", "English", "History", "Geography",
     "Physics", "Chemistry", "Biology", "Computer Science", "Art",
   ];
   for (const name of subjectNames) {
-    await prisma.subject.upsert({ where: { name }, update: {}, create: { name } });
+    await prisma.subject.upsert({
+      where: { organizationId_name: { organizationId: org.id, name } },
+      update: {},
+      create: { name, organizationId: org.id },
+    });
   }
 
-  // TEACHER — fetch real class/subject IDs dynamically
-  const classRecords = await prisma.class.findMany({ orderBy: { id: "asc" } });
-  const subjectRecords = await prisma.subject.findMany({ orderBy: { id: "asc" } });
+  // ── 7. TEACHER ───────────────────────────────────────────────
+  const classRecords = await prisma.class.findMany({
+    where: { organizationId: org.id },
+    orderBy: { id: "asc" },
+  });
+  const subjectRecords = await prisma.subject.findMany({
+    where: { organizationId: org.id },
+    orderBy: { id: "asc" },
+  });
 
   for (let i = 1; i <= 15; i++) {
     const classId = classRecords[(i % classRecords.length)]?.id;
@@ -59,14 +113,18 @@ async function main() {
         ...(subjectId ? { subjects: { connect: [{ id: subjectId }] } } : {}),
         ...(classId ? { classes: { connect: [{ id: classId }] } } : {}),
         birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 30)),
+        organizationId: org.id,
       },
     });
   }
 
-  // LESSON
-  const teacherRecords = await prisma.teacher.findMany({ orderBy: { id: "asc" } });
+  // ── 8. LESSON ────────────────────────────────────────────────
+  const teacherRecords = await prisma.teacher.findMany({
+    where: { organizationId: org.id },
+    orderBy: { id: "asc" },
+  });
   for (let i = 1; i <= 30; i++) {
-    const existing = await prisma.lesson.findFirst({ where: { name: `Lesson${i}` } });
+    const existing = await prisma.lesson.findFirst({ where: { name: `Lesson${i}`, organizationId: org.id } });
     if (!existing) {
       const cId = classRecords[(i % classRecords.length)]?.id;
       const sId = subjectRecords[(i % subjectRecords.length)]?.id;
@@ -81,12 +139,13 @@ async function main() {
           subjectId: sId,
           classId: cId,
           teacherId: tId,
+          organizationId: org.id,
         },
       });
     }
   }
 
-  // STUDENT
+  // ── 9. STUDENT ───────────────────────────────────────────────
   const firstGrade = gradeRecords[0];
   const firstClass = classRecords[0];
   for (let i = 1; i <= 50; i++) {
@@ -108,44 +167,54 @@ async function main() {
         gradeId: gId,
         classId: cId,
         birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 20)),
+        organizationId: org.id,
       },
     });
   }
 
-  // ASSIGNMENT
+  // ── 10. ASSIGNMENT ───────────────────────────────────────────
   for (let i = 1; i <= 10; i++) {
-    const existing = await prisma.assignment.findFirst({ where: { title: `Assignment ${i}` } });
+    const existing = await prisma.assignment.findFirst({ where: { title: `Assignment ${i}`, organizationId: org.id } });
     if (!existing) {
+      const sId = subjectRecords[(i % subjectRecords.length)]?.id;
+      if (!sId) continue;
       await prisma.assignment.create({
         data: {
           title: `Assignment ${i}`,
           startDate: new Date(new Date().setHours(new Date().getHours() + 1)),
           dueDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-          subjectId: (i % 10) + 1,
+          subjectId: sId,
+          organizationId: org.id,
         },
       });
     }
   }
 
-  // ATTENDANCE
-  const lessonRecords = await prisma.lesson.findMany({ orderBy: { id: "asc" } });
-  const studentRecords = await prisma.student.findMany({ orderBy: { id: "asc" } });
+  // ── 11. ATTENDANCE ───────────────────────────────────────────
+  const lessonRecords = await prisma.lesson.findMany({
+    where: { organizationId: org.id },
+    orderBy: { id: "asc" },
+  });
+  const studentRecords = await prisma.student.findMany({
+    where: { organizationId: org.id },
+    orderBy: { id: "asc" },
+  });
   for (let i = 0; i < Math.min(10, lessonRecords.length, studentRecords.length); i++) {
     const lessonId = lessonRecords[i]?.id;
     const studentId = studentRecords[i]?.id;
     if (!lessonId || !studentId) continue;
-    const existing = await prisma.attendance.findFirst({ where: { studentId, lessonId } });
+    const existing = await prisma.attendance.findFirst({ where: { studentId, lessonId, organizationId: org.id } });
     if (!existing) {
       await prisma.attendance.create({
-        data: { date: new Date(), present: true, studentId, lessonId },
+        data: { date: new Date(), present: true, studentId, lessonId, organizationId: org.id },
       });
     }
   }
 
-  // ANNOUNCEMENT
+  // ── 12. ANNOUNCEMENT ─────────────────────────────────────────
   for (let i = 1; i <= 5; i++) {
     const classId = classRecords[(i % classRecords.length)]?.id;
-    const existing = await prisma.announcement.findFirst({ where: { title: `Announcement ${i}` } });
+    const existing = await prisma.announcement.findFirst({ where: { title: `Announcement ${i}`, organizationId: org.id } });
     if (!existing) {
       await prisma.announcement.create({
         data: {
@@ -153,12 +222,13 @@ async function main() {
           description: `Description for Announcement ${i}`,
           date: new Date(),
           ...(classId ? { classId } : {}),
+          organizationId: org.id,
         },
       });
     }
   }
 
-  console.log("Seeding completed successfully.");
+  console.log("✅ Seeding completed successfully.");
 }
 
 main()

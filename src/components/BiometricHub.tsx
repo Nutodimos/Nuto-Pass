@@ -33,7 +33,6 @@ interface DeviceStatus {
     mode: string;
     wifiRSSI: number | null;
     freeHeap: number | null;
-    templateCount: number;
     sensorStatus: boolean;
     uptime: number;
 }
@@ -242,7 +241,7 @@ const BiometricHub = () => {
                                 </div>
                             </div>
 
-                            {/* Cloud Enrollment Status */}
+                            {/* Enrollment Status */}
                             <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
                                 <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
@@ -262,7 +261,7 @@ const BiometricHub = () => {
                                         </div>
                                     </div>
                                     <div className="flex-1 space-y-2 text-center md:text-left">
-                                        <h4 className="text-xl font-bold">Cloud Enrollment Status</h4>
+                                        <h4 className="text-xl font-bold">Enrollment Status</h4>
                                         <p className="text-white/60 text-sm leading-relaxed max-w-md">
                                             {enrolledCount} of {students.length} students have fingerprints stored in the cloud.
                                         </p>

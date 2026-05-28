@@ -1,5 +1,5 @@
 export const dynamic = "force-dynamic";
-import prisma from "@/lib/prisma";
+import prismaBase from "@/lib/prisma-base";
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { WebhookEvent } from "@clerk/nextjs/server";
@@ -71,12 +71,12 @@ export async function POST(req: Request) {
                 );
             }
 
-            // Try to delete from each user table (Student, Teacher, Admin)
+            // Try to delete from each user table (Student, Teacher, User)
             // Only one will succeed based on user role
             const results = await Promise.allSettled([
-                prisma.student.delete({ where: { id } }).catch(() => null),
-                prisma.teacher.delete({ where: { id } }).catch(() => null),
-                prisma.admin.delete({ where: { id } }).catch(() => null),
+                prismaBase.student.delete({ where: { id } }).catch(() => null),
+                prismaBase.teacher.delete({ where: { id } }).catch(() => null),
+                prismaBase.user.delete({ where: { clerkId: id } }).catch(() => null),
             ]);
 
 
@@ -110,11 +110,11 @@ export async function POST(req: Request) {
             }
 
             // Try to update in Student table first, then Teacher
-            // Admin table only has id and username, handle separately
+            // User table uses clerkId and has email/name
             let updated = false;
 
             try {
-                await prisma.student.update({
+                await prismaBase.student.update({
                     where: { id },
                     data: updateData,
                 });
@@ -126,22 +126,25 @@ export async function POST(req: Request) {
 
             if (!updated) {
                 try {
-                    await prisma.teacher.update({
+                    await prismaBase.teacher.update({
                         where: { id },
                         data: updateData,
                     });
                     updated = true;
 
                 } catch {
-                    // Not a teacher, try admin
+                    // Not a teacher, try user
                 }
             }
 
-            if (!updated && username) {
+            if (!updated && primaryEmail) {
                 try {
-                    await prisma.admin.update({
-                        where: { id },
-                        data: { username },
+                    await prismaBase.user.update({
+                        where: { clerkId: id },
+                        data: {
+                            email: primaryEmail,
+                            ...(first_name || last_name ? { name: `${first_name || ""} ${last_name || ""}`.trim() } : {})
+                        },
                     });
                     updated = true;
 

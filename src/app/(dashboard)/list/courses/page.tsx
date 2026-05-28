@@ -32,7 +32,7 @@ const CoursesPage = async ({
   const p = page ? parseInt(page) : 1;
 
   // Fetch current semester setting
-  const semesterConfig = await prisma.schoolConfig.findUnique({
+  const semesterConfig = await prisma.schoolConfig.findFirst({
     where: { key: "currentSemester" },
   });
   const currentSemester = semesterConfig?.value ? parseInt(semesterConfig.value) : null;

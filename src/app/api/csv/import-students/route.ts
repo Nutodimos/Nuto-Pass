@@ -29,6 +29,10 @@ export async function POST(req: NextRequest) {
         }
 
         const role = (sessionClaims?.metadata as { role?: string })?.role;
+        const organizationId = (sessionClaims?.metadata as any)?.organizationId;
+        if (!organizationId) {
+            return NextResponse.json({ error: "No organization context" }, { status: 400 });
+        }
 
         const formData = await req.formData();
         const file = formData.get("file") as File | null;
@@ -154,7 +158,7 @@ export async function POST(req: NextRequest) {
                     password: matricNo,
                     firstName: name,
                     lastName: surname,
-                    publicMetadata: { role: "student" },
+                    publicMetadata: { role: "student", organizationId: organizationId },
                     ...(row.email?.trim() ? { emailAddress: [row.email.trim()] } : {}),
                 });
 
@@ -172,6 +176,7 @@ export async function POST(req: NextRequest) {
                         birthday: parsedDate,
                         gradeId: classWithGrade.gradeId,
                         classId: classId,
+                        organizationId: organizationId,
                     },
                 });
 

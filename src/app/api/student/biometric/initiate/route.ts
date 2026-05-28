@@ -59,8 +59,12 @@ export const POST = async (req: NextRequest) => {
         // Queue the command for the ESP32
         await prisma.deviceHeartbeat.upsert({
             where: { deviceId: "ESP32_MAIN" },
-            update: { pendingCommand: `CLOUD_ENROLL:${slotId}` },
-            create: { deviceId: "ESP32_MAIN", pendingCommand: `CLOUD_ENROLL:${slotId}` },
+            update: { pendingCommand: `ENROLL:${slotId}` },
+            create: {
+                deviceId: "ESP32_MAIN",
+                pendingCommand: `ENROLL:${slotId}`,
+                organizationId: student.organizationId,
+            },
         });
 
         return NextResponse.json({

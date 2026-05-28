@@ -7,10 +7,65 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Admin {
-  id       String @id
-  username String @unique
+// ─── Multi-Tenancy ─────────────────────────────────────────────
+
+enum InstitutionType {
+  SECONDARY_SCHOOL
+  UNIVERSITY_DEPARTMENT
+  TRAINING_CENTER
+  PRIMARY_SCHOOL
 }
+
+model Organization {
+  id              String          @id @default(cuid())
+  name            String
+  slug            String          @unique
+  institutionType InstitutionType @default(UNIVERSITY_DEPARTMENT)
+  metadata        Json?           // OrgMetadata: uiConfig, features (see @/types/organization.ts)
+  logoUrl         String?
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  users              User[]
+  students           Student[]
+  teachers           Teacher[]
+  classes            Class[]
+  grades             Grade[]
+  subjects           Subject[]
+  lessons            Lesson[]
+  assignments        Assignment[]
+  assignmentSubmissions AssignmentSubmission[]
+  attendances        Attendance[]
+  attendanceSessions AttendanceSession[]
+  announcements      Announcement[]
+  announcementReads  AnnouncementRead[]
+  materials          Material[]
+  notifications      Notification[]
+  courseEnrollments   CourseEnrollment[]
+  schoolConfigs      SchoolConfig[]
+
+  deviceHeartbeats   DeviceHeartbeat[]
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+}
+
+model User {
+  id             String        @id @default(cuid())
+  clerkId        String        @unique
+  email          String        @unique
+  name           String?
+  role           Role
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+// ─── Domain Models ─────────────────────────────────────────────
 
 model Student {
   id          String       @id
@@ -34,10 +89,14 @@ model Student {
   enrollments  CourseEnrollment[]
   birthday     DateTime
   biometricId String?      @unique
-  biometricTemplate BiometricTemplate?
+
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@index([classId])
   @@index([gradeId])
+  @@index([organizationId])
 }
 
 model Teacher {
@@ -58,21 +117,32 @@ model Teacher {
   classes   Class[]
   birthday  DateTime?
   materials Material[]
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
 }
 
 
 
 model Grade {
   id    Int @id @default(autoincrement())
-  level Int @unique
+  level Int
 
   students Student[]
   classess Class[]
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, level])
+  @@index([organizationId])
 }
 
 model Class {
   id       Int      @id @default(autoincrement())
-  name     String   @unique
+  name     String
   isActive Boolean  @default(true)
 
   supervisorId  String?
@@ -84,11 +154,17 @@ model Class {
 
   announcements Announcement[]
   materials     Material[]
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
 }
 
 model Subject {
   id        Int       @id @default(autoincrement())
-  name      String    @unique
+  name      String
   title     String?
   credits   Int?
   level     Int?      // 100, 200, 300 etc.
@@ -100,6 +176,12 @@ model Subject {
   assignments Assignment[]
   enrollments CourseEnrollment[]
   announcements Announcement[]
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
 }
 
 model Lesson {
@@ -119,9 +201,13 @@ model Lesson {
   attendances Attendance[]
   attendanceSessions AttendanceSession[]
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
   @@index([teacherId])
   @@index([classId])
   @@index([subjectId])
+  @@index([organizationId])
 }
 
 
@@ -138,7 +224,11 @@ model Assignment {
   subject       Subject  @relation(fields: [subjectId], references: [id])
   submissions   AssignmentSubmission[]
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
   @@index([subjectId])
+  @@index([organizationId])
 }
 
 model AssignmentSubmission {
@@ -152,9 +242,13 @@ model AssignmentSubmission {
   grade          Int?
   feedback       String?
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
   @@unique([assignmentId, studentId]) // One submission per student per assignment
   @@index([assignmentId])
   @@index([studentId])
+  @@index([organizationId])
 }
 
 
@@ -169,9 +263,13 @@ model Attendance {
   lessonId  Int
   lesson    Lesson  @relation(fields: [lessonId], references: [id])
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
   @@index([studentId, date])
   @@index([lessonId, date])
   @@index([date])
+  @@index([organizationId])
 }
 
 
@@ -188,6 +286,11 @@ model Announcement {
   subjectId Int?
   subject   Subject?        @relation(fields: [subjectId], references: [id])
   reads   AnnouncementRead[]
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
 }
 
 model AnnouncementRead {
@@ -198,8 +301,12 @@ model AnnouncementRead {
 
   announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
   @@unique([announcementId, userId])
   @@index([userId])
+  @@index([organizationId])
 }
 
 enum UserSex {
@@ -224,6 +331,11 @@ model AttendanceSession {
   startTime DateTime @default(now())
   endTime   DateTime?
   status    SessionStatus @default(OPEN)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
 }
 
 enum SessionStatus {
@@ -233,8 +345,14 @@ enum SessionStatus {
 
 model SchoolConfig {
   id    Int    @id @default(autoincrement())
-  key   String @unique
+  key   String
   value String
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
 }
 
 model Material {
@@ -251,8 +369,12 @@ model Material {
   classId   Int?
   class     Class?   @relation(fields: [classId], references: [id])
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
   @@index([subjectId])
   @@index([classId])
+  @@index([organizationId])
 }
 
 model Notification {
@@ -264,8 +386,12 @@ model Notification {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
   @@index([userId])
   @@index([userId, isRead])
+  @@index([organizationId])
 }
 
 model CourseEnrollment {
@@ -276,21 +402,15 @@ model CourseEnrollment {
   subject    Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   enrolledAt DateTime @default(now())
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
   @@unique([studentId, subjectId])
   @@index([studentId])
   @@index([subjectId])
+  @@index([organizationId])
 }
 
-model BiometricTemplate {
-  id          Int      @id @default(autoincrement())
-  studentId   String   @unique
-  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  imageBase64 String   @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([studentId])
-}
 
 model DeviceHeartbeat {
   id        Int      @id @default(autoincrement())
@@ -302,8 +422,12 @@ model DeviceHeartbeat {
   sdReady   Boolean  @default(false)
   sensorStatus Boolean @default(false)
   uptime    Int      @default(0)
-  templateCount Int?
+
   pendingCommand String?
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
   @@index([deviceId])
+  @@index([organizationId])
 }

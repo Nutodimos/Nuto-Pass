@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "./prisma";
+import { getTenantDb } from "./tenant";
 
 export async function getSearchSuggestions(query: string, path: string) {
   if (!query || query.length < 2) return [];
@@ -8,8 +8,10 @@ export async function getSearchSuggestions(query: string, path: string) {
   const lowerQuery = query.toLowerCase();
 
   try {
+    const db = getTenantDb();
+
     if (path.includes("/list/students")) {
-      const results = await prisma.student.findMany({
+      const results = await db.student.findMany({
         where: {
           isActive: true,
           OR: [
@@ -25,7 +27,7 @@ export async function getSearchSuggestions(query: string, path: string) {
     }
 
     if (path.includes("/list/lecturers")) {
-      const results = await prisma.teacher.findMany({
+      const results = await db.teacher.findMany({
         where: {
           isActive: true,
           OR: [
@@ -41,7 +43,7 @@ export async function getSearchSuggestions(query: string, path: string) {
     }
 
     if (path.includes("/list/courses") || path.includes("/list/subjects")) {
-      const results = await prisma.subject.findMany({
+      const results = await db.subject.findMany({
         where: {
           isActive: true,
           name: { contains: lowerQuery, mode: "insensitive" },
@@ -54,7 +56,7 @@ export async function getSearchSuggestions(query: string, path: string) {
 
     if (path.includes("/list/attendance")) {
       // Could be classes or subjects, search both
-      const classes = await prisma.class.findMany({
+      const classes = await db.class.findMany({
         where: {
           isActive: true,
           name: { contains: lowerQuery, mode: "insensitive" },
@@ -62,7 +64,7 @@ export async function getSearchSuggestions(query: string, path: string) {
         select: { name: true },
         take: 3,
       });
-      const subjects = await prisma.subject.findMany({
+      const subjects = await db.subject.findMany({
         where: {
           isActive: true,
           name: { contains: lowerQuery, mode: "insensitive" },
@@ -77,7 +79,7 @@ export async function getSearchSuggestions(query: string, path: string) {
     }
 
     if (path.includes("/list/assignments")) {
-      const results = await prisma.assignment.findMany({
+      const results = await db.assignment.findMany({
         where: {
           OR: [
             { title: { contains: lowerQuery, mode: "insensitive" } },

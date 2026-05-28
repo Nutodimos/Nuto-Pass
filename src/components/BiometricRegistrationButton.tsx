@@ -13,7 +13,7 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
     const [mounted, setMounted] = useState(false);
     const [deviceStatus, setDeviceStatus] = useState<"online" | "idle" | "offline" | "loading">("loading");
     const [sensorStatus, setSensorStatus] = useState<boolean>(true);
-    const [templateCount, setTemplateCount] = useState<number>(0);
+
     const [enrollStep, setEnrollStep] = useState<string>("");
     const router = useRouter();
     const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -47,7 +47,6 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                 const data = await res.json();
                 setDeviceStatus(data.device?.status || "offline");
                 setSensorStatus(data.device?.sensorStatus ?? false);
-                setTemplateCount(data.device?.templateCount ?? 0);
             }
         } catch (error) {
             setDeviceStatus("offline");
@@ -295,10 +294,6 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                             {/* Diagnostics Section (Only in IDLE) */}
                             {status === "idle" && deviceStatus !== "offline" && (
                                 <div className="mt-1 mb-4 flex flex-col items-center gap-1 w-full">
-                                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg w-full justify-between">
-                                        <span className="text-[10px] text-slate-500 font-bold uppercase">Sensor Templates</span>
-                                        <span className="text-xs font-bold text-CPENavy">{templateCount} / 127</span>
-                                    </div>
                                     {!sensorStatus && (
                                         <div className="w-full px-3 py-1.5 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
                                             <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
@@ -307,6 +302,8 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                                     )}
                                 </div>
                             )}
+
+
 
                             {status === "idle" && hasBiometric && (
                                 <div className="mt-2 w-full">
@@ -356,8 +353,8 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                                 </div>
                             )}
 
-                            {/* EMERGENCY WIPE BUTTON (Only if templateCount > 0 and idle) */}
-                            {status === "idle" && templateCount > 0 && (
+                            {/* EMERGENCY WIPE BUTTON */}
+                            {status === "idle" && (
                                 <button
                                     onClick={handleEmergencyWipe}
                                     className="mt-6 text-[10px] text-red-400 hover:text-red-600 font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5 opacity-60 hover:opacity-100"

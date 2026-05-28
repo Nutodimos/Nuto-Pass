@@ -63,8 +63,8 @@ const SettingsPage = async () => {
     let currentSemester = "1";
     if (role === "admin") {
         const [sessionConfig, semesterConfig] = await Promise.all([
-            prisma.schoolConfig.findUnique({ where: { key: "sessionYear" } }),
-            prisma.schoolConfig.findUnique({ where: { key: "currentSemester" } }),
+            prisma.schoolConfig.findFirst({ where: { key: "sessionYear" } }),
+            prisma.schoolConfig.findFirst({ where: { key: "currentSemester" } }),
         ]);
         currentSession = sessionConfig?.value || "2024/25";
         currentSemester = semesterConfig?.value || "1";

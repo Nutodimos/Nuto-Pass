@@ -34,12 +34,18 @@ export const POST = async (req: NextRequest) => {
             );
         }
 
+        const organizationId = (sessionClaims?.metadata as any)?.organizationId;
+        if (!organizationId) {
+            return NextResponse.json({ message: "No organization context" }, { status: 400 });
+        }
+
         // Create new session
         const newSession = await prisma.attendanceSession.create({
             data: {
                 lessonId: Number(lessonId),
                 status: "OPEN",
                 startTime: new Date(),
+                organizationId,
             },
         });
 

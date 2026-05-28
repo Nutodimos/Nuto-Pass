@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "InstitutionType" AS ENUM ('SECONDARY_SCHOOL', 'UNIVERSITY_DEPARTMENT', 'TRAINING_CENTER', 'PRIMARY_SCHOOL');
+
+-- AlterTable
+ALTER TABLE "Organization" ADD COLUMN     "institutionType" "InstitutionType" NOT NULL DEFAULT 'UNIVERSITY_DEPARTMENT';

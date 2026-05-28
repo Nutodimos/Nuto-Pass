@@ -92,10 +92,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const organizationId = (sessionClaims?.metadata as any)?.organizationId;
+    if (!organizationId) {
+      return NextResponse.json({ error: "No organization context" }, { status: 400 });
+    }
+
     await prisma.announcementRead.upsert({
       where: { announcementId_userId: { announcementId, userId } },
       update: {},
-      create: { announcementId, userId },
+      create: { announcementId, userId, organizationId },
     });
 
     return NextResponse.json({ success: true }, { status: 200 });

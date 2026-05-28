@@ -6,12 +6,33 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     Menu, X, Home, Users, GraduationCap, BookOpen,
     ClipboardList, Fingerprint, Megaphone,
-    Settings, LogOut, Layers, ChevronLeft, Presentation
+    Settings, LogOut, Layers, ChevronLeft, Presentation,
+    Building2, FileText, Bell, BarChart3, Calendar,
+    type LucideIcon
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton, useUser, useClerk } from "@clerk/nextjs";
 import Image from "next/image";
+import { useTaxonomy, type TaxonomyMap } from "@/hooks/use-taxonomy";
+import { useOrgMetadata } from "@/components/OrgMetadataProvider";
+import type { NavItem as OrgNavItem } from "@/types/organization";
+
+/** Maps icon name strings (from Clerk metadata) to Lucide components */
+const iconMap: Record<string, LucideIcon> = {
+    Home, Users, GraduationCap, BookOpen, ClipboardList,
+    Fingerprint, Megaphone, Settings, Layers, Presentation,
+    Building2, FileText, Bell, BarChart3, Calendar, LogOut,
+};
+
+/** Resolve a navItem label — if it starts with "Taxonomy." use the taxonomy hook */
+function resolveLabel(label: string, taxonomy: TaxonomyMap): string {
+    if (label.startsWith('Taxonomy.')) {
+        const key = label.split('.')[1] as keyof TaxonomyMap;
+        return (taxonomy[key] as string) ?? label;
+    }
+    return label;
+}
 
 interface MenuItem {
     icon: React.ComponentType<{ className?: string }>;
@@ -65,7 +86,12 @@ const SidebarContent = ({
     const pathname = usePathname();
     const { user } = useUser();
     const { signOut } = useClerk();
+    const { metadata } = useOrgMetadata();
+    const taxonomy = useTaxonomy();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    // Read dynamic nav items from Prisma-stored org metadata (via context)
+    const orgNavItems = metadata?.uiConfig?.navItems;
 
     const isActive = (href: string) => {
         if (href === "/") return pathname === "/" || pathname === `/${role}`;
@@ -95,50 +121,92 @@ const SidebarContent = ({
                             <p className="font-semibold text-slate-700 text-sm">
                                 {user.firstName || user.username || "User"}
                             </p>
-                            <p className="text-xs text-CPENavy capitalize">
+                            <p className="text-xs text-CPENavy capitalize flex items-center gap-1">
                                 {role === "teacher" ? "lecturer" : role}
+                                {(user.publicMetadata?.orgSlug as string) && (
+                                    <>
+                                        <span className="text-slate-300">•</span>
+                                        <span className="text-slate-500 lowercase">{(user.publicMetadata.orgSlug as string)}</span>
+                                    </>
+                                )}
                             </p>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Menu Items */}
+            {/* Menu Items — dynamic from org metadata, or hardcoded fallback */}
             <div className="flex-1 overflow-y-auto p-3">
-                {menuItems.map((section) => (
-                    <div key={section.title} className="mb-4">
+                {orgNavItems && orgNavItems.length > 0 ? (
+                    /* ── Dynamic nav from Clerk org publicMetadata ── */
+                    <div className="mb-4">
                         {!isCollapsed && (
                             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 px-2">
-                                {section.title}
+                                MENU
                             </p>
                         )}
                         <div className="space-y-1">
-                            {section.items
-                                .filter((item) => item.visible.includes(role))
-                                .map((item) => {
-                                    const Icon = item.icon;
-                                    const active = isActive(item.href);
+                            {orgNavItems.map((item) => {
+                                const Icon = iconMap[item.icon] || BookOpen;
+                                const label = resolveLabel(item.label, taxonomy);
+                                const active = isActive(item.href);
 
-                                    return (
-                                        <Link
-                                            key={item.label}
-                                            href={item.href}
-                                            onClick={onNavigate}
-                                            title={isCollapsed ? item.label : undefined}
-                                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${isCollapsed ? "justify-center" : ""
-                                                } ${active
-                                                    ? "bg-CPENavy text-white shadow-lg shadow-CPENavy/30"
-                                                    : "text-slate-600 hover:bg-CPENavy/10 hover:text-CPENavy"
-                                                }`}
-                                        >
-                                            <Icon className="w-5 h-5 flex-shrink-0" />
-                                            {!isCollapsed && <span className="font-medium text-sm">{item.label}</span>}
-                                        </Link>
-                                    );
-                                })}
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        onClick={onNavigate}
+                                        title={isCollapsed ? label : undefined}
+                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${isCollapsed ? "justify-center" : ""
+                                            } ${active
+                                                ? "bg-CPENavy text-white shadow-lg shadow-CPENavy/30"
+                                                : "text-slate-600 hover:bg-CPENavy/10 hover:text-CPENavy"
+                                            }`}
+                                    >
+                                        <Icon className="w-5 h-5 flex-shrink-0" />
+                                        {!isCollapsed && <span className="font-medium text-sm">{label}</span>}
+                                    </Link>
+                                );
+                            })}
                         </div>
                     </div>
-                ))}
+                ) : (
+                    /* ── Hardcoded fallback (existing behaviour) ── */
+                    menuItems.map((section) => (
+                        <div key={section.title} className="mb-4">
+                            {!isCollapsed && (
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 px-2">
+                                    {section.title}
+                                </p>
+                            )}
+                            <div className="space-y-1">
+                                {section.items
+                                    .filter((item) => item.visible.includes(role))
+                                    .map((item) => {
+                                        const Icon = item.icon;
+                                        const active = isActive(item.href);
+
+                                        return (
+                                            <Link
+                                                key={item.label}
+                                                href={item.href}
+                                                onClick={onNavigate}
+                                                title={isCollapsed ? item.label : undefined}
+                                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${isCollapsed ? "justify-center" : ""
+                                                    } ${active
+                                                        ? "bg-CPENavy text-white shadow-lg shadow-CPENavy/30"
+                                                        : "text-slate-600 hover:bg-CPENavy/10 hover:text-CPENavy"
+                                                    }`}
+                                            >
+                                                <Icon className="w-5 h-5 flex-shrink-0" />
+                                                {!isCollapsed && <span className="font-medium text-sm">{item.label}</span>}
+                                            </Link>
+                                        );
+                                    })}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             {/* Logout */}
