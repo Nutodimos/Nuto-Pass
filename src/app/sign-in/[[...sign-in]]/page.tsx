@@ -1,19 +1,27 @@
 "use client";
 
-import { useSignIn } from "@clerk/nextjs";
+import { useSignIn, useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 
 const LoginPage = () => {
   const { isLoaded, signIn, setActive } = useSignIn();
+  const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
   const [matricNo, setMatricNo] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  // Redirect if user is already signed in (avoiding "Session already exists" error)
+  useEffect(() => {
+    if (isAuthLoaded && isSignedIn) {
+      router.replace("/");
+    }
+  }, [isAuthLoaded, isSignedIn, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +49,11 @@ const LoginPage = () => {
       }
     } catch (err: any) {
       console.error("Login error:", err);
+      if (err.errors?.[0]?.message === "Session already exists") {
+        toast.info("You are already signed in. Redirecting...");
+        router.replace("/");
+        return;
+      }
       const errorMessage = err.errors?.[0]?.message || "Invalid Matric No or Password";
       toast.error(errorMessage);
     } finally {
