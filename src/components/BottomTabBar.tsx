@@ -20,6 +20,16 @@ import {
 import { useState } from "react";
 import { useClerk } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "framer-motion";
+import { useOrgMetadata } from "@/components/OrgMetadataProvider";
+import { useTaxonomy, type TaxonomyMap } from "@/hooks/use-taxonomy";
+
+function resolveLabel(label: string, taxonomy: TaxonomyMap): string {
+  if (label.startsWith('Taxonomy.')) {
+    const key = label.split('.')[1] as keyof TaxonomyMap;
+    return (taxonomy[key] as string) ?? label;
+  }
+  return label;
+}
 
 interface Tab {
   icon: React.ComponentType<{ className?: string }>;
@@ -31,30 +41,30 @@ const roleTabs: Record<string, Tab[]> = {
   admin: [
     { icon: Home, label: "Home", href: "/admin" },
     { icon: Fingerprint, label: "Attendance", href: "/list/attendance" },
-    { icon: GraduationCap, label: "Students", href: "/list/students" },
-    { icon: BookOpen, label: "Courses", href: "/list/courses" },
+    { icon: GraduationCap, label: "Taxonomy.student", href: "/list/students" },
+    { icon: BookOpen, label: "Taxonomy.subject", href: "/list/courses" },
   ],
   teacher: [
     { icon: Home, label: "Home", href: "/teacher" },
     { icon: Fingerprint, label: "Attendance", href: "/list/attendance" },
-    { icon: BookOpen, label: "Courses", href: "/list/courses" },
-    { icon: ClipboardList, label: "Assignments", href: "/list/assignments" },
+    { icon: BookOpen, label: "Taxonomy.subject", href: "/list/courses" },
+    { icon: ClipboardList, label: "Taxonomy.assignment", href: "/list/assignments" },
   ],
   student: [
     { icon: Home, label: "Home", href: "/student" },
     { icon: Fingerprint, label: "Attendance", href: "/list/attendance" },
-    { icon: BookOpen, label: "Courses", href: "/list/courses" },
-    { icon: FileText, label: "Materials", href: "/list/materials" },
+    { icon: BookOpen, label: "Taxonomy.subject", href: "/list/courses" },
+    { icon: FileText, label: "Taxonomy.material", href: "/list/materials" },
   ],
 };
 
 const moreMenuItems = [
-  { icon: Users, label: "Lecturers", href: "/list/lecturers", roles: ["admin"] },
-  { icon: Building2, label: "Levels", href: "/list/levels", roles: ["admin"] },
-  { icon: GraduationCap, label: "Students", href: "/list/students", roles: ["teacher"] },
+  { icon: Users, label: "Taxonomy.teacher", href: "/list/lecturers", roles: ["admin"] },
+  { icon: Building2, label: "Taxonomy.class", href: "/list/levels", roles: ["admin"] },
+  { icon: GraduationCap, label: "Taxonomy.student", href: "/list/students", roles: ["teacher"] },
   { icon: BookOpen, label: "Lessons", href: "/list/lessons", roles: ["admin", "teacher", "student"] },
-  { icon: ClipboardList, label: "Assignments", href: "/list/assignments", roles: ["admin", "student"] },
-  { icon: FileText, label: "Materials", href: "/list/materials", roles: ["admin", "teacher"] },
+  { icon: ClipboardList, label: "Taxonomy.assignment", href: "/list/assignments", roles: ["admin", "student"] },
+  { icon: FileText, label: "Taxonomy.material", href: "/list/materials", roles: ["admin", "teacher"] },
   { icon: Megaphone, label: "Announcements", href: "/list/announcements", roles: ["admin", "teacher", "student"] },
   { icon: Fingerprint, label: "Biometrics", href: "/list/biometrics", roles: ["admin", "teacher"] },
 ];
@@ -63,6 +73,8 @@ export default function BottomTabBar() {
   const pathname = usePathname();
   const { user } = useUser();
   const { signOut } = useClerk();
+  const { metadata } = useOrgMetadata();
+  const taxonomy = useTaxonomy();
   const role = (user?.publicMetadata?.role as string) || "student";
   const tabs = roleTabs[role] || roleTabs.student;
   const [moreOpen, setMoreOpen] = useState(false);
@@ -103,18 +115,20 @@ export default function BottomTabBar() {
                   {moreItems.map((item) => {
                     const Icon = item.icon;
                     const active = pathname.startsWith(item.href);
+                    const label = resolveLabel(item.label, taxonomy);
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
                         onClick={() => setMoreOpen(false)}
                         className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all active:scale-95 ${active
-                          ? "bg-CPENavy/10 text-CPENavy"
+                          ? "text-[var(--text-secondary)]"
                           : "text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]"
                           }`}
+                        style={active ? { backgroundColor: `rgba(${orgPrimaryRgb}, 0.1)`, color: orgPrimaryColor } : {}}
                       >
                         <Icon className="w-5 h-5" />
-                        <span className="text-[11px] font-semibold">{item.label}</span>
+                        <span className="text-[11px] font-semibold">{label}</span>
                       </Link>
                     );
                   })}
@@ -154,19 +168,23 @@ export default function BottomTabBar() {
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const active = isActive(tab.href);
+            const label = resolveLabel(tab.label, taxonomy);
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
                 className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative transition-colors active:scale-95 ${active ? "text-CPENavy" : "text-[var(--text-tertiary)]"
                   }`}
+                  style={active ? { color: 'var(--org-primary)' } : {}}
               >
                 {active && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-CPEGold" />
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full" style={{ backgroundColor: 'var(--org-accent)' }} />
                 )}
                 <Icon className={`w-5 h-5 transition-all ${active ? "stroke-[2.5]" : ""}`} />
-                <span className={`text-[10px] font-semibold ${active ? "text-CPENavy" : "text-[var(--text-tertiary)]"}`}>
-                  {tab.label}
+                <span className={`text-[10px] font-semibold ${active ? "" : "text-[var(--text-tertiary)]"}`}
+                  style={active ? { color: 'var(--org-primary)' } : {}}
+                >
+                  {label}
                 </span>
               </Link>
             );
@@ -175,14 +193,17 @@ export default function BottomTabBar() {
           {/* More tab */}
           <button
             onClick={() => setMoreOpen(!moreOpen)}
-            className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative transition-colors active:scale-95 ${moreIsActive ? "text-CPENavy" : "text-[var(--text-tertiary)]"
+            className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative transition-colors active:scale-95 ${moreIsActive ? "" : "text-[var(--text-tertiary)]"
               }`}
+            style={moreIsActive ? { color: 'var(--org-primary)' } : {}}
           >
             {moreIsActive && !moreOpen && (
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-CPEGold" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full" style={{ backgroundColor: 'var(--org-accent)' }} />
             )}
             <MoreHorizontal className={`w-5 h-5 transition-all ${moreIsActive ? "stroke-[2.5]" : ""}`} />
-            <span className={`text-[10px] font-semibold ${moreIsActive ? "text-CPENavy" : "text-[var(--text-tertiary)]"}`}>
+            <span className={`text-[10px] font-semibold ${moreIsActive ? "" : "text-[var(--text-tertiary)]"}`}
+              style={moreIsActive ? { color: 'var(--org-primary)' } : {}}
+            >
               More
             </span>
           </button>

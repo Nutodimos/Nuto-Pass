@@ -6,6 +6,14 @@
    CPE THEME SYSTEM — CSS Custom Properties
    ======================================== */
 
+/* Organisation brand colour fallbacks (overridden by OrgThemeInjector) */
+:root {
+  --org-primary: #0A1E4B;
+  --org-primary-rgb: 10, 30, 75;
+  --org-accent: #B99146;
+  --org-accent-rgb: 185, 145, 70;
+}
+
 /* Light Theme (Default) — the current CPE Automation look */
 :root,
 [data-theme="light"] {

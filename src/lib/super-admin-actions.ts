@@ -263,6 +263,11 @@ export async function updateOrgMetadata(
 
     revalidatePath(`/super-admin/organisations/${orgId}`);
     revalidatePath(`/super-admin/organisations/${orgId}/customize`);
+    // Also revalidate dashboard routes so the org users see the changes
+    revalidatePath("/");
+    revalidatePath("/admin");
+    revalidatePath("/teacher");
+    revalidatePath("/student");
     return { success: true, error: false };
   } catch (err: any) {
     console.error("Update org metadata error:", err);

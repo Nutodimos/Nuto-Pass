@@ -14,10 +14,10 @@ const config: Config = {
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
       colors: {
-        CPENavy: "#0A1E4B",
+        CPENavy: "rgba(var(--org-primary-rgb), <alpha-value>)",
         CPESlate: "#4A6073",
-        CPENavyDark: "#08142A",
-        CPEGold: "#B99146",
+        CPENavyDark: "rgba(var(--org-primary-rgb), 0.8)", // fallback for dark mode/hover states
+        CPEGold: "rgba(var(--org-accent-rgb), <alpha-value>)",
         CPEGoldLight: "#D4B473",
         CPEGoldDark: "#8E6D2B",
         CPETeal: "#2C7A82",

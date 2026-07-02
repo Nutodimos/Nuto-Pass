@@ -52,10 +52,10 @@ const menuItems: MenuSection[] = [
         items: [
             { icon: Home, label: "Home", href: "/", visible: ["admin", "teacher", "student"] },
             { icon: Fingerprint, label: "Attendance", href: "/list/attendance", visible: ["admin", "teacher", "student"] },
-            { icon: Users, label: "Lecturers", href: "/list/lecturers", visible: ["admin"] },
-            { icon: GraduationCap, label: "Students", href: "/list/students", visible: ["admin", "teacher"] },
-            { icon: BookOpen, label: "Courses", href: "/list/courses", visible: ["admin", "teacher", "student"] },
-            { icon: Layers, label: "Levels", href: "/list/levels", visible: ["admin", "teacher"] },
+            { icon: Users, label: "Taxonomy.teacher", href: "/list/lecturers", visible: ["admin"] },
+            { icon: GraduationCap, label: "Taxonomy.student", href: "/list/students", visible: ["admin", "teacher"] },
+            { icon: BookOpen, label: "Taxonomy.subject", href: "/list/courses", visible: ["admin", "teacher", "student"] },
+            { icon: Layers, label: "Taxonomy.class", href: "/list/levels", visible: ["admin", "teacher"] },
             { icon: Presentation, label: "Lessons", href: "/list/lessons", visible: ["admin", "teacher", "student"] },
             { icon: BookOpen, label: "Materials", href: "/list/materials", visible: ["admin", "teacher", "student"] },
             { icon: ClipboardList, label: "Assignments", href: "/list/assignments", visible: ["admin", "teacher", "student"] },
@@ -86,7 +86,7 @@ const SidebarContent = ({
     const pathname = usePathname();
     const { user } = useUser();
     const { signOut } = useClerk();
-    const { metadata } = useOrgMetadata();
+    const { metadata, orgName } = useOrgMetadata();
     const taxonomy = useTaxonomy();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -98,30 +98,61 @@ const SidebarContent = ({
         return pathname.startsWith(href);
     };
 
+    const isFeatureEnabled = (href: string) => {
+        const features = metadata?.features;
+        if (!features) return true; // Default to true if no flags set
+
+        if (href.includes("/biometrics") && features.hasBiometrics === false) return false;
+        if (href.includes("/assignments") && features.hasAssignments === false) return false;
+        if (href.includes("/materials") && features.hasMaterials === false) return false;
+        
+        return true;
+    };
+
+    // Org branding from metadata
+    const orgLogo = metadata?.uiConfig?.logoUrl;
+    const orgTitle = metadata?.uiConfig?.sidebarTitle;
+    const orgPrimaryColor = metadata?.uiConfig?.primaryColor || "#0A1E4B";
+
+    // Helper to convert hex to rgb string for rgba()
+    const getRgb = (hex: string) => {
+        const cleaned = hex.replace("#", "");
+        const r = parseInt(cleaned.substring(0, 2), 16);
+        const g = parseInt(cleaned.substring(2, 4), 16);
+        const b = parseInt(cleaned.substring(4, 6), 16);
+        if (isNaN(r) || isNaN(g) || isNaN(b)) return "10, 30, 75";
+        return `${r}, ${g}, ${b}`;
+    };
+    const orgPrimaryRgb = getRgb(orgPrimaryColor);
+
     return (
         <div className="flex flex-col h-full">
             {/* Logo */}
             <div className={`p-4 border-b border-slate-100 ${isCollapsed ? "flex justify-center" : ""}`}>
                 <Link href="/" onClick={onNavigate} className={`flex items-center gap-3 ${isCollapsed ? "justify-center" : ""}`}>
                     <div className={`relative ${isCollapsed ? "w-8 h-8" : "w-10 h-10"}`}>
-                        <Image src="/cpeautomation-logo.png" alt="logo" fill className="object-contain mix-blend-multiply" />
+                        <Image src={orgLogo || "/cpeautomation-logo.png"} alt="logo" fill className="object-contain mix-blend-multiply" />
                     </div>
-                    {!isCollapsed && <span className="font-bold text-CPENavy tracking-tight">CPE Automation</span>}
+                    {!isCollapsed && (
+                        <span className="font-bold tracking-tight" style={{ color: orgPrimaryColor }}>
+                            {orgTitle || orgName || "CPE Automation"}
+                        </span>
+                    )}
                 </Link>
             </div>
 
             {/* User Info */}
             {showUserInfo && user && !isCollapsed && (
-                <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-CPENavy/5 to-transparent">
+                <div className="p-4 border-b border-slate-100" style={{ background: `linear-gradient(to right, rgba(${orgPrimaryRgb}, 0.05), transparent)` }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-CPENavy/20 flex items-center justify-center text-CPENavy font-bold">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold" style={{ backgroundColor: `rgba(${orgPrimaryRgb}, 0.2)`, color: orgPrimaryColor }}>
                             {user.firstName?.[0] || user.username?.[0] || "U"}
                         </div>
                         <div>
                             <p className="font-semibold text-slate-700 text-sm">
                                 {user.firstName || user.username || "User"}
                             </p>
-                            <p className="text-xs text-CPENavy capitalize flex items-center gap-1">
+                            <p className="text-xs capitalize flex items-center gap-1" style={{ color: orgPrimaryColor }}>
                                 {role === "teacher" ? "lecturer" : role}
                                 {(user.publicMetadata?.orgSlug as string) && (
                                     <>
@@ -146,7 +177,7 @@ const SidebarContent = ({
                             </p>
                         )}
                         <div className="space-y-1">
-                            {orgNavItems.map((item) => {
+                            {orgNavItems.filter((item) => isFeatureEnabled(item.href)).map((item) => {
                                 const Icon = iconMap[item.icon] || BookOpen;
                                 const label = resolveLabel(item.label, taxonomy);
                                 const active = isActive(item.href);
@@ -159,9 +190,10 @@ const SidebarContent = ({
                                         title={isCollapsed ? label : undefined}
                                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${isCollapsed ? "justify-center" : ""
                                             } ${active
-                                                ? "bg-CPENavy text-white shadow-lg shadow-CPENavy/30"
-                                                : "text-slate-600 hover:bg-CPENavy/10 hover:text-CPENavy"
+                                                ? "text-white shadow-lg"
+                                                : "text-slate-600 hover:text-[var(--org-primary)]"
                                             }`}
+                                    style={active ? { backgroundColor: orgPrimaryColor, boxShadow: `0 10px 15px -3px rgba(${orgPrimaryRgb}, 0.3)` } : { }}
                                     >
                                         <Icon className="w-5 h-5 flex-shrink-0" />
                                         {!isCollapsed && <span className="font-medium text-sm">{label}</span>}
@@ -182,24 +214,27 @@ const SidebarContent = ({
                             <div className="space-y-1">
                                 {section.items
                                     .filter((item) => item.visible.includes(role))
+                                    .filter((item) => isFeatureEnabled(item.href))
                                     .map((item) => {
                                         const Icon = item.icon;
                                         const active = isActive(item.href);
+                                        const label = resolveLabel(item.label, taxonomy);
 
                                         return (
                                             <Link
                                                 key={item.label}
                                                 href={item.href}
                                                 onClick={onNavigate}
-                                                title={isCollapsed ? item.label : undefined}
+                                                title={isCollapsed ? label : undefined}
                                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${isCollapsed ? "justify-center" : ""
                                                     } ${active
-                                                        ? "bg-CPENavy text-white shadow-lg shadow-CPENavy/30"
-                                                        : "text-slate-600 hover:bg-CPENavy/10 hover:text-CPENavy"
+                                                        ? "text-white shadow-lg"
+                                                        : "text-slate-600 hover:text-[var(--org-primary)]"
                                                     }`}
+                                            style={active ? { backgroundColor: orgPrimaryColor, boxShadow: `0 10px 15px -3px rgba(${orgPrimaryRgb}, 0.3)` } : { }}
                                             >
                                                 <Icon className="w-5 h-5 flex-shrink-0" />
-                                                {!isCollapsed && <span className="font-medium text-sm">{item.label}</span>}
+                                                {!isCollapsed && <span className="font-medium text-sm">{label}</span>}
                                             </Link>
                                         );
                                     })}

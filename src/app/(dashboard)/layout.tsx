@@ -6,31 +6,64 @@ import { getOrgContext } from "@/lib/tenant";
 import prisma from "@/lib/prisma-base";
 import type { InstitutionType, OrgMetadata } from "@/types/organization";
 
+// Force dynamic rendering so metadata changes are always reflected
+export const dynamic = "force-dynamic";
+
+/** Convert hex (#RRGGBB) to "R, G, B" for rgba() usage */
+function hexToRgb(hex: string): string {
+  const cleaned = hex.replace("#", "");
+  const r = parseInt(cleaned.substring(0, 2), 16);
+  const g = parseInt(cleaned.substring(2, 4), 16);
+  const b = parseInt(cleaned.substring(4, 6), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return "10, 30, 75";
+  return `${r}, ${g}, ${b}`;
+}
+
 export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Fetch org metadata from Prisma (server-side) to provide to client components
   const ctx = getOrgContext();
   let institutionType: InstitutionType = "UNIVERSITY_DEPARTMENT";
   let metadata: Partial<OrgMetadata> | null = null;
 
+  let orgName: string | undefined = undefined;
+
   if (ctx.organizationId) {
     const org = await prisma.organization.findUnique({
       where: { id: ctx.organizationId },
-      select: { institutionType: true, metadata: true },
+      select: { name: true, institutionType: true, metadata: true },
     });
     if (org) {
       institutionType = org.institutionType as InstitutionType;
       metadata = (org.metadata as Partial<OrgMetadata>) || null;
+      orgName = org.name;
     }
   }
 
+  // Resolve org brand colours (with fallbacks to CPE defaults)
+  const primaryColor = metadata?.uiConfig?.primaryColor || "#0A1E4B";
+  const accentColor = metadata?.uiConfig?.accentColor || "#B99146";
+  const faviconUrl = metadata?.uiConfig?.faviconUrl;
+  const siteTitle = metadata?.uiConfig?.sidebarTitle;
+
+  // Inject CSS custom properties directly on the wrapper div
+  const themeVars: React.CSSProperties & Record<string, string> = {
+    "--org-primary": primaryColor,
+    "--org-primary-rgb": hexToRgb(primaryColor),
+    "--org-accent": accentColor,
+    "--org-accent-rgb": hexToRgb(accentColor),
+  } as any;
+
   return (
-    <OrgMetadataProvider institutionType={institutionType} metadata={metadata}>
-      <div className="h-screen flex">
-        {/* LEFT - Modern Sidebar (hidden on mobile, hamburger in navbar instead) */}
+    <OrgMetadataProvider institutionType={institutionType} metadata={metadata} orgName={orgName}>
+      {/* Dynamic favicon + title */}
+      {faviconUrl && <link rel="icon" href={faviconUrl} />}
+      {siteTitle && <title>{siteTitle}</title>}
+
+      <div className="h-screen flex" style={themeVars}>
+        {/* LEFT - Modern Sidebar */}
         <Sidebar />
 
         {/* RIGHT - Main Content */}

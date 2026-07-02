@@ -1,7 +1,7 @@
 'use client';
 
-import { useOrganization } from '@clerk/nextjs';
 import type { InstitutionType } from '@/types/organization';
+import { useOrgMetadata } from '@/components/OrgMetadataProvider';
 
 /**
  * Taxonomy labels that adapt to the institution type.
@@ -73,10 +73,7 @@ const fallbackTaxonomy: TaxonomyMap = {
  * <span>{t.teacher}s</span>  // → "Lecturers" for university
  */
 export function useTaxonomy(): TaxonomyMap {
-  const { organization } = useOrganization();
-  const institutionType = (
-    organization?.publicMetadata as { institutionType?: InstitutionType } | undefined
-  )?.institutionType;
+  const { institutionType } = useOrgMetadata();
 
   if (institutionType && taxonomyDictionary[institutionType]) {
     return taxonomyDictionary[institutionType];

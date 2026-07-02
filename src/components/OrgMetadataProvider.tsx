@@ -6,11 +6,13 @@ import type { OrgMetadata, InstitutionType } from "@/types/organization";
 interface OrgMetadataContextValue {
   institutionType: InstitutionType;
   metadata: Partial<OrgMetadata> | null;
+  orgName?: string;
 }
 
 const OrgMetadataContext = createContext<OrgMetadataContextValue>({
   institutionType: "UNIVERSITY_DEPARTMENT",
   metadata: null,
+  orgName: undefined,
 });
 
 /**
@@ -22,13 +24,15 @@ export function OrgMetadataProvider({
   children,
   institutionType,
   metadata,
+  orgName,
 }: {
   children: ReactNode;
   institutionType: InstitutionType;
   metadata: Partial<OrgMetadata> | null;
+  orgName?: string;
 }) {
   return (
-    <OrgMetadataContext.Provider value={{ institutionType, metadata }}>
+    <OrgMetadataContext.Provider value={{ institutionType, metadata, orgName }}>
       {children}
     </OrgMetadataContext.Provider>
   );
