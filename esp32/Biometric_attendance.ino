@@ -171,9 +171,21 @@ void handleEnrollment(){
         enrollState = ENROLL_FAIL; break;
       }
       if (finger.getImage() == FINGERPRINT_NOFINGER) {
-        Serial.println("[ENROLL] SCAN 2 of 2 — Place SAME finger again...");
-        ledPurple(); beep(100);
-        enrollTimeout = now; enrollState = ENROLL_WAIT_FINGER_2;
+        // Debounce: ensure the finger is actually gone (not just a sensor glitch)
+        delay(500); 
+        if (finger.getImage() == FINGERPRINT_NOFINGER) {
+          Serial.println("[ENROLL] SCAN 2 of 2 — Place SAME finger again...");
+          ledPurple(); beep(100);
+          
+          // Wait an extra second so they don't accidentally re-trigger instantly 
+          // while pulling their hand away
+          delay(1000); 
+          
+          // Flush the serial buffer just in case
+          while(fpSerial.available()) fpSerial.read();
+
+          enrollTimeout = millis(); enrollState = ENROLL_WAIT_FINGER_2;
+        }
       }
       break;
 
