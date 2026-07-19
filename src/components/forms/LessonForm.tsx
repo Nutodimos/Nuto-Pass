@@ -45,15 +45,9 @@ const LessonForm = ({
         defaultValues: data,
     });
 
-    const [state, formAction] = useFormState(
-        type === "create" ? createLesson : updateLesson,
-        {
-            success: false,
-            error: false,
-        }
-    );
+    const router = useRouter();
 
-    const onSubmit = handleSubmit((formData) => {
+    const onSubmit = handleSubmit(async (formData) => {
         const dateBase = new Date().toISOString().split('T')[0];
 
         const formatDateTime = (timeInput: any) => {
@@ -69,20 +63,21 @@ const LessonForm = ({
             endTime: formatDateTime(formData.endTime),
         };
 
-        formAction(finalData);
-    });
-
-    const router = useRouter();
-
-    useEffect(() => {
-        if (state.success) {
-            toast.success(`Lesson ${type === "create" ? "created" : "updated"} successfully!`);
-            setOpen(false);
-            router.refresh();
-        } else if (state.error) {
-            toast.error("Something went wrong!");
+        try {
+            const action = type === "create" ? createLesson : updateLesson;
+            const res = await action({ success: false, error: false }, finalData);
+            
+            if (res.success) {
+                toast.success(`Lesson ${type === "create" ? "created" : "updated"} successfully!`);
+                setOpen(false);
+                router.refresh();
+            } else {
+                toast.error(res.messages?.[0] || "Something went wrong!");
+            }
+        } catch (err) {
+            toast.error("An unexpected error occurred");
         }
-    }, [state, router, setOpen, type]);
+    });
 
     // --- CSV Upload Handlers ---
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

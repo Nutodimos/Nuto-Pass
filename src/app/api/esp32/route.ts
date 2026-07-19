@@ -67,11 +67,14 @@ async function processEvent(payload: EventPayload) {
             };
         }
 
-        // Find an active attendance session for the student's class
+        // Find an active attendance session for the student's class OR a subject they are enrolled in
         const activeSession = await prisma.attendanceSession.findFirst({
             where: {
                 status: "OPEN",
-                lesson: { classId: student.classId },
+                OR: [
+                    { lesson: { classId: student.classId } },
+                    { lesson: { subject: { enrollments: { some: { studentId: student.id } } } } }
+                ]
             },
             include: { lesson: true },
         });
