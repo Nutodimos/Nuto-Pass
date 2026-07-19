@@ -1,7 +1,14 @@
 /*
- * NutoPass Attendance v4.0 — Sensor Upgrade Ready
- * Cloud matching engine removed. R307 DSP used for on-device matching.
- * Ready for new sensor integration.
+ * NutoPass Attendance v5.0 — AS608 Fingerprint Sensor
+ * On-device DSP matching with 2-scan enrollment for high accuracy.
+ * Syncs attendance to NutoPass web app via WiFi.
+ *
+ * Wiring (AS608 → ESP32):
+ *   VCC  → 3.3V (some modules need 5V — check yours)
+ *   GND  → GND
+ *   TX   → GPIO16 (FP_RX — sensor TX to ESP RX)
+ *   RX   → GPIO17 (FP_TX — sensor RX to ESP TX)
+ *   TOUCH → Not connected (optional wake wire)
  */
 #include "globals.h"
 
@@ -61,6 +68,7 @@ void sendHeartbeat() {
   http.begin(url); http.addHeader("Content-Type","application/json"); http.setTimeout(5000);
   unsigned long up = (millis() - bootTime) / 1000;
   int rssi = WiFi.RSSI(); int heap = ESP.getFreeHeap();
+  int stored = finger.templateCount; // AS608 reports stored template count
   String json = "{\"deviceSecret\":\""+String(DEVICE_SECRET)+"\",\"deviceId\":\"ESP32_MAIN\",\"mode\":\""+String(modeToString(currentMode))+"\",\"rssi\":"+String(rssi)+",\"freeHeap\":"+String(heap)+",\"sdReady\":"+String(sdReady?"true":"false")+",\"sensorStatus\":"+String(sensorReady?"true":"false")+",\"uptime\":"+String(up)+"}";
   int code = http.POST(json);
   if (code == 200) {
@@ -71,9 +79,10 @@ void sendHeartbeat() {
       if (ei > si) {
         String cmd = response.substring(si, ei);
         if (cmd == "none") { /* noop */ }
-        else if (cmd.startsWith("ENROLL:") && currentMode != MODE_REGISTRATION) {
-          int slot = cmd.substring(7).toInt();
-          if (slot > 0 && slot <= 127) {
+        else if ((cmd.startsWith("ENROLL:") || cmd.startsWith("CLOUD_ENROLL:")) && currentMode != MODE_REGISTRATION) {
+          int colonIdx = cmd.indexOf(':');
+          int slot = cmd.substring(colonIdx + 1).toInt();
+          if (slot > 0 && slot <= AS608_MAX_TEMPLATES) {
             enrollNewID = slot; currentMode = MODE_REGISTRATION; enrollState = ENROLL_IDLE;
             Serial.printf("[REMOTE] ENROLL slot %d\n", slot); ledPurple(); beep(150);
           }
@@ -103,55 +112,123 @@ void logToSD(String event,int id,String status,bool synced){
   if(f){f.printf("%s,%s,%s,%s,%s\n",ts,event.c_str(),makeUserID(id).c_str(),status.c_str(),synced?"YES":"NO");f.close();}
 }
 
-// ══════════ DSP Enrollment (R307 On-Device) ══════════
+// ══════════════════════════════════════════════════════════════════
+// AS608 TWO-SCAN ENROLLMENT
+//
+// The proper enrollment process captures TWO fingerprint images
+// and combines them into a single, high-accuracy template.
+// This dramatically reduces false rejections compared to
+// single-scan enrollment.
+//
+// Flow:
+//   IDLE → WAIT_FINGER_1 → CAPTURE_1 → WAIT_LIFT →
+//   WAIT_FINGER_2 → CAPTURE_2 → CREATE_MODEL → STORE → SUCCESS
+// ══════════════════════════════════════════════════════════════════
 void handleEnrollment(){
   unsigned long now = millis();
   switch(enrollState){
+
+    // ── Start: Validate slot ID ──
     case ENROLL_IDLE:
-      if (enrollNewID <= 0 || enrollNewID > 127) {
+      if (enrollNewID <= 0 || enrollNewID > AS608_MAX_TEMPLATES) {
         Serial.println("[ENROLL] Invalid slot!"); ledRed(); beepTimes(3,100,80); delay(2000);
         postToServer("ENROLL", enrollNewID, "FAILED");
         enrollNewID=-1; currentMode=MODE_DEFAULT; ledBlue(); return;
       }
-      Serial.printf("[ENROLL] Slot %d — PLACE FINGER on sensor\n", enrollNewID);
-      ledPurple(); beep(100); enrollTimeout=now; enrollState=ENROLL_WAIT_FINGER; break;
+      Serial.printf("\n[ENROLL] ═══ Slot %d ═══\n", enrollNewID);
+      Serial.println("[ENROLL] SCAN 1 of 2 — Place finger on sensor...");
+      ledPurple(); beep(100); enrollTimeout=now; enrollState=ENROLL_WAIT_FINGER_1; break;
 
-    case ENROLL_WAIT_FINGER:
-      if (now - enrollTimeout > 30000) {
-        Serial.println("[ENROLL] Timeout"); postToServer("ENROLL", enrollNewID, "FAILED");
+    // ── Wait for first finger placement ──
+    case ENROLL_WAIT_FINGER_1:
+      if (now - enrollTimeout > ENROLL_TIMEOUT_MS) {
+        Serial.println("[ENROLL] Timeout — no finger detected");
+        postToServer("ENROLL", enrollNewID, "FAILED");
         enrollNewID=-1; currentMode=MODE_DEFAULT; ledBlue(); enrollState=ENROLL_IDLE; return;
       }
       if (finger.getImage() == FINGERPRINT_OK) {
-        Serial.println("[ENROLL] Finger detected — processing...");
-        ledWhite(); beep(100);
-
-        // Convert image to template in slot 1
-        if (finger.image2Tz(1) != FINGERPRINT_OK) {
-          Serial.println("[ENROLL] Failed to extract features");
-          enrollState = ENROLL_FAIL; break;
-        }
-
-        // Store template
-        if (finger.storeModel(enrollNewID) != FINGERPRINT_OK) {
-          Serial.println("[ENROLL] Failed to store template");
-          enrollState = ENROLL_FAIL; break;
-        }
-
-        enrollState = ENROLL_SUCCESS;
+        Serial.println("[ENROLL] ✓ Finger detected (scan 1)");
+        ledWhite(); beep(80);
+        enrollState = ENROLL_CAPTURE_1;
       }
       break;
 
+    // ── Process first scan ──
+    case ENROLL_CAPTURE_1:
+      if (finger.image2Tz(1) != FINGERPRINT_OK) {
+        Serial.println("[ENROLL] ✕ Feature extraction failed (scan 1)");
+        enrollState = ENROLL_FAIL; break;
+      }
+      Serial.println("[ENROLL] ✓ Scan 1 stored in buffer");
+      Serial.println("[ENROLL] Remove finger from sensor...");
+      ledBlue(); beepTimes(2, 60, 60);
+      enrollTimeout = now; enrollState = ENROLL_WAIT_LIFT; break;
+
+    // ── Wait for finger to be lifted ──
+    case ENROLL_WAIT_LIFT:
+      if (now - enrollTimeout > ENROLL_TIMEOUT_MS) {
+        Serial.println("[ENROLL] Timeout — finger not removed");
+        enrollState = ENROLL_FAIL; break;
+      }
+      if (finger.getImage() == FINGERPRINT_NOFINGER) {
+        Serial.println("[ENROLL] SCAN 2 of 2 — Place SAME finger again...");
+        ledPurple(); beep(100);
+        enrollTimeout = now; enrollState = ENROLL_WAIT_FINGER_2;
+      }
+      break;
+
+    // ── Wait for second finger placement ──
+    case ENROLL_WAIT_FINGER_2:
+      if (now - enrollTimeout > ENROLL_TIMEOUT_MS) {
+        Serial.println("[ENROLL] Timeout — second scan not detected");
+        enrollState = ENROLL_FAIL; break;
+      }
+      if (finger.getImage() == FINGERPRINT_OK) {
+        Serial.println("[ENROLL] ✓ Finger detected (scan 2)");
+        ledWhite(); beep(80);
+        enrollState = ENROLL_CAPTURE_2;
+      }
+      break;
+
+    // ── Process second scan ──
+    case ENROLL_CAPTURE_2:
+      if (finger.image2Tz(2) != FINGERPRINT_OK) {
+        Serial.println("[ENROLL] ✕ Feature extraction failed (scan 2)");
+        enrollState = ENROLL_FAIL; break;
+      }
+      Serial.println("[ENROLL] ✓ Scan 2 stored in buffer");
+      enrollState = ENROLL_CREATE_MODEL; break;
+
+    // ── Merge both scans into one template ──
+    case ENROLL_CREATE_MODEL:
+      if (finger.createModel() != FINGERPRINT_OK) {
+        Serial.println("[ENROLL] ✕ Scans don't match — try again with the same finger");
+        ledOrange(); beepTimes(4, 80, 60); delay(2000);
+        enrollState = ENROLL_FAIL; break;
+      }
+      Serial.println("[ENROLL] ✓ Template created from both scans");
+
+      // Store the combined template in the AS608's flash
+      if (finger.storeModel(enrollNewID) != FINGERPRINT_OK) {
+        Serial.println("[ENROLL] ✕ Failed to store template in flash");
+        enrollState = ENROLL_FAIL; break;
+      }
+      enrollState = ENROLL_SUCCESS; break;
+
+    // ── Enrollment succeeded ──
     case ENROLL_SUCCESS: {
       logToSD("ENROLL", enrollNewID, "SUCCESS", wifiConnected);
       postToServer("ENROLL", enrollNewID, "SUCCESS");
-      Serial.printf("[ENROLL] ✓ SUCCESS: slot %d stored on sensor\n", enrollNewID);
+      Serial.printf("[ENROLL] ✓ SUCCESS — Slot %d saved (%d templates total)\n",
+                    enrollNewID, finger.templateCount);
       ledGreen(); beepTimes(2,150,100); delay(3000);
       enrollNewID=-1; currentMode=MODE_DEFAULT; ledBlue(); enrollState=ENROLL_IDLE; break; }
 
+    // ── Enrollment failed ──
     case ENROLL_FAIL: {
       logToSD("ENROLL", enrollNewID, "FAILED", wifiConnected);
       postToServer("ENROLL", enrollNewID, "FAILED");
-      Serial.println("[ENROLL] ✕ FAILED");
+      Serial.println("[ENROLL] ✕ ENROLLMENT FAILED");
       ledRed(); beepTimes(3,100,80); delay(3000);
       enrollNewID=-1; currentMode=MODE_DEFAULT; ledBlue(); enrollState=ENROLL_IDLE; break; }
 
@@ -160,18 +237,26 @@ void handleEnrollment(){
   }
 }
 
-// ══════════ DSP Verification (R307 On-Device) ══════════
+// ══════════════════════════════════════════════════════════════════
+// AS608 VERIFICATION
+//
+// Captures a fingerprint, extracts features, and searches the
+// sensor's on-chip flash library for a match.
+// On match: posts VERIFY/SUCCESS to web app for attendance.
+// ══════════════════════════════════════════════════════════════════
 void handleVerification(){
   if(finger.getImage()!=FINGERPRINT_OK) return;
-  
+
   Serial.println("[VERIFY] Finger detected...");
   ledWhite(); beep(100);
 
+  // Extract features into buffer slot 1
   if(finger.image2Tz() != FINGERPRINT_OK){
     Serial.println("[VERIFY] Feature extraction failed");
     ledRed(); beepTimes(2,80,80); delay(2000); ledYellow(); return;
   }
 
+  // Search the AS608's internal flash for a matching template
   if(finger.fingerFastSearch() != FINGERPRINT_OK){
     Serial.println("[VERIFY] ✕ NO MATCH");
     ledRed(); beepTimes(2,80,80); delay(2000); ledYellow(); return;
@@ -181,15 +266,28 @@ void handleVerification(){
   int confidence = finger.confidence;
   Serial.printf("[VERIFY] ✓ MATCH — Slot %d (confidence: %d)\n", foundID, confidence);
 
-  // Duplicate guard
+  // Optional: Reject low-confidence matches
+  if(confidence < MIN_MATCH_CONFIDENCE){
+    Serial.printf("[VERIFY] ✕ Confidence too low (%d < %d)\n", confidence, MIN_MATCH_CONFIDENCE);
+    ledOrange(); beepTimes(2,100,80); delay(2000); ledYellow(); return;
+  }
+
+  // Duplicate guard — prevent same student scanning twice within 10s
   if(foundID == lastVerifiedID && (millis() - lastVerifyTime) < DUPLICATE_GUARD_MS){
-    Serial.println("[VERIFY] Duplicate — skipping"); ledYellow(); return;
+    Serial.println("[VERIFY] Duplicate scan — already recorded");
+    ledBlue(); beep(40); delay(1000); ledYellow(); return;
   }
   lastVerifiedID = foundID; lastVerifyTime = millis();
 
-  // Post to server
+  // Post attendance event to NutoPass web app
   bool posted = postToServer("VERIFY", foundID, "SUCCESS");
   logToSD("VERIFY", foundID, "SUCCESS", posted);
+
+  if(posted){
+    Serial.println("[VERIFY] ✓ Attendance posted to server");
+  } else {
+    Serial.println("[VERIFY] ⚠ Server post failed — logged to SD");
+  }
 
   ledGreen(); beepTimes(1,120,0); delay(2500);
   ledYellow();
@@ -203,14 +301,16 @@ void enterSleepMode(){
   esp_deep_sleep_start();
 }
 
-// ══════════ SETUP ══════════
+// ══════════════════════════════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════════════════════════════
 void setup(){
   Serial.begin(115200); delay(200);
   bootTime = millis();
-  Serial.println("\n============================");
-  Serial.println("  NutoPass Attendance v4.0");
-  Serial.println("  On-Device Matching Mode");
-  Serial.println("============================\n");
+  Serial.println("\n╔════════════════════════════════╗");
+  Serial.println("║   NutoPass Attendance v5.0     ║");
+  Serial.println("║   AS608 On-Device Matching     ║");
+  Serial.println("╚════════════════════════════════╝\n");
 
   pinMode(SD_CS,OUTPUT); digitalWrite(SD_CS,HIGH);
   pinMode(BUTTON_PIN,INPUT_PULLUP); pinMode(BUZZER_PIN,OUTPUT);
@@ -218,26 +318,33 @@ void setup(){
   digitalWrite(BUZZER_PIN,LOW); ledOff();
   blinkWhite(3,150,100); ledWhite();
 
-  // SD Card
+  // ── SD Card ──
   SPI.begin(SPI_SCK,SPI_MISO,SPI_MOSI); delay(50);
   sdReady = SD.begin(SD_CS,SPI);
   Serial.printf("[INIT] SD Card: %s\n", sdReady?"OK":"FAILED");
   if(sdReady){ledGreen();beep(60);}else{ledRed();beepTimes(2,100,80);}
   delay(300);
 
-  // Fingerprint sensor
-  fpSerial.begin(57600, SERIAL_8N1, FP_RX, FP_TX);
-  finger.begin(57600);
+  // ── AS608 Fingerprint Sensor ──
+  fpSerial.begin(AS608_BAUD, SERIAL_8N1, FP_RX, FP_TX);
+  finger.begin(AS608_BAUD);
   if(finger.verifyPassword()){
-    Serial.println("[INIT] Fingerprint sensor: OK");
+    finger.getTemplateCount();
+    Serial.printf("[INIT] AS608 sensor: OK (%d templates stored)\n", finger.templateCount);
     sensorReady = true; ledGreen(); beep(60);
+
+    // Print sensor parameters for debugging
+    finger.getParameters();
+    Serial.printf("[INIT] AS608 capacity: %d | Security: %d | Baud: %d\n",
+                  finger.capacity, finger.security_level, AS608_BAUD);
   } else {
-    Serial.println("[INIT] Fingerprint sensor: FAILED (Check wiring!)");
+    Serial.println("[INIT] AS608 sensor: FAILED (Check wiring!)");
+    Serial.println("  → VCC=3.3V, GND, TX→GPIO16, RX→GPIO17");
     sensorReady = false; ledRed(); beepTimes(3,100,80);
   }
   delay(300);
 
-  // WiFi
+  // ── WiFi ──
   Serial.printf("[INIT] Connecting to WiFi: %s\n", ssid);
   WiFi.begin(ssid, password);
   int attempts = 0;
@@ -258,18 +365,21 @@ void setup(){
   delay(500);
 
   currentMode = MODE_DEFAULT;
-  Serial.println("[READY] Mode: DEFAULT (Blue LED)");
-  Serial.println("  On-device matching via sensor DSP");
-  Serial.println("  Button: 1 press = toggle VERIFICATION | Long press = SLEEP");
+  Serial.println("\n[READY] Mode: DEFAULT (Blue LED)");
+  Serial.println("  AS608 on-device matching active");
+  Serial.println("  Button: 1 press = VERIFICATION mode | Long press = SLEEP");
+  Serial.printf("  Enrolled: %d/%d slots used\n\n", finger.templateCount, AS608_MAX_TEMPLATES);
   ledBlue(); beep(100);
   lastTick=millis(); lastWifiCheck=millis(); lastSyncAttempt=millis(); lastHeartbeat=millis();
 }
 
-// ══════════ LOOP ══════════
+// ══════════════════════════════════════════════════════════════════
+// LOOP
+// ══════════════════════════════════════════════════════════════════
 void loop(){
   unsigned long now = millis();
 
-  // WiFi check every 5s
+  // WiFi health check every 5s
   if(now-lastWifiCheck>=5000){
     lastWifiCheck=now; bool was=wifiConnected;
     wifiConnected = (WiFi.status()==WL_CONNECTED);
@@ -279,7 +389,8 @@ void loop(){
       ntpSynced=true; cloudReady=true; ledBlue();
     }
     if(was && !wifiConnected){
-      Serial.println("[WIFI] Disconnected"); cloudReady=false; WiFi.begin(ssid,password);
+      Serial.println("[WIFI] Disconnected — attempting reconnect...");
+      cloudReady=false; WiFi.begin(ssid,password);
     }
   }
 
@@ -288,7 +399,7 @@ void loop(){
     lastHeartbeat=now; sendHeartbeat();
   }
 
-  // Button logic
+  // Button logic (single press = toggle mode, long press = sleep)
   bool btnDown = (digitalRead(BUTTON_PIN)==LOW);
   if(btnDown && !btnWasDown){btnWasDown=true; btnDownTime=now; longPressHandled=false;}
   if(btnWasDown && btnDown && !longPressHandled){
@@ -306,19 +417,19 @@ void loop(){
     if(count==1){
       if(currentMode==MODE_DEFAULT){
         currentMode=MODE_VERIFICATION;
-        Serial.println("[MODE] -> VERIFICATION (Yellow LED)"); ledYellow(); beep(80);
+        Serial.println("[MODE] → VERIFICATION (Yellow LED)"); ledYellow(); beep(80);
       } else if(currentMode==MODE_VERIFICATION){
         currentMode=MODE_DEFAULT;
-        Serial.println("[MODE] -> DEFAULT (Blue LED)"); ledBlue(); beep(60);
+        Serial.println("[MODE] → DEFAULT (Blue LED)"); ledBlue(); beep(60);
       }
     }
   }
 
-  // ── On-Device Verification ──
+  // ── Verification mode ──
   if(currentMode==MODE_VERIFICATION && sensorReady){
     handleVerification();
   }
 
-  // ── Registration ──
+  // ── Registration mode (triggered by web app) ──
   if(currentMode==MODE_REGISTRATION){ handleEnrollment(); }
 }

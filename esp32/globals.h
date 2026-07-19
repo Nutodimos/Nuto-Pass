@@ -22,20 +22,31 @@
 #define LED_GREEN  26
 #define LED_BLUE   27
 
+// ── AS608 Sensor Configuration ──
+#define AS608_BAUD            57600   // Default baud for AS608
+#define AS608_MAX_TEMPLATES   127     // AS608 supports up to 127 (some: 162 or 300)
+#define MIN_MATCH_CONFIDENCE  50      // Reject matches below this confidence score
+
 // ── Enums ──
 enum Mode { MODE_DEFAULT, MODE_VERIFICATION, MODE_REGISTRATION, MODE_SLEEP };
 enum EnrollState {
   ENROLL_IDLE,
-  ENROLL_WAIT_FINGER,
+  ENROLL_WAIT_FINGER_1,   // Waiting for first finger placement
+  ENROLL_CAPTURE_1,       // Processing first scan
+  ENROLL_WAIT_LIFT,       // Waiting for finger to be lifted
+  ENROLL_WAIT_FINGER_2,   // Waiting for second finger placement
+  ENROLL_CAPTURE_2,       // Processing second scan
+  ENROLL_CREATE_MODEL,    // Merging both scans into one template
   ENROLL_SUCCESS,
   ENROLL_FAIL
 };
 
-// ── Constants ──
-#define DUPLICATE_GUARD_MS    10000UL
-#define MULTI_PRESS_WINDOW_MS 1000
-#define LONG_PRESS_MS         3000
-#define HEARTBEAT_INTERVAL_MS 5000UL
+// ── Timing Constants ──
+#define DUPLICATE_GUARD_MS    10000UL   // Block same student scanning twice within 10s
+#define MULTI_PRESS_WINDOW_MS 1000      // Multi-press detection window
+#define LONG_PRESS_MS         3000      // Long press to enter sleep
+#define HEARTBEAT_INTERVAL_MS 5000UL    // Heartbeat to web app every 5s
+#define ENROLL_TIMEOUT_MS     30000UL   // Timeout for each enrollment step
 
 // ── Include Config AFTER types are defined ──
 #include "config.h"

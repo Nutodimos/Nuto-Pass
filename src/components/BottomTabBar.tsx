@@ -79,6 +79,20 @@ export default function BottomTabBar() {
   const tabs = roleTabs[role] || roleTabs.student;
   const [moreOpen, setMoreOpen] = useState(false);
 
+  // Org branding from metadata
+  const orgPrimaryColor = metadata?.uiConfig?.primaryColor || "#0A1E4B";
+  
+  // Helper to convert hex to rgb string for rgba()
+  const getRgb = (hex: string) => {
+      const cleaned = hex.replace("#", "");
+      const r = parseInt(cleaned.substring(0, 2), 16);
+      const g = parseInt(cleaned.substring(2, 4), 16);
+      const b = parseInt(cleaned.substring(4, 6), 16);
+      if (isNaN(r) || isNaN(g) || isNaN(b)) return "10, 30, 75";
+      return `${r}, ${g}, ${b}`;
+  };
+  const orgPrimaryRgb = getRgb(orgPrimaryColor);
+
   const isActive = (href: string) => {
     if (href === `/${role}`) return pathname === href;
     return pathname.startsWith(href);
