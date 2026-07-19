@@ -25,10 +25,15 @@ export const POST = async (req: NextRequest) => {
         }
 
         let slotId = 1;
+        let biometricIdStr = "";
 
         if (student.biometricId && student.biometricId.startsWith("USER")) {
             // Reuse existing slot
             slotId = parseInt(student.biometricId.replace("USER", ""), 10);
+            biometricIdStr = `PENDING-USER${String(slotId).padStart(3, "0")}`;
+        } else if (student.biometricId && student.biometricId.startsWith("PENDING-USER")) {
+            slotId = parseInt(student.biometricId.replace("PENDING-USER", ""), 10);
+            biometricIdStr = student.biometricId;
         } else {
             // Find next available slot
             const allStudents = await prisma.student.findMany({
@@ -37,7 +42,7 @@ export const POST = async (req: NextRequest) => {
             });
 
             const usedSlots = allStudents
-                .map(s => parseInt(s.biometricId!.replace("USER", ""), 10))
+                .map(s => parseInt(s.biometricId!.replace("PENDING-USER", "").replace("USER", ""), 10))
                 .filter(n => !isNaN(n));
 
             if (usedSlots.length > 0) {
@@ -48,13 +53,14 @@ export const POST = async (req: NextRequest) => {
                 return NextResponse.json({ message: "Scanner memory full (127 slots max)" }, { status: 400 });
             }
 
-            // Reserve the slot for this student
-            const biometricIdStr = `USER${String(slotId).padStart(3, "0")}`;
-            await prisma.student.update({
-                where: { id: studentId },
-                data: { biometricId: biometricIdStr },
-            });
+            biometricIdStr = `PENDING-USER${String(slotId).padStart(3, "0")}`;
         }
+
+        // Set to pending so they don't show up as registered until the device confirms
+        await prisma.student.update({
+            where: { id: studentId },
+            data: { biometricId: biometricIdStr },
+        });
 
         // Queue the command for the ESP32
         await prisma.deviceHeartbeat.upsert({

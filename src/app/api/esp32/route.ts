@@ -132,6 +132,12 @@ async function processEvent(payload: EventPayload) {
 
     if (event === "ENROLL") {
         if (status === "SUCCESS") {
+            // Finalize the student's biometric ID
+            await prisma.student.updateMany({
+                where: { biometricId: `PENDING-${biometricId}` },
+                data: { biometricId: biometricId }
+            });
+
             // Clear the pending command since it was successful
             await prisma.deviceHeartbeat.updateMany({
                 where: { deviceId: "ESP32_MAIN" },
@@ -148,7 +154,7 @@ async function processEvent(payload: EventPayload) {
             // Enrollment failed on the sensor — clear the student's biometricId
             // so they can try again
             await prisma.student.updateMany({
-                where: { biometricId },
+                where: { biometricId: `PENDING-${biometricId}` },
                 data: { biometricId: null },
             });
             await prisma.deviceHeartbeat.updateMany({

@@ -126,10 +126,9 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
 
     const startPolling = (expectedSlot: number) => {
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-        hasEnteredRegRef.current = false;
 
         let pollCount = 0;
-        const MAX_POLLS = 60;
+        const MAX_POLLS = 60; // 60 seconds timeout
 
         pollIntervalRef.current = setInterval(async () => {
             pollCount++;
@@ -142,50 +141,40 @@ const BiometricRegistrationButton = ({ studentId, hasBiometric = false }: { stud
                 return;
             }
 
-            // Cycle through engaging messages during waiting
-            if (!hasEnteredRegRef.current && pollCount > 1) {
-                setEnrollMsgIndex(Math.min(0, enrollMessages.length - 1));
+            // Cycle through messages while waiting
+            if (pollCount > 2 && pollCount < 10) {
+                setEnrollMsgIndex(1); // "Place your finger now"
+                setEnrollStep("Place your finger gently on the sensor (Scan 1 of 2)");
+            } else if (pollCount >= 10) {
+                setEnrollMsgIndex(2); // "Hold it steady"
+                setEnrollStep("Follow the sensor LED instructions (Scan 2 of 2)");
             }
 
             try {
-                const res = await fetch("/api/esp32/events");
-                if (!res.ok) return;
-                const data = await res.json();
-                const mode = data.device?.mode || "UNKNOWN";
-
-                if (mode === "REGISTRATION") {
-                    hasEnteredRegRef.current = true;
-                    setEnrollMsgIndex(1); // "Place your finger now"
-                    setEnrollStep("LED is purple — place your finger gently on the sensor");
-                } else if (hasEnteredRegRef.current && (mode === "DEFAULT" || mode === "VERIFICATION")) {
-                    setEnrollMsgIndex(3); // "Uploading to cloud"
-                    setEnrollStep("Uploading fingerprint to cloud...");
-
-                    const eventRes = await fetch(`/api/student/biometric/status?studentId=${studentId}`);
-                    if (eventRes.ok) {
-                        const eventData = await eventRes.json();
-                        if (eventData.status === "SUCCESS") {
-                            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-                            setEnrollMsgIndex(4);
-                            setStatus("success");
-                            setEnrollStep("");
-                            toast.success("🎉 Fingerprint saved to cloud!");
-                            router.refresh();
-                            setTimeout(() => { setOpen(false); setStatus("idle"); }, 3000);
-                        } else if (eventData.status === "FAILED") {
-                            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-                            setStatus("error");
-                            setEnrollStep("Scan failed — try pressing a bit firmer next time.");
-                            toast.error("Registration failed");
-                        }
+                const eventRes = await fetch(`/api/student/biometric/status?studentId=${studentId}`);
+                if (eventRes.ok) {
+                    const eventData = await eventRes.json();
+                    
+                    if (eventData.status === "SUCCESS") {
+                        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                        setEnrollMsgIndex(4);
+                        setStatus("success");
+                        setEnrollStep("");
+                        toast.success("🎉 Fingerprint successfully registered!");
+                        router.refresh();
+                        setTimeout(() => { setOpen(false); setStatus("idle"); }, 3000);
+                    } else if (eventData.status === "FAILED") {
+                        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                        setStatus("error");
+                        setEnrollStep("Scan failed — try pressing a bit firmer next time.");
+                        toast.error("Registration failed");
                     }
-                } else if (!hasEnteredRegRef.current) {
-                    setEnrollStep("Waiting for sensor to wake up...");
+                    // If PENDING, just keep polling
                 }
             } catch (error) {
                 console.error("Polling error", error);
             }
-        }, 3000);
+        }, 1000); // Poll every 1 second for ultra-fast UI updates
     };
 
     const handleDelete = async () => {

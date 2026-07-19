@@ -111,7 +111,7 @@ const BiometricHub = () => {
         s.biometricId?.toLowerCase().includes(search.toLowerCase())
     );
 
-    const enrolledCount = students.filter(s => !!s.biometricId).length;
+    const enrolledCount = students.filter(s => !!s.biometricId && !s.biometricId.startsWith("PENDING-")).length;
 
     if (loading && !device) {
         return (
@@ -263,7 +263,7 @@ const BiometricHub = () => {
                                     <div className="flex-1 space-y-2 text-center md:text-left">
                                         <h4 className="text-xl font-bold">Enrollment Status</h4>
                                         <p className="text-white/60 text-sm leading-relaxed max-w-md">
-                                            {enrolledCount} of {students.length} students have fingerprints stored in the cloud.
+                                            {enrolledCount} of {students.length} students have fingerprints stored on the sensor.
                                         </p>
                                     </div>
                                 </div>
@@ -335,13 +335,13 @@ const BiometricHub = () => {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between gap-2 mb-0.5">
                                             <h4 className="font-bold text-slate-800 truncate">{student.name} {student.surname}</h4>
-                                            {student.biometricId && (
+                                            {student.biometricId && !student.biometricId.startsWith("PENDING-") && (
                                                 <span className="text-[8px] font-black bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">Verified</span>
                                             )}
                                         </div>
-                                        <p className="text-xs text-slate-400 font-medium">{student.class.name} • {student.biometricId || "Unregistered"}</p>
+                                        <p className="text-xs text-slate-400 font-medium">{student.class.name} • {(student.biometricId && !student.biometricId.startsWith("PENDING-")) ? student.biometricId : "Unregistered"}</p>
                                     </div>
-                                    <BiometricRegistrationButton studentId={student.id} hasBiometric={!!student.biometricId} />
+                                    <BiometricRegistrationButton studentId={student.id} hasBiometric={!!student.biometricId && !student.biometricId.startsWith("PENDING-")} />
                                 </div>
                             ))}
                         </div>
