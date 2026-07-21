@@ -5,6 +5,8 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { setClerkUserMetadata } from "./clerk-metadata";
 import { revalidatePath } from "next/cache";
 import type { OrgMetadata, InstitutionType } from "@/types/organization";
+import { getSeedTemplate } from "./seed-templates";
+import type { PrismaClient, Prisma } from "@prisma/client";
 
 type CurrentState = { success: boolean; error: boolean; messages?: string[] };
 
@@ -19,6 +21,31 @@ function requireSuperAdmin() {
     return { authorized: false as const, error: { success: false, error: true, messages: ["Unauthorized"] } };
   }
   return { authorized: true as const, userId };
+}
+
+/**
+ * Shared helper to delete all organization data in order of foreign-key constraints.
+ */
+async function deleteOrgCascade(orgId: string, client: PrismaClient | Prisma.TransactionClient) {
+  await client.assignmentSubmission.deleteMany({ where: { organizationId: orgId } });
+  await client.attendance.deleteMany({ where: { organizationId: orgId } });
+  await client.attendanceSession.deleteMany({ where: { organizationId: orgId } });
+  await client.assignment.deleteMany({ where: { organizationId: orgId } });
+  await client.lesson.deleteMany({ where: { organizationId: orgId } });
+  await client.subject.deleteMany({ where: { organizationId: orgId } });
+  await client.courseEnrollment.deleteMany({ where: { organizationId: orgId } });
+  await client.student.deleteMany({ where: { organizationId: orgId } });
+  await client.teacher.deleteMany({ where: { organizationId: orgId } });
+  await client.class.deleteMany({ where: { organizationId: orgId } });
+  await client.grade.deleteMany({ where: { organizationId: orgId } });
+  await client.announcementRead.deleteMany({ where: { organizationId: orgId } });
+  await client.announcement.deleteMany({ where: { organizationId: orgId } });
+  await client.material.deleteMany({ where: { organizationId: orgId } });
+  await client.notification.deleteMany({ where: { organizationId: orgId } });
+  await client.schoolConfig.deleteMany({ where: { organizationId: orgId } });
+  await client.deviceHeartbeat.deleteMany({ where: { organizationId: orgId } });
+  await client.user.deleteMany({ where: { organizationId: orgId } });
+  await client.organization.delete({ where: { id: orgId } });
 }
 
 // ── Dashboard Stats ─────────────────────────────────────────────
@@ -107,13 +134,64 @@ export async function createOrganization(
       return { success: false, error: true, messages: ["An organization with this slug already exists"] };
     }
 
-    // 2. Create the Organization record
     const institutionType = (formData.get("institutionType") as InstitutionType) || "UNIVERSITY_DEPARTMENT";
-    const org = await prisma.organization.create({
-      data: { name, slug, institutionType },
+    const template = getSeedTemplate(institutionType);
+
+    // 2. Create the Organization row + seed default data atomically.
+    //    All DB writes are inside a single transaction so any failure
+    //    (e.g. duplicate subject/class name) rolls back the entire org creation.
+    //    Clerk is an external HTTP call and cannot participate in a DB transaction;
+    //    it is called after the transaction commits (see step 3).
+    const org = await prisma.$transaction(async (tx) => {
+      // 2a. Create org
+      const newOrg = await tx.organization.create({
+        data: { name, slug, institutionType },
+      });
+
+      // 2b. Seed Grade rows (createMany doesn't return IDs, so we create one-by-one
+      //     to build the gradeLevel → id map needed by Class rows).
+      const gradeLevelToId = new Map<number, number>();
+      for (const grade of template.grades) {
+        const created = await tx.grade.create({
+          data: { level: grade.level, organizationId: newOrg.id },
+        });
+        gradeLevelToId.set(grade.level, created.id);
+      }
+
+      // 2c. Seed Class rows — each references a Grade by the level → id map.
+      await tx.class.createMany({
+        data: template.classes.map((cls) => ({
+          name: cls.name,
+          gradeId: gradeLevelToId.get(cls.gradeLevel)!,
+          organizationId: newOrg.id,
+        })),
+        skipDuplicates: true,
+      });
+
+      // 2d. Seed Subject rows.
+      await tx.subject.createMany({
+        data: template.subjects.map((subjectName) => ({
+          name: subjectName,
+          organizationId: newOrg.id,
+        })),
+        skipDuplicates: true,
+      });
+
+      // 2e. Seed SchoolConfig key/value pairs.
+      await tx.schoolConfig.createMany({
+        data: template.schoolConfig.map((entry) => ({
+          key: entry.key,
+          value: entry.value,
+          organizationId: newOrg.id,
+        })),
+        skipDuplicates: true,
+      });
+
+      return newOrg;
     });
 
-    // 3. Create a Clerk user for the admin (invitation-style)
+    // 3. Create a Clerk user for the admin (invitation-style).
+    //    This is outside the DB transaction because Clerk is an external service.
     let clerkUser;
     try {
       clerkUser = await clerkClient().users.createUser({
@@ -129,13 +207,14 @@ export async function createOrganization(
         },
       });
     } catch (clerkErr: any) {
-      // If Clerk user creation fails, clean up the org
-      await prisma.organization.delete({ where: { id: org.id } });
+      // Clerk failed — roll back all seeded DB data in FK-constraint order
+      // before deleting the org itself.
+      await deleteOrgCascade(org.id, prisma);
       const msg = clerkErr.errors?.[0]?.message || "Failed to create admin user in Clerk";
       return { success: false, error: true, messages: [msg] };
     }
 
-    // 4. Create User record in our DB
+    // 4. Create User record in our DB.
     await prisma.user.create({
       data: {
         clerkId: clerkUser.id,
@@ -198,27 +277,7 @@ export async function deleteOrganization(orgId: string) {
     }
 
     // 3. Delete DB records in order of constraints
-    await prisma.assignmentSubmission.deleteMany({ where: { organizationId: orgId } });
-    await prisma.attendance.deleteMany({ where: { organizationId: orgId } });
-    await prisma.attendanceSession.deleteMany({ where: { organizationId: orgId } });
-    await prisma.assignment.deleteMany({ where: { organizationId: orgId } });
-    await prisma.lesson.deleteMany({ where: { organizationId: orgId } });
-    await prisma.subject.deleteMany({ where: { organizationId: orgId } });
-    await prisma.courseEnrollment.deleteMany({ where: { organizationId: orgId } });
-    await prisma.student.deleteMany({ where: { organizationId: orgId } });
-    await prisma.teacher.deleteMany({ where: { organizationId: orgId } });
-    await prisma.class.deleteMany({ where: { organizationId: orgId } });
-    await prisma.grade.deleteMany({ where: { organizationId: orgId } });
-    await prisma.announcementRead.deleteMany({ where: { organizationId: orgId } });
-    await prisma.announcement.deleteMany({ where: { organizationId: orgId } });
-    await prisma.material.deleteMany({ where: { organizationId: orgId } });
-    await prisma.notification.deleteMany({ where: { organizationId: orgId } });
-    await prisma.schoolConfig.deleteMany({ where: { organizationId: orgId } });
-    await prisma.deviceHeartbeat.deleteMany({ where: { organizationId: orgId } });
-    await prisma.user.deleteMany({ where: { organizationId: orgId } });
-
-    // 4. Finally, delete the organisation itself
-    await prisma.organization.delete({ where: { id: orgId } });
+    await deleteOrgCascade(orgId, prisma);
 
     revalidatePath("/super-admin/organisations");
     return { success: true, error: false };

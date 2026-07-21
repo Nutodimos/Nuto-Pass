@@ -130,12 +130,18 @@ const SidebarContent = ({
             {/* Logo */}
             <div className={`p-4 border-b border-slate-100 ${isCollapsed ? "flex justify-center" : ""}`}>
                 <Link href="/" onClick={onNavigate} className={`flex items-center gap-3 ${isCollapsed ? "justify-center" : ""}`}>
-                    <div className={`relative ${isCollapsed ? "w-8 h-8" : "w-10 h-10"}`}>
-                        <Image src={orgLogo || "/cpeautomation-logo.png"} alt="logo" fill className="object-contain mix-blend-multiply" />
-                    </div>
+                    {orgLogo ? (
+                        <div className={`relative ${isCollapsed ? "w-8 h-8" : "w-10 h-10"}`}>
+                            <Image src={orgLogo} alt="logo" fill className="object-contain mix-blend-multiply" />
+                        </div>
+                    ) : (
+                        <div className={`flex items-center justify-center font-bold rounded-lg ${isCollapsed ? "w-8 h-8 text-sm" : "w-10 h-10 text-lg"}`} style={{ backgroundColor: `rgba(${orgPrimaryRgb}, 0.1)`, color: orgPrimaryColor }}>
+                            {(orgTitle || orgName || "O").charAt(0).toUpperCase()}
+                        </div>
+                    )}
                     {!isCollapsed && (
                         <span className="font-bold tracking-tight" style={{ color: orgPrimaryColor }}>
-                            {orgTitle || orgName || "CPE Automation"}
+                            {orgTitle || orgName || "Organization"}
                         </span>
                     )}
                 </Link>

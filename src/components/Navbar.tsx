@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { MobileMenuButton } from "./Sidebar";
+import { useOrgMetadata } from "./OrgMetadataProvider";
 
 import {
   Search,
@@ -90,6 +91,10 @@ const getTimeAgo = (date: Date): string => {
 const Navbar = () => {
   const router = useRouter();
   const { user } = useUser();
+  const { metadata, orgName } = useOrgMetadata();
+  const orgLogo = metadata?.uiConfig?.logoUrl;
+  const orgPrimaryColor = metadata?.uiConfig?.primaryColor || "#0A1E4B";
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
 
@@ -492,14 +497,20 @@ const Navbar = () => {
         </div>
 
         {/* Center - Mobile Logo (only visible on small screens) */}
-        <Link href="/" className="md:hidden">
-          <Image
-            src="/cpeautomation-logo.png"
-            alt="CPE Automation"
-            width={70}
-            height={70}
-            className="mix-blend-multiply"
-          />
+        <Link href="/" className="md:hidden flex items-center gap-2">
+          {orgLogo ? (
+            <Image
+              src={orgLogo}
+              alt="Logo"
+              width={70}
+              height={70}
+              className="mix-blend-multiply object-contain"
+            />
+          ) : (
+            <div className="flex items-center justify-center font-bold rounded-lg w-10 h-10 text-lg shadow-sm" style={{ backgroundColor: `${orgPrimaryColor}20`, color: orgPrimaryColor }}>
+                {(orgName || "O").charAt(0).toUpperCase()}
+            </div>
+          )}
         </Link>
 
         {/* Desktop Search Bar */}
