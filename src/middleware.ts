@@ -22,6 +22,17 @@ export default clerkMiddleware((auth, req) => {
   const role = metadata?.role;
   const pathname = req.nextUrl.pathname;
 
+  // ── Root path (/) handling ──────────────────────────────────────
+  if (pathname === "/") {
+    if (!userId) {
+      return NextResponse.redirect(new URL("/sign-in", req.url));
+    }
+    const redirectPath = role === "super_admin" 
+      ? "/super-admin/dashboard" 
+      : (role ? `/${role}` : "/sign-in");
+    return NextResponse.redirect(new URL(redirectPath, req.url));
+  }
+
   // ── Super Admin routes ────────────────────────────────────────
   if (isSuperAdminRoute(req)) {
     if (!userId || role !== "super_admin") {
