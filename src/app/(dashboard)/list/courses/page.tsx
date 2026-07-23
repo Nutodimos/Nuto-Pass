@@ -9,6 +9,8 @@ import { BookOpen, Users, Calendar, FileText, ChevronRight } from "lucide-react"
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import CourseLevelFilter from "@/components/CourseLevelFilter";
+import { getOrgContext } from "@/lib/tenant";
+import { getTerm } from "@/lib/terminology";
 
 type SubjectWithCounts = Subject & {
   teachers: Teacher[];
@@ -27,6 +29,19 @@ const CoursesPage = async ({
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
   const userId = sessionClaims?.sub;
+  const ctx = getOrgContext();
+  
+  let institutionType = ctx.institutionType;
+  if (!institutionType && ctx.organizationId) {
+    const org = await prisma.organization.findUnique({
+      where: { id: ctx.organizationId },
+      select: { institutionType: true }
+    });
+    if (org) institutionType = org.institutionType as any;
+  }
+
+  const termSubjectPlural = getTerm(institutionType, "subject", { plural: true, capitalize: true });
+  const termSubjectSingular = getTerm(institutionType, "subject", { capitalize: true });
 
   const { page, ...queryParams } = searchParams;
   const p = page ? parseInt(page) : 1;
@@ -133,8 +148,8 @@ const CoursesPage = async ({
               <BookOpen className="w-7 h-7 text-white" />
             </div>
             <div className="text-white">
-              <h1 className="text-2xl font-bold">Courses</h1>
-              <p className="text-white/80 text-sm">{count} courses available</p>
+              <h1 className="text-2xl font-bold">{termSubjectPlural}</h1>
+              <p className="text-white/80 text-sm">{count} {termSubjectPlural.toLowerCase()} available</p>
             </div>
           </div>
 
@@ -155,7 +170,7 @@ const CoursesPage = async ({
       {data.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl">
           <BookOpen className="w-16 h-16 text-gray-300 mb-4" />
-          <h3 className="text-lg font-medium text-gray-500">No courses found</h3>
+          <h3 className="text-lg font-medium text-gray-500">No {termSubjectPlural.toLowerCase()} found</h3>
           <p className="text-sm text-gray-400">Try adjusting your search</p>
         </div>
       ) : (
@@ -272,7 +287,7 @@ const CoursesPage = async ({
             </div>
             <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
               <div className="bg-slate-800 text-white text-sm px-3 py-2 rounded-lg shadow-lg">
-                Create New Course
+                Create New {termSubjectSingular}
                 <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
                   <div className="border-8 border-transparent border-l-slate-800"></div>
                 </div>
