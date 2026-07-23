@@ -30,16 +30,20 @@ export const GET = async (
             return NextResponse.json({ message: "Session not found" }, { status: 404 });
         }
 
-        // Get all attendances for this lesson recorded during this session's timeframe
-        // (From startTime until now, or endTime if closed)
-        const endTime = session.endTime || new Date();
+        // Get all attendances for this lesson recorded during or after this session's startTime
+        // Note: The ESP32 sends local time (UTC+1) which the Vercel server (UTC) 
+        // misinterprets as being 1 hour in the future. To fix this without requiring a firmware flash,
+        // we use a flexible endTime boundary (current time + 24 hours).
+        const endTimeBoundary = session.endTime 
+            ? new Date(session.endTime.getTime() + (24 * 60 * 60 * 1000)) 
+            : new Date(Date.now() + (24 * 60 * 60 * 1000));
         
         const attendances = await prisma.attendance.findMany({
             where: {
                 lessonId: session.lessonId,
                 date: {
                     gte: session.startTime,
-                    lte: endTime,
+                    lte: endTimeBoundary,
                 },
                 present: true,
             },
