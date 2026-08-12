@@ -5,7 +5,8 @@ export const subjectSchema = z.object({
   name: z.string().min(1, { message: "Course code is required!" }),
   title: z.string().optional().or(z.literal("")),
   credits: z.coerce.number().optional().or(z.literal("")),
-  teachers: z.array(z.string()), //teacher ids
+  status: z.string().optional().or(z.literal("")),
+  teachers: z.array(z.string()).optional().default([]), //teacher ids
   semester: z.coerce.number().optional().or(z.literal("")), // 1 = first, 2 = second, empty = both
   level: z.coerce.number().optional().or(z.literal("")),
 });

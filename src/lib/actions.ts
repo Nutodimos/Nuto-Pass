@@ -78,9 +78,10 @@ export const createSubject = async (
         credits: data.credits === "" ? null : data.credits,
         level: !data.level || data.level === 0 ? null : data.level,
         semester: data.semester === "" ? null : data.semester,
+        status: data.status || null,
         organizationId: authCheck.organizationId,
         teachers: {
-          connect: data.teachers.map((teacherId) => ({ id: teacherId })),
+          connect: (data.teachers || []).map((teacherId) => ({ id: teacherId })),
         },
       },
     });
@@ -111,8 +112,9 @@ export const updateSubject = async (
         credits: data.credits === "" ? null : data.credits,
         level: !data.level || data.level === 0 ? null : data.level,
         semester: data.semester === "" ? null : data.semester,
+        status: data.status || null,
         teachers: {
-          set: data.teachers.map((teacherId) => ({ id: teacherId })),
+          set: (data.teachers || []).map((teacherId) => ({ id: teacherId })),
         },
       },
     });

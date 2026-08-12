@@ -130,7 +130,7 @@ const BiometricHub = () => {
                         <ShieldCheck className="w-8 h-8 text-CPEGold" />
                         Biometric Hub
                     </h1>
-                    <p className="text-slate-500 font-medium">Command center for your R307 hardware & enrollment.</p>
+                    <p className="text-slate-500 font-medium">Command center for the Biometric Attendance Module</p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -141,8 +141,8 @@ const BiometricHub = () => {
                         <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
                     </button>
                     <div className={`px-4 py-2 rounded-xl flex items-center gap-2 border font-bold text-xs uppercase tracking-widest ${device?.status === "online" ? "bg-emerald-50 border-emerald-100 text-emerald-600" :
-                            device?.status === "idle" ? "bg-amber-50 border-amber-100 text-amber-600" :
-                                "bg-red-50 border-red-100 text-red-600"
+                        device?.status === "idle" ? "bg-amber-50 border-amber-100 text-amber-600" :
+                            "bg-red-50 border-red-100 text-red-600"
                         }`}>
                         <div className={`w-2 h-2 rounded-full ${device?.status === "online" ? "bg-emerald-500 animate-pulse" : "bg-current"}`} />
                         Device {device?.status || "offline"}
@@ -193,8 +193,8 @@ const BiometricHub = () => {
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all capitalize ${activeTab === tab
-                                ? "bg-white text-CPENavy shadow-sm"
-                                : "text-slate-500 hover:text-slate-800"
+                            ? "bg-white text-CPENavy shadow-sm"
+                            : "text-slate-500 hover:text-slate-800"
                             }`}
                     >
                         {tab}
@@ -391,7 +391,7 @@ const DiagItem = ({ label, value, icon, status }: any) => (
         <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
             <p className={`text-sm font-bold ${status === "success" ? "text-emerald-600" :
-                    status === "error" ? "text-red-500" : "text-slate-700"
+                status === "error" ? "text-red-500" : "text-slate-700"
                 }`}>{value}</p>
         </div>
     </div>

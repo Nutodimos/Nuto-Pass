@@ -208,17 +208,42 @@ const CoursesPage = async ({
               <div className="group cpe-card-indicator"></div>
               <Link href={`/list/courses/${course.id}`} className="block flex-1 relative z-10">
                 {/* Course Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-CPENavy to-CPENavyDark flex items-center justify-center">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-CPENavy to-CPENavyDark flex items-center justify-center shrink-0">
                     <BookOpen className="w-6 h-6 text-white" />
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-CPENavy transition-colors" />
+                  <div className="flex items-center gap-2">
+                    {course.status && (
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${
+                        course.status === "C"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : course.status === "R"
+                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                          : "bg-purple-50 text-purple-700 border-purple-200"
+                      }`}>
+                        {course.status === "C" ? "Compulsory" : course.status === "R" ? "Required" : "Elective"}
+                      </span>
+                    )}
+                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-CPENavy transition-colors" />
+                  </div>
                 </div>
 
-                {/* Course Name */}
-                <h3 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-CPENavy transition-colors">
-                  {course.name}
-                </h3>
+                {/* Course Code & Title */}
+                <div className="mb-3">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-CPENavy transition-colors">
+                      {course.name}
+                    </h3>
+                    {course.credits !== null && course.credits !== undefined && (
+                      <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                        {course.credits} {course.credits === 1 ? "Unit" : "Units"}
+                      </span>
+                    )}
+                  </div>
+                  {course.title && (
+                    <p className="text-sm font-medium text-slate-600 line-clamp-1">{course.title}</p>
+                  )}
+                </div>
 
                 {/* Lecturers */}
                 <p className="text-sm text-gray-500 mb-4 line-clamp-1">

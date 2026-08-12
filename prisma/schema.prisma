@@ -170,6 +170,7 @@ model Subject {
   level     Int?      // 100, 200, 300 etc.
   isActive  Boolean   @default(true)
   semester  Int?      // 1 = First semester, 2 = Second semester, null = both/full year
+  status    String?   // "C" = Compulsory, "R" = Required, "E" = Elective
   teachers  Teacher[]
   lessons     Lesson[]
   materials   Material[]
