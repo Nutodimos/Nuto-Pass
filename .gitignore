@@ -42,3 +42,9 @@ next-env.d.ts
 /public/sw.js.map
 /public/workbox-*.js.map
 /public/swe-worker-*.js
+
+# Demo recordings
+/recordings/
+
+# Scratch / temp files
+scratch.js

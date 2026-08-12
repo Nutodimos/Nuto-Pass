@@ -14,7 +14,12 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
 
     const { sessionClaims } = auth();
     const role = (sessionClaims?.metadata as { role?: string })?.role;
-    const userId = sessionClaims?.sub;
+
+    const levelClassInfo = await prisma.class.findUnique({
+        where: { id: levelId },
+        select: { grade: { select: { level: true } } }
+    });
+    if (!levelClassInfo) return notFound();
 
     const level = await prisma.class.findUnique({
         where: { id: levelId },
@@ -24,10 +29,27 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
             _count: {
                 select: {
                     students: true,
-                    lessons: true,
+                    lessons: {
+                        where: {
+                            subject: {
+                                OR: [
+                                    { level: null },
+                                    { level: levelClassInfo.grade.level }
+                                ]
+                            }
+                        }
+                    },
                 }
             },
             lessons: {
+                where: {
+                    subject: {
+                        OR: [
+                            { level: null },
+                            { level: levelClassInfo.grade.level }
+                        ]
+                    }
+                },
                 include: {
                     subject: true,
                     teacher: true,
@@ -43,8 +65,6 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
     if (!level) return notFound();
 
     // 2. Fetch Aggregate Attendance Stats for this level's students
-    // To calculate the overall average attendance for this level:
-    // We get total attendances marked for students in this class, and count how many were 'present: true'.
     const attendanceStats = await prisma.attendance.aggregate({
         where: {
             student: {
