@@ -39,12 +39,27 @@ export const POST = async (req: NextRequest) => {
             return NextResponse.json({ message: "No organization context" }, { status: 400 });
         }
 
+        // Fetch current academic session & semester config
+        const [sessionConfig, semesterConfig] = await Promise.all([
+            prisma.schoolConfig.findFirst({
+                where: { organizationId, key: "sessionYear" }
+            }),
+            prisma.schoolConfig.findFirst({
+                where: { organizationId, key: "currentSemester" }
+            })
+        ]);
+
+        const academicSession = sessionConfig?.value || "2024/25";
+        const semester = semesterConfig?.value ? parseInt(semesterConfig.value) : 1;
+
         // Create new session
         const newSession = await prisma.attendanceSession.create({
             data: {
                 lessonId: Number(lessonId),
                 status: "OPEN",
                 startTime: new Date(),
+                academicSession,
+                semester,
                 organizationId,
             },
         });

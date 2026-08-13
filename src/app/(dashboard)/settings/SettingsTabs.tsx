@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, Palette, Shield, Lock } from "lucide-react";
+import { User, Palette, Shield, Lock, Archive } from "lucide-react";
 
 interface Tab {
     id: string;
@@ -14,6 +14,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     palette: Palette,
     shield: Shield,
     lock: Lock,
+    archive: Archive,
 };
 
 const SettingsTabs = ({

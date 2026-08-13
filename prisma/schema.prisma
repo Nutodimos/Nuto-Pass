@@ -252,8 +252,6 @@ model AssignmentSubmission {
   @@index([organizationId])
 }
 
-
-
 model Attendance {
   id      Int      @id @default(autoincrement())
   date    DateTime
@@ -264,6 +262,12 @@ model Attendance {
   lessonId  Int
   lesson    Lesson  @relation(fields: [lessonId], references: [id])
 
+  sessionId Int?
+  session   AttendanceSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  academicSession String?
+  semester        Int?
+
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
 
@@ -271,9 +275,8 @@ model Attendance {
   @@index([lessonId, date])
   @@index([date])
   @@index([organizationId])
+  @@index([sessionId])
 }
-
-
 
 model Announcement {
   id              Int                 @id @default(autoincrement())
@@ -332,6 +335,11 @@ model AttendanceSession {
   startTime DateTime @default(now())
   endTime   DateTime?
   status    SessionStatus @default(OPEN)
+
+  academicSession String?
+  semester        Int?
+
+  attendances Attendance[]
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])

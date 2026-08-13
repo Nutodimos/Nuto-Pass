@@ -713,7 +713,39 @@ export const updateSchoolConfig = async (
   }
 
   try {
-    // Update session year
+    // 1. Fetch old configs to tag untagged records for archiving
+    const [oldSessionConfig, oldSemesterConfig] = await Promise.all([
+      db.schoolConfig.findFirst({ where: { key: "sessionYear" } }),
+      db.schoolConfig.findFirst({ where: { key: "currentSemester" } }),
+    ]);
+
+    const oldSession = oldSessionConfig?.value || "2024/25";
+    const oldSemester = oldSemesterConfig?.value ? parseInt(oldSemesterConfig.value) : 1;
+
+    // 2. Tag any untagged sessions and attendances before resetting
+    await db.attendanceSession.updateMany({
+      where: { organizationId: authCheck.organizationId, academicSession: null },
+      data: { academicSession: oldSession, semester: oldSemester }
+    });
+
+    await db.attendance.updateMany({
+      where: { organizationId: authCheck.organizationId, academicSession: null },
+      data: { academicSession: oldSession, semester: oldSemester }
+    });
+
+    // 3. Reset/Close any currently active attendance sessions for the new session update
+    await db.attendanceSession.updateMany({
+      where: { organizationId: authCheck.organizationId, status: "OPEN" },
+      data: { status: "CLOSED", endTime: new Date() }
+    });
+
+    // Reset ESP32 biometric device to IDLE
+    await db.deviceHeartbeat.updateMany({
+      where: { organizationId: authCheck.organizationId, deviceId: "ESP32_MAIN" },
+      data: { pendingCommand: "VERIFY:STOP" }
+    });
+
+    // 4. Update session year
     await db.schoolConfig.upsert({
       where: { organizationId_key: { organizationId: authCheck.organizationId, key: "sessionYear" } },
       update: { value: sessionYear },
@@ -732,6 +764,7 @@ export const updateSchoolConfig = async (
     revalidatePath("/admin");
     revalidatePath("/settings");
     revalidatePath("/list/courses");
+    revalidatePath("/list/attendance");
     return { success: true, error: false };
   } catch (err) {
     console.error(err);

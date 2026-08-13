@@ -3,9 +3,10 @@ import SettingsForm from "@/components/forms/SettingsForm";
 import ProfileSettings from "@/components/forms/ProfileSettings";
 import ThemeSettings from "@/components/forms/ThemeSettings";
 import SecuritySettings from "@/components/forms/SecuritySettings";
+import AttendanceArchiveSettings from "@/components/forms/AttendanceArchiveSettings";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { Settings, User, Palette, Shield, Lock } from "lucide-react";
+import { Settings, Shield } from "lucide-react";
 
 // Client wrapper for tabs
 import SettingsTabs from "./SettingsTabs";
@@ -61,13 +62,101 @@ const SettingsPage = async () => {
     // Fetch school config for admin
     let currentSession = "2024/25";
     let currentSemester = "1";
-    if (role === "admin") {
-        const [sessionConfig, semesterConfig] = await Promise.all([
-            prisma.schoolConfig.findFirst({ where: { key: "sessionYear" } }),
-            prisma.schoolConfig.findFirst({ where: { key: "currentSemester" } }),
-        ]);
-        currentSession = sessionConfig?.value || "2024/25";
-        currentSemester = semesterConfig?.value || "1";
+    
+    const [sessionConfig, semesterConfig] = await Promise.all([
+        prisma.schoolConfig.findFirst({ where: { key: "sessionYear" } }),
+        prisma.schoolConfig.findFirst({ where: { key: "currentSemester" } }),
+    ]);
+    if (sessionConfig?.value) currentSession = sessionConfig.value;
+    if (semesterConfig?.value) currentSemester = semesterConfig.value;
+
+    // Fetch archived attendance sessions for admin & teacher
+    let archivedSessionsData: any[] = [];
+    let academicSessionsList: string[] = [];
+
+    if (role === "admin" || role === "teacher") {
+        const sessions = await prisma.attendanceSession.findMany({
+            orderBy: { startTime: "desc" },
+            include: {
+                lesson: {
+                    include: {
+                        subject: true,
+                        class: {
+                            include: {
+                                students: {
+                                    where: { isActive: true },
+                                    select: { id: true, name: true, surname: true, username: true }
+                                }
+                            }
+                        }
+                    }
+                },
+                attendances: {
+                    select: { studentId: true, date: true, present: true }
+                }
+            }
+        });
+
+        // Unique academic sessions list
+        const sessionsSet = new Set<string>();
+        if (currentSession) sessionsSet.add(currentSession);
+
+        sessions.forEach((s) => {
+            if (s.academicSession) sessionsSet.add(s.academicSession);
+        });
+        academicSessionsList = Array.from(sessionsSet);
+
+        archivedSessionsData = sessions.map((session) => {
+            const classStudents = session.lesson?.class?.students || [];
+            const attendanceMap = new Map<string, { present: boolean; date?: Date }>();
+
+            session.attendances.forEach((att) => {
+                attendanceMap.set(att.studentId, { present: att.present, date: att.date });
+            });
+
+            const attendees = classStudents.map((student) => {
+                const record = attendanceMap.get(student.id);
+                return {
+                    id: student.id,
+                    name: student.name,
+                    surname: student.surname,
+                    username: student.username,
+                    present: record ? record.present : false,
+                    time: record && record.date ? new Date(record.date).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : undefined
+                };
+            });
+
+            const presentCount = attendees.filter((a) => a.present).length;
+            const totalStudents = classStudents.length || attendees.length;
+            const absentCount = Math.max(0, totalStudents - presentCount);
+            const attendancePercentage = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
+
+            const semesterName = session.semester === 1
+                ? "Harmattan Semester"
+                : session.semester === 2
+                ? "Rain Semester"
+                : currentSemester === "1"
+                ? "Harmattan Semester"
+                : "Rain Semester";
+
+            return {
+                id: session.id,
+                courseCode: session.lesson?.subject?.name || "Unknown Course",
+                courseTitle: session.lesson?.subject?.title || "",
+                levelName: session.lesson?.class?.name || "Unassigned Level",
+                date: session.startTime.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                startTime: session.startTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
+                endTime: session.endTime ? session.endTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "Active / Open",
+                academicSession: session.academicSession || currentSession,
+                semester: semesterName,
+                status: session.status,
+                totalStudents,
+                presentCount,
+                absentCount,
+                attendancePercentage,
+                attendees
+            };
+        });
     }
 
     // Get semester display text
@@ -82,6 +171,20 @@ const SettingsPage = async () => {
             label: "Profile",
             icon: "user",
             content: <ProfileSettings profile={profile} role={role} />,
+        });
+    }
+
+    if (role === "admin" || role === "teacher") {
+        tabs.push({
+            id: "archive",
+            label: "Attendance Archive",
+            icon: "archive",
+            content: (
+                <AttendanceArchiveSettings
+                    archivedSessions={archivedSessionsData}
+                    academicSessionsList={academicSessionsList}
+                />
+            ),
         });
     }
 
@@ -144,7 +247,7 @@ const SettingsPage = async () => {
                     <div>
                         <h1 className="text-2xl font-bold text-white">Settings</h1>
                         <p className="text-white/80 text-sm">
-                            Manage your profile, appearance, and preferences
+                            Manage your profile, attendance archives, appearance, and school configuration
                         </p>
                     </div>
                 </div>

@@ -85,6 +85,9 @@ export const POST = async (req: NextRequest) => {
                 present: true,
                 studentId: student.id,
                 lessonId: activeSession.lessonId,
+                sessionId: activeSession.id,
+                academicSession: activeSession.academicSession,
+                semester: activeSession.semester,
                 organizationId: student.organizationId,
             },
         });
