@@ -45,7 +45,8 @@ const LoginPage = () => {
         router.push("/");
         toast.success("Welcome back!");
       } else {
-        toast.info("Additional steps required for login.");
+        console.log("Clerk incomplete sign-in result:", result);
+        toast.info(`Additional steps required: ${result.status}`);
       }
     } catch (err: any) {
       console.error("Login error:", err);
