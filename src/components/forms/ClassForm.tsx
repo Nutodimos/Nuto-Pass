@@ -104,11 +104,11 @@ const ClassForm = ({
           />
         )}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-sm font-medium text-CPENavyDark">Level Adviser</label>
+          <label className="text-sm font-medium text-CPENavyDark">{taxonomy.class} Adviser / Supervisor</label>
           <select
             className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
             {...register("supervisorId")}
-            defaultValue={data?.teachers}
+            defaultValue={data?.supervisorId || relatedData?.teachers?.[0]?.id}
           >
             {teachers.map(
               (teacher: { id: string; name: string; surname: string }) => (
@@ -139,7 +139,7 @@ const ClassForm = ({
               <p key={i} className="text-sm text-red-600">• {msg}</p>
             ))
           ) : (
-            <p className="text-sm text-red-600">• Something went wrong. Please try again.</p>
+            <p className="text-sm text-red-600">• Something went wrong!</p>
           )}
         </div>
       )}
@@ -147,7 +147,7 @@ const ClassForm = ({
         type="submit"
         className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-CPENavy to-CPENavyDark text-white font-semibold text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
       >
-        {type === "create" ? "Create Level" : "Update Level"}
+        {type === "create" ? `Create ${taxonomy.class}` : `Update ${taxonomy.class}`}
       </button>
     </form>
   );

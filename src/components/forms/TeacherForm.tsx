@@ -46,6 +46,16 @@ const TeacherForm = ({
     resolver: zodResolver(teacherSchema),
     defaultValues: {
       ...data,
+      id: data?.id,
+      username: data?.username || "",
+      name: data?.name || "",
+      surname: data?.surname || "",
+      email: data?.email || "",
+      phone: data?.phone || "",
+      address: data?.address || "",
+      bloodType: data?.bloodType || "",
+      sex: data?.sex || "MALE",
+      birthday: data?.birthday ? new Date(data.birthday).toISOString().split("T")[0] : undefined,
       subjects: data?.subjects?.map((s: any) => typeof s === "object" ? s.id.toString() : s.toString()) || [],
     },
   });

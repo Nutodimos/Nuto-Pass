@@ -7,12 +7,18 @@ interface OrgMetadataContextValue {
   institutionType: InstitutionType;
   metadata: Partial<OrgMetadata> | null;
   orgName?: string;
+  sessionYear?: string;
+  currentSemester?: string;
+  semesterText?: string;
 }
 
 const OrgMetadataContext = createContext<OrgMetadataContextValue>({
   institutionType: "UNIVERSITY_DEPARTMENT",
   metadata: null,
   orgName: undefined,
+  sessionYear: undefined,
+  currentSemester: undefined,
+  semesterText: undefined,
 });
 
 /**
@@ -25,14 +31,20 @@ export function OrgMetadataProvider({
   institutionType,
   metadata,
   orgName,
+  sessionYear,
+  currentSemester,
+  semesterText,
 }: {
   children: ReactNode;
   institutionType: InstitutionType;
   metadata: Partial<OrgMetadata> | null;
   orgName?: string;
+  sessionYear?: string;
+  currentSemester?: string;
+  semesterText?: string;
 }) {
   return (
-    <OrgMetadataContext.Provider value={{ institutionType, metadata, orgName }}>
+    <OrgMetadataContext.Provider value={{ institutionType, metadata, orgName, sessionYear, currentSemester, semesterText }}>
       {children}
     </OrgMetadataContext.Provider>
   );

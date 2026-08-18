@@ -30,6 +30,16 @@ const SubjectForm = ({
     formState: { errors },
   } = useForm<SubjectSchema>({
     resolver: zodResolver(subjectSchema),
+    defaultValues: {
+      ...data,
+      id: data?.id,
+      name: data?.name || "",
+      title: data?.title || "",
+      credits: data?.credits !== undefined ? Number(data.credits) : undefined,
+      semester: data?.semester !== undefined ? data.semester.toString() : "1",
+      level: data?.level !== undefined && data?.level !== null ? data.level.toString() : "",
+      teachers: data?.teachers?.map((t: any) => (typeof t === "object" ? t.id : t.toString())) || [],
+    },
   });
 
   const [state, formAction] = useFormState(
@@ -178,7 +188,7 @@ const SubjectForm = ({
         type="submit"
         className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-CPEGold to-CPEGoldDark text-white font-semibold text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
       >
-        {type === "create" ? "Create Course" : "Update Course"}
+        {type === "create" ? `Create ${taxonomy.subject}` : `Update ${taxonomy.subject}`}
       </button>
     </form>
   );

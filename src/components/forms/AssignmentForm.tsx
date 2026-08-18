@@ -19,6 +19,8 @@ import { CldUploadWidget } from "next-cloudinary";
 import Image from "next/image";
 import { UploadCloud, CheckCircle2, ClipboardSignature } from "lucide-react";
 
+import { useTaxonomy } from "@/hooks/use-taxonomy";
+
 const AssignmentForm = ({
     type,
     data,
@@ -30,6 +32,7 @@ const AssignmentForm = ({
     setOpen: Dispatch<SetStateAction<boolean>>;
     relatedData?: any;
 }) => {
+    const taxonomy = useTaxonomy();
     const {
         register,
         handleSubmit,
@@ -40,8 +43,13 @@ const AssignmentForm = ({
         resolver: zodResolver(assignmentSchema),
         defaultValues: {
             ...data,
-            startDate: data?.startDate ? new Date(data.startDate) : undefined,
-            dueDate: data?.dueDate ? new Date(data.dueDate) : undefined,
+            id: data?.id,
+            title: data?.title || "",
+            description: data?.description || "",
+            startDate: data?.startDate ? new Date(data.startDate).toISOString().slice(0, 16) : undefined,
+            dueDate: data?.dueDate ? new Date(data.dueDate).toISOString().slice(0, 16) : undefined,
+            subjectId: data?.subjectId,
+            attachmentUrl: data?.attachmentUrl || "",
         }
     });
 
@@ -194,13 +202,13 @@ const AssignmentForm = ({
                 )}
 
                 <div className="flex flex-col gap-2 w-full">
-                    <label className="text-sm font-bold text-slate-700">Select Course</label>
+                    <label className="text-sm font-bold text-slate-700">Select {taxonomy.subject}</label>
                     <select
                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none transition-all duration-200 cursor-pointer appearance-none"
                         {...register("subjectId")}
                         defaultValue={data?.subjectId}
                     >
-                        <option value="" disabled selected>Choose a course...</option>
+                        <option value="" disabled selected>Choose a {taxonomy.subject.toLowerCase()}...</option>
                         {subjects.map((subject: { id: number; name: string }) => (
                             <option value={subject.id} key={subject.id}>
                                 {subject.name}
@@ -218,7 +226,7 @@ const AssignmentForm = ({
             <button
                 className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-black tracking-wide shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 mt-2"
             >
-                {type === "create" ? "Create Assignment" : "Update Details"}
+                {type === "create" ? "Publish Assignment" : "Save Changes"}
             </button>
         </form>
     );

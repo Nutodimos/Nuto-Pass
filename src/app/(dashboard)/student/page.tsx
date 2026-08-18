@@ -19,7 +19,7 @@ const StudentPage = async () => {
     },
   });
 
-  const [enrollmentsList, assignmentsCount, attendanceRecords] = await Promise.all([
+  const [enrollmentsList, assignmentsCount, attendanceRecords, sessionConfig, semesterConfig] = await Promise.all([
     prisma.courseEnrollment.findMany({
       where: { studentId: userId! },
       select: { subjectId: true },
@@ -38,7 +38,13 @@ const StudentPage = async () => {
       where: { studentId: userId! },
       select: { present: true },
     }),
+    prisma.schoolConfig.findFirst({ where: { key: "sessionYear" } }),
+    prisma.schoolConfig.findFirst({ where: { key: "currentSemester" } }),
   ]);
+
+  const sessionYear = sessionConfig?.value || "2024/25";
+  const currentSemester = semesterConfig?.value || "1";
+  const semesterText = currentSemester === "1" ? "Harmattan Semester" : "Rain Semester";
 
   const enrolledCourseCount = enrollmentsList.length;
 
@@ -105,18 +111,40 @@ const StudentPage = async () => {
               <div className="text-white">
                 <p className="text-white/80 text-xs md:text-sm font-medium mb-0.5 md:mb-1 uppercase tracking-wider">Welcome back,</p>
                 <h1 className="text-xl md:text-3xl font-bold tracking-tight">{student?.name} {student?.surname}</h1>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-white text-xs font-semibold backdrop-blur-sm border border-white/20">
+                    <CalendarDays className="w-3.5 h-3.5 text-CPEGold" />
+                    Session: {sessionYear}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-CPEGold/25 text-amber-200 text-xs font-semibold backdrop-blur-sm border border-CPEGold/40">
+                    <BookOpen className="w-3.5 h-3.5 text-CPEGold" />
+                    {semesterText}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="hidden md:flex bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 items-center gap-4">
-              <div className="p-3 bg-white/20 rounded-xl">
-                <CalendarDays className="w-6 h-6 text-white" />
+            <div className="hidden md:flex items-center gap-3">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3.5 border border-white/10 flex items-center gap-3">
+                <div className="p-2.5 bg-CPEGold/20 rounded-xl border border-CPEGold/30">
+                  <BookOpen className="w-5 h-5 text-CPEGold" />
+                </div>
+                <div>
+                  <p className="text-xs text-white/70 font-medium">Academic Term</p>
+                  <p className="text-sm font-bold text-white">{sessionYear} • {semesterText}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-white/80 font-medium">Today is</p>
-                <p className="text-lg font-bold text-white">
-                  {today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                </p>
+
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3.5 border border-white/10 flex items-center gap-3">
+                <div className="p-2.5 bg-white/20 rounded-xl">
+                  <CalendarDays className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs text-white/70 font-medium">Today is</p>
+                  <p className="text-sm font-bold text-white">
+                    {today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

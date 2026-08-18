@@ -91,7 +91,7 @@ const getTimeAgo = (date: Date): string => {
 const Navbar = () => {
   const router = useRouter();
   const { user } = useUser();
-  const { metadata, orgName } = useOrgMetadata();
+  const { metadata, orgName, sessionYear, semesterText } = useOrgMetadata();
   const orgLogo = metadata?.uiConfig?.logoUrl;
   const orgPrimaryColor = metadata?.uiConfig?.primaryColor || "#0A1E4B";
 
@@ -552,13 +552,26 @@ const Navbar = () => {
           </AnimatePresence>
         </div>
 
-        {/* Center Section - Date/Time */}
-        <div className="hidden xl:flex items-center gap-3 text-sm">
+        {/* Center Section - Academic Term & Date/Time */}
+        <div className="hidden lg:flex items-center gap-2.5 text-xs xl:text-sm">
+          {sessionYear && semesterText && (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-CPEGold/10 border border-CPEGold/25 text-CPENavyDark font-semibold shadow-xs"
+            >
+              <Calendar className="w-3.5 h-3.5 text-CPEGold" />
+              <span>{sessionYear}</span>
+              <span className="text-slate-300">•</span>
+              <span className="text-CPEGoldDark font-bold">{semesterText}</span>
+            </motion.div>
+          )}
+
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-CPENavy/5 to-transparent"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-CPENavy/5 to-transparent border border-slate-100"
           >
             <Sparkles className="w-4 h-4 text-CPEGold" />
             <span className="text-slate-600 font-medium">

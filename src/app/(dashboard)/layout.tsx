@@ -42,6 +42,27 @@ export default async function DashboardLayout({
     }
   }
 
+  // Fetch academic session & semester
+  const [sessionConfig, semesterConfig] = await Promise.all([
+    prisma.schoolConfig.findFirst({
+      where: ctx.organizationId ? { organizationId: ctx.organizationId, key: "sessionYear" } : { key: "sessionYear" },
+    }),
+    prisma.schoolConfig.findFirst({
+      where: ctx.organizationId ? { organizationId: ctx.organizationId, key: "currentSemester" } : { key: "currentSemester" },
+    }),
+  ]);
+
+  const sessionYear = sessionConfig?.value || "2024/25";
+  const currentSemester = semesterConfig?.value || "1";
+  
+  // Format semester/term text dynamically based on institution type
+  let semesterText = currentSemester === "1" ? "Harmattan Semester" : "Rain Semester";
+  if (institutionType === "SECONDARY_SCHOOL" || institutionType === "PRIMARY_SCHOOL") {
+    semesterText = currentSemester === "1" ? "First Term" : currentSemester === "2" ? "Second Term" : "Third Term";
+  } else if (institutionType === "TRAINING_CENTER") {
+    semesterText = currentSemester === "1" ? "First Session" : "Second Session";
+  }
+
   // Resolve org brand colours (with fallbacks to CPE defaults)
   const primaryColor = metadata?.uiConfig?.primaryColor || "#0A1E4B";
   const accentColor = metadata?.uiConfig?.accentColor || "#B99146";
@@ -57,7 +78,14 @@ export default async function DashboardLayout({
   } as any;
 
   return (
-    <OrgMetadataProvider institutionType={institutionType} metadata={metadata} orgName={orgName}>
+    <OrgMetadataProvider
+      institutionType={institutionType}
+      metadata={metadata}
+      orgName={orgName}
+      sessionYear={sessionYear}
+      currentSemester={currentSemester}
+      semesterText={semesterText}
+    >
       {/* Dynamic favicon + title */}
       {faviconUrl && <link rel="icon" href={faviconUrl} />}
       {siteTitle && <title>{siteTitle}</title>}
