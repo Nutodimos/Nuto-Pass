@@ -85,7 +85,7 @@ export default function DownloadAttendanceReportButton({
                 // Summary calculation
                 const totalStudents = data.length;
                 const eligibleStudents = data.filter(
-                    (d) => Number(d.percentage) >= 75
+                    (d) => Number(d.percentage) >= 70
                 ).length;
                 const avgAttendance =
                     totalStudents > 0
@@ -100,7 +100,7 @@ export default function DownloadAttendanceReportButton({
                 csvLines.push(`"SUMMARY STATISTICS"`);
                 csvLines.push(`"Total Enrolled Students:","${totalStudents}"`);
                 csvLines.push(
-                    `"Eligible for Examination (>=75%):","${eligibleStudents} / ${totalStudents} (${
+                    `"Eligible for Examination (>=70%):","${eligibleStudents} / ${totalStudents} (${
                         totalStudents > 0
                             ? Math.round((eligibleStudents / totalStudents) * 100)
                             : 0
@@ -121,7 +121,7 @@ export default function DownloadAttendanceReportButton({
                         '"Sessions Present"',
                         '"Sessions Absent"',
                         '"Attendance Rate (%)"',
-                        '"Exam Eligibility (>=75%)"',
+                        '"Exam Eligibility (>=70%)"',
                     ].join(",")
                 );
 
@@ -131,7 +131,7 @@ export default function DownloadAttendanceReportButton({
                     const total = Number(student.totalSessions || 0);
                     const absent = student.absentSessions !== undefined ? student.absentSessions : Math.max(0, total - present);
                     const pct = Number(student.percentage || 0);
-                    const isEligible = pct >= 75 ? "ELIGIBLE" : "INELIGIBLE";
+                    const isEligible = pct >= 70 ? "ELIGIBLE" : "INELIGIBLE";
 
                     csvLines.push(
                         [

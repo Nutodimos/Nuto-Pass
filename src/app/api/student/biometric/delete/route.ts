@@ -8,8 +8,8 @@ export const DELETE = async (req: NextRequest) => {
         const { sessionClaims } = auth();
         const role = (sessionClaims?.metadata as { role?: string })?.role;
 
-        if (role !== "admin" && role !== "teacher") {
-            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        if (role !== "admin") {
+            return NextResponse.json({ message: "Forbidden: Only admins can delete biometric data" }, { status: 403 });
         }
 
         const body = await req.json();

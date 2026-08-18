@@ -197,7 +197,7 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
                         {/* Progress Bar indicator */}
                         <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
                             <div
-                                className={`h-full rounded-full ${averageAttendance >= 75 ? 'bg-emerald-500' : averageAttendance >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                className={`h-full rounded-full ${averageAttendance >= 70 ? 'bg-emerald-500' : averageAttendance >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
                                 style={{ width: `${averageAttendance}%` }}
                             />
                         </div>

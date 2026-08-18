@@ -122,6 +122,7 @@ const CoursesPage = async ({
           },
         },
       },
+      orderBy: { name: "asc" },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
     }),

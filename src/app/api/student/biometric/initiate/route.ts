@@ -20,10 +20,55 @@ export const POST = async (req: NextRequest) => {
 
         const student = await prisma.student.findUnique({
             where: { id: studentId },
+            include: {
+                class: true,
+            }
         });
 
         if (!student) {
             return NextResponse.json({ message: "Student not found" }, { status: 404 });
+        }
+
+        // If user is a lecturer, verify they are assigned to this student
+        if (role === "teacher") {
+            const isAssigned = await prisma.student.findFirst({
+                where: {
+                    id: studentId,
+                    isActive: true,
+                    OR: [
+                        {
+                            enrollments: {
+                                some: {
+                                    subject: {
+                                        teachers: {
+                                            some: { id: userId },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        {
+                            class: {
+                                supervisorId: userId,
+                            },
+                        },
+                        {
+                            class: {
+                                lessons: {
+                                    some: { teacherId: userId },
+                                },
+                            },
+                        },
+                    ],
+                },
+            });
+
+            if (!isAssigned) {
+                return NextResponse.json(
+                    { message: "Forbidden: You can only register biometrics for students assigned to your courses or classes." },
+                    { status: 403 }
+                );
+            }
         }
 
         let slotId = 1;

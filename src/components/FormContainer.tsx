@@ -32,26 +32,28 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
       case "subject":
         const subjectTeachers = await prisma.teacher.findMany({
           select: { id: true, name: true, surname: true },
+          orderBy: { name: "asc" },
         });
         relatedData = { teachers: subjectTeachers };
         break;
       case "class":
         const [classGrades, classTeachers] = await prisma.$transaction([
           prisma.grade.findMany({ select: { id: true, level: true } }),
-          prisma.teacher.findMany({ select: { id: true, name: true, surname: true } }),
+          prisma.teacher.findMany({ select: { id: true, name: true, surname: true }, orderBy: { name: "asc" } }),
         ]);
         relatedData = { teachers: classTeachers, grades: classGrades };
         break;
       case "teacher":
         const teacherSubjects = await prisma.subject.findMany({
           select: { id: true, name: true },
+          orderBy: { name: "asc" },
         });
         relatedData = { subjects: teacherSubjects };
         break;
       case "student":
         const [studentGrades, studentClasses] = await prisma.$transaction([
           prisma.grade.findMany({ select: { id: true, level: true } }),
-          prisma.class.findMany({ include: { _count: { select: { students: true } } } }),
+          prisma.class.findMany({ include: { _count: { select: { students: true } } }, orderBy: { name: "asc" } }),
         ]);
         relatedData = { classes: studentClasses, grades: studentGrades };
         break;
@@ -61,16 +63,18 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
         let annSubjects: any[] = [];
 
         if (role === "admin") {
-          annClasses = await prisma.class.findMany({ select: { id: true, name: true } });
-          annSubjects = await prisma.subject.findMany({ select: { id: true, name: true } });
+          annClasses = await prisma.class.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } });
+          annSubjects = await prisma.subject.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } });
         } else if (role === "teacher") {
           annClasses = await prisma.class.findMany({
             where: { supervisorId: currentUserId! },
             select: { id: true, name: true },
+            orderBy: { name: "asc" },
           });
           annSubjects = await prisma.subject.findMany({
             where: { teachers: { some: { id: currentUserId! } } },
             select: { id: true, name: true },
+            orderBy: { name: "asc" },
           });
         }
 
@@ -79,21 +83,22 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
 
       case "material":
         const [materialClasses, materialSubjects] = await prisma.$transaction([
-          prisma.class.findMany({ select: { id: true, name: true } }),
-          prisma.subject.findMany({ select: { id: true, name: true } }),
+          prisma.class.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+          prisma.subject.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
         ]);
         relatedData = { classes: materialClasses, subjects: materialSubjects, role };
         break;
 
       case "lesson":
         const [lessonClasses, lessonSubjects] = await prisma.$transaction([
-          prisma.class.findMany({ select: { id: true, name: true } }),
+          prisma.class.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
           prisma.subject.findMany({
             select: {
               id: true,
               name: true,
               teachers: { select: { id: true, name: true, surname: true } },
             },
+            orderBy: { name: "asc" },
           }),
         ]);
         relatedData = { classes: lessonClasses, subjects: lessonSubjects };
@@ -104,6 +109,9 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
           select: {
             id: true,
             name: true,
+          },
+          orderBy: {
+            name: "asc",
           },
         };
 

@@ -13,9 +13,44 @@ export const GET = async (req: NextRequest) => {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
+        let whereCondition: any = { isActive: true };
+
+        if (role === "teacher") {
+            whereCondition = {
+                isActive: true,
+                OR: [
+                    {
+                        enrollments: {
+                            some: {
+                                subject: {
+                                    teachers: {
+                                        some: { id: userId },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    {
+                        class: {
+                            supervisorId: userId,
+                        },
+                    },
+                    {
+                        class: {
+                            lessons: {
+                                some: { teacherId: userId },
+                            },
+                        },
+                    },
+                ],
+            };
+        }
+
         const students = await prisma.student.findMany({
+            where: whereCondition,
             select: {
                 id: true,
+                username: true,
                 name: true,
                 surname: true,
                 biometricId: true,

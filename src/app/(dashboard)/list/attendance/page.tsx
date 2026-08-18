@@ -90,7 +90,7 @@ const AttendanceClassListPage = async ({
             const total = courseAttendance.length;
             const present = courseAttendance.filter((a) => a.present).length;
             const pct = total > 0 ? Math.round((present / total) * 100) : 100;
-            const status = pct >= 75 ? "Good Standing (Eligible)" : "At Risk (<75%)";
+            const status = pct >= 70 ? "Good Standing (Eligible)" : "At Risk (<70%)";
             const teachers = enr.subject.teachers.map((t) => `${t.name} ${t.surname}`).join(", ");
 
             return {

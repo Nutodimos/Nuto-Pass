@@ -15,7 +15,7 @@ const SubjectAttendanceSummary = async ({ studentId }: { studentId: string }) =>
     if (role === "teacher") {
         whereClause.lesson = {
             teacherId: userId
-        }
+        };
     }
 
     const attendance = await prisma.attendance.findMany({
@@ -43,13 +43,13 @@ const SubjectAttendanceSummary = async ({ studentId }: { studentId: string }) =>
     });
 
     return (
-        <div className="bg-white p-4 rounded-md h-full">
-            <h2 className="text-xl font-semibold mb-4">Course Attendance</h2>
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm h-full">
+            <h2 className="text-xl font-semibold mb-4 text-slate-800">Course Attendance</h2>
             <div className="flex flex-col gap-4">
                 {Object.entries(subjectStats).map(([subject, stats]) => {
                     const percentage = Math.round((stats.present / stats.total) * 100);
                     const color =
-                        percentage >= 75
+                        percentage >= 70
                             ? "bg-green-500"
                             : percentage >= 50
                                 ? "bg-yellow-500"

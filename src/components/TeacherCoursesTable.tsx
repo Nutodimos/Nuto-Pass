@@ -36,6 +36,7 @@ const TeacherCoursesTable = async ({
           select: { lessons: true },
         },
       },
+      orderBy: { name: "asc" },
       take: ITEMS_PER_PAGE,
       skip: ITEMS_PER_PAGE * (page - 1),
     }),
