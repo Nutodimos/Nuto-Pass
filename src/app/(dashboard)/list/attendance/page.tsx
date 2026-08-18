@@ -10,6 +10,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import AttendanceCalendarContainer from "@/components/AttendanceCalendarContainer";
 import SubjectAttendanceSummary from "@/components/SubjectAttendanceSummary";
+import DownloadAttendanceReportButton from "@/components/DownloadAttendanceReportButton";
 
 type ClassWithDetails = Class & {
     supervisor: Teacher | null;
@@ -42,21 +43,66 @@ const AttendanceClassListPage = async ({
 
     // ========== STUDENT VIEW: My Attendance ==========
     if (role === "student") {
-        const student = await prisma.student.findUnique({
-            where: { id: currentUserId },
-            include: {
-                class: true
-            }
-        });
+        const [student, attendanceRecords, enrollments, sessionConfig, semesterConfig] = await Promise.all([
+            prisma.student.findUnique({
+                where: { id: currentUserId },
+                include: { class: true }
+            }),
+            prisma.attendance.findMany({
+                where: { studentId: currentUserId },
+                include: {
+                    lesson: {
+                        include: {
+                            subject: true,
+                            teacher: true,
+                        }
+                    }
+                }
+            }),
+            prisma.courseEnrollment.findMany({
+                where: { studentId: currentUserId },
+                include: {
+                    subject: {
+                        include: {
+                            teachers: true,
+                        }
+                    }
+                }
+            }),
+            prisma.schoolConfig.findFirst({ where: { key: "sessionYear" } }),
+            prisma.schoolConfig.findFirst({ where: { key: "currentSemester" } }),
+        ]);
 
-        const attendanceRecords = await prisma.attendance.findMany({
-            where: { studentId: currentUserId },
-        });
+        const sessionYear = sessionConfig?.value || "2024/25";
+        const currentSemester = semesterConfig?.value || "1";
+        const semesterText = currentSemester === "1" ? "Harmattan Semester" : "Rain Semester";
 
         const totalLessons = attendanceRecords.length;
         const presentCount = attendanceRecords.filter((record) => record.present).length;
         const absentCount = totalLessons - presentCount;
         const attendanceRate = totalLessons > 0 ? Math.round((presentCount / totalLessons) * 100) : 100;
+
+        // Build per-course breakdown for the download slip
+        const studentCourseRows = enrollments.map((enr) => {
+            const courseAttendance = attendanceRecords.filter(
+                (a) => a.lesson.subjectId === enr.subjectId
+            );
+            const total = courseAttendance.length;
+            const present = courseAttendance.filter((a) => a.present).length;
+            const pct = total > 0 ? Math.round((present / total) * 100) : 100;
+            const status = pct >= 75 ? "Good Standing (Eligible)" : "At Risk (<75%)";
+            const teachers = enr.subject.teachers.map((t) => `${t.name} ${t.surname}`).join(", ");
+
+            return {
+                courseCode: enr.subject.name,
+                courseTitle: enr.subject.title || "",
+                lecturer: teachers || "Assigned Lecturer",
+                totalClasses: total,
+                attendedClasses: present,
+                percentage: pct,
+                status,
+            };
+        });
 
         return (
             <div className="flex-1 p-4 flex flex-col gap-6 bg-slate-50/50 min-h-screen">
@@ -76,8 +122,24 @@ const AttendanceClassListPage = async ({
                             </div>
                         </div>
 
-                        {/* QUICK STATS IN BANNER */}
-                        <div className="flex gap-4">
+                        {/* QUICK STATS & DOWNLOAD IN BANNER */}
+                        <div className="flex flex-wrap items-center gap-4">
+                            <DownloadAttendanceReportButton
+                                type="student"
+                                title={`Student Attendance Slip - ${student?.name} ${student?.surname}`}
+                                subtitle={`Matric No: ${student?.username} | Class: ${student?.class?.name || "N/A"}`}
+                                sessionYear={sessionYear}
+                                semester={semesterText}
+                                studentDetails={{
+                                    name: `${student?.name} ${student?.surname}`,
+                                    username: student?.username || "",
+                                    className: student?.class?.name,
+                                }}
+                                studentCoursesData={studentCourseRows}
+                                fileName={`Attendance_Slip_${student?.username || "Student"}_${new Date().toISOString().slice(0, 10)}.csv`}
+                                buttonText="Download Attendance Slip"
+                                variant="primary"
+                            />
                             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 text-center min-w-[120px]">
                                 <p className="text-sm text-white/80 font-medium mb-1">Overall Rate</p>
                                 <p className="text-3xl font-bold text-white">{attendanceRate}%</p>
@@ -255,7 +317,7 @@ const AttendanceClassListPage = async ({
         }
     }
 
-    const [data, count] = await prisma.$transaction([
+    const [data, count, allStudents, sessionConfig, semesterConfig] = await prisma.$transaction([
         prisma.class.findMany({
             where: query,
             include: {
@@ -267,13 +329,50 @@ const AttendanceClassListPage = async ({
             skip: ITEM_PER_PAGE * (p - 1),
         }),
         prisma.class.count({ where: query }),
+        prisma.student.findMany({
+            where: { isActive: true },
+            include: {
+                class: true,
+                attendances: {
+                    where: {
+                        date: {
+                            gte: new Date(new Date().getFullYear(), 0, 1),
+                        },
+                    },
+                },
+            },
+            orderBy: { name: "asc" },
+        }),
+        prisma.schoolConfig.findFirst({ where: { key: "sessionYear" } }),
+        prisma.schoolConfig.findFirst({ where: { key: "currentSemester" } }),
     ]);
+
+    const sessionYear = sessionConfig?.value || "2024/25";
+    const currentSemester = semesterConfig?.value || "1";
+    const semesterText = currentSemester === "1" ? "Harmattan Semester" : "Rain Semester";
+
+    const adminReportData = allStudents.map((s) => {
+        const total = s.attendances.length;
+        const present = s.attendances.filter((a) => a.present).length;
+        const percentage = total > 0 ? ((present / total) * 100).toFixed(1) : "0.0";
+        return {
+            id: s.id,
+            username: s.username,
+            name: s.name,
+            surname: s.surname,
+            className: s.class?.name || "N/A",
+            totalSessions: total,
+            presentSessions: present,
+            percentage,
+            biometricId: s.biometricId,
+        };
+    });
 
     return (
         <div className="flex-1 p-4 flex flex-col gap-4">
             {/* HEADER */}
             <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
                             <ClipboardCheck className="w-7 h-7 text-white" />
@@ -284,8 +383,17 @@ const AttendanceClassListPage = async ({
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                            <TableSearch />
+                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                        <DownloadAttendanceReportButton
+                            type="class"
+                            title="Institutional Attendance Summary"
+                            sessionYear={sessionYear}
+                            semester={semesterText}
+                            data={adminReportData}
+                            fileName={`Attendance_Summary_${new Date().toISOString().slice(0, 10)}.csv`}
+                            buttonText="Download Overall Report (CSV)"
+                        />
+                        <TableSearch />
                     </div>
                 </div>
             </div>

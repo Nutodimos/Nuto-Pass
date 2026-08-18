@@ -3,6 +3,7 @@ import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import AttendancePanel from "@/components/AttendancePanel";
+import DownloadAttendanceReportButton, { AttendanceStudentRow } from "@/components/DownloadAttendanceReportButton";
 import { Student, Class, Attendance } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -38,7 +39,7 @@ const CourseAttendancePage = async ({
     const subject = await prisma.subject.findUnique({
         where: { id: subjectId },
         include: {
-            teachers: { select: { id: true } },
+            teachers: { select: { id: true, name: true, surname: true } },
         },
     });
 
@@ -82,16 +83,14 @@ const CourseAttendancePage = async ({
         ...searchFilter,
     };
 
-    const [data, count] = await prisma.$transaction([
+    const [data, count, allEnrolledStudents, sessionConfig, semesterConfig] = await prisma.$transaction([
         prisma.student.findMany({
             where: studentQuery,
             include: {
                 class: true,
                 attendances: {
                     where: {
-                        date: {
-                            gte: new Date(new Date().getFullYear(), 0, 1),
-                        },
+                        lesson: { subjectId },
                     },
                 },
             },
@@ -100,6 +99,23 @@ const CourseAttendancePage = async ({
             skip: ITEM_PER_PAGE * (p - 1),
         }),
         prisma.student.count({ where: studentQuery }),
+        prisma.student.findMany({
+            where: {
+                id: { in: enrolledStudentIds },
+                isActive: true,
+            },
+            include: {
+                class: true,
+                attendances: {
+                    where: {
+                        lesson: { subjectId },
+                    },
+                },
+            },
+            orderBy: { name: "asc" },
+        }),
+        prisma.schoolConfig.findFirst({ where: { key: "sessionYear" } }),
+        prisma.schoolConfig.findFirst({ where: { key: "currentSemester" } }),
     ]);
 
     // Fetch lessons for this subject (for attendance session control)
@@ -124,6 +140,27 @@ const CourseAttendancePage = async ({
         subject: lesson.subject,
         teacher: lesson.teacher,
     }));
+
+    const sessionYear = sessionConfig?.value || "2024/25";
+    const currentSemester = semesterConfig?.value || "1";
+    const semesterText = currentSemester === "1" ? "Harmattan Semester" : "Rain Semester";
+
+    const reportData: AttendanceStudentRow[] = allEnrolledStudents.map((s) => {
+        const total = s.attendances.length;
+        const present = s.attendances.filter((a) => a.present).length;
+        const percentage = total > 0 ? ((present / total) * 100).toFixed(1) : "0.0";
+        return {
+            id: s.id,
+            username: s.username,
+            name: s.name,
+            surname: s.surname,
+            className: s.class?.name || "N/A",
+            totalSessions: total,
+            presentSessions: present,
+            percentage,
+            biometricId: s.biometricId,
+        };
+    });
 
     const columns = [
         { header: "Info", accessor: "info" },
@@ -197,7 +234,17 @@ const CourseAttendancePage = async ({
                                 <p className="text-sm text-gray-500">{count} enrolled students</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 w-full md:w-auto">
+                        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                            <DownloadAttendanceReportButton
+                                type="course"
+                                title={`${subject.name} Attendance Report`}
+                                subtitle={subject.title ? `${subject.name}: ${subject.title}` : undefined}
+                                sessionYear={sessionYear}
+                                semester={semesterText}
+                                data={reportData}
+                                fileName={`Attendance_${subject.name}_${new Date().toISOString().slice(0, 10)}.csv`}
+                                buttonText="Download Report (CSV)"
+                            />
                             <div className="flex-1 md:flex-none bg-white rounded-xl border border-gray-200 px-4 py-2 shadow-sm">
                                 <TableSearch />
                             </div>

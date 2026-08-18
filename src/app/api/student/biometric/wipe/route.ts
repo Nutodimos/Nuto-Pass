@@ -4,9 +4,11 @@ import { auth } from "@clerk/nextjs/server";
 
 export const POST = async (req: NextRequest) => {
     try {
-        const { userId } = auth();
-        if (!userId) {
-            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        const { userId, sessionClaims } = auth();
+        const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+        if (!userId || role !== "admin") {
+            return NextResponse.json({ message: "Forbidden: Admin access required" }, { status: 403 });
         }
 
         // Queue the EMPTY_ALL command for the ESP32

@@ -24,6 +24,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import Image from "next/image";
+import { useUser } from "@clerk/nextjs";
 import BiometricRegistrationButton from "./BiometricRegistrationButton";
 
 interface DeviceStatus {
@@ -47,6 +48,9 @@ interface Student {
 }
 
 const BiometricHub = () => {
+    const { user } = useUser();
+    const role = (user?.publicMetadata?.role as string) || "guest";
+
     const [device, setDevice] = useState<DeviceStatus | null>(null);
     const [students, setStudents] = useState<Student[]>([]);
     const [search, setSearch] = useState("");
@@ -229,16 +233,18 @@ const BiometricHub = () => {
                                     <DiagItem label="SD Card" value="Ready" icon={<Database className="w-4 h-4 text-slate-400" />} />
                                 </div>
 
-                                <div className="pt-6 border-t border-slate-50 flex flex-wrap gap-4">
-                                    <button
-                                        disabled={isWiping || device?.status === "offline"}
-                                        onClick={handleWipe}
-                                        className="px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl font-bold text-sm transition-all flex items-center gap-2 border border-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                        Emergency Wipe All Data
-                                    </button>
-                                </div>
+                                {role === "admin" && (
+                                    <div className="pt-6 border-t border-slate-50 flex flex-wrap gap-4">
+                                        <button
+                                            disabled={isWiping || device?.status === "offline"}
+                                            onClick={handleWipe}
+                                            className="px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl font-bold text-sm transition-all flex items-center gap-2 border border-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            Emergency Wipe All Data
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Enrollment Status */}

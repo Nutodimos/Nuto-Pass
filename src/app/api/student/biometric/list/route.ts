@@ -6,9 +6,11 @@ export const dynamic = "force-dynamic";
 
 export const GET = async (req: NextRequest) => {
     try {
-        const { userId } = auth();
-        if (!userId) {
-            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        const { userId, sessionClaims } = auth();
+        const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+        if (!userId || (role !== "admin" && role !== "teacher")) {
+            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
         const students = await prisma.student.findMany({

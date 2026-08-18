@@ -3,6 +3,7 @@ import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import AttendancePanel from "@/components/AttendancePanel";
+import DownloadAttendanceReportButton, { AttendanceStudentRow } from "@/components/DownloadAttendanceReportButton";
 import { Student, Class, Attendance } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -127,8 +128,10 @@ const ClassAttendancePage = async ({
     const { page, ...queryParams } = searchParams;
     const p = page ? parseInt(page) : 1;
 
+    // URL PARAMS CONDITION
     const query: any = {
         classId: parseInt(id),
+        isActive: true,
     };
 
     if (queryParams) {
@@ -147,8 +150,8 @@ const ClassAttendancePage = async ({
         }
     }
 
-    // Fetch students, count, lessons, and class info in one transaction
-    const [data, count, lessons, classInfo] = await prisma.$transaction([
+    // Fetch students, count, lessons, class info, and session configs
+    const [data, count, allClassStudents, lessons, classInfo, sessionConfig, semesterConfig] = await prisma.$transaction([
         prisma.student.findMany({
             where: query,
             include: {
@@ -161,10 +164,28 @@ const ClassAttendancePage = async ({
                     }
                 }
             },
+            orderBy: { name: "asc" },
             take: ITEM_PER_PAGE,
             skip: ITEM_PER_PAGE * (p - 1),
         }),
         prisma.student.count({ where: query }),
+        prisma.student.findMany({
+            where: {
+                classId: parseInt(id),
+                isActive: true,
+            },
+            include: {
+                class: true,
+                attendances: {
+                    where: {
+                        date: {
+                            gte: new Date(new Date().getFullYear(), 0, 1),
+                        }
+                    }
+                }
+            },
+            orderBy: { name: "asc" },
+        }),
         prisma.lesson.findMany({
             where: {
                 classId: parseInt(id),
@@ -183,9 +204,31 @@ const ClassAttendancePage = async ({
             where: { id: parseInt(id) },
             select: { name: true },
         }),
+        prisma.schoolConfig.findFirst({ where: { key: "sessionYear" } }),
+        prisma.schoolConfig.findFirst({ where: { key: "currentSemester" } }),
     ]);
 
     const className = classInfo?.name || data[0]?.class?.name || "Class";
+    const sessionYear = sessionConfig?.value || "2024/25";
+    const currentSemester = semesterConfig?.value || "1";
+    const semesterText = currentSemester === "1" ? "Harmattan Semester" : "Rain Semester";
+
+    const reportData: AttendanceStudentRow[] = allClassStudents.map((s) => {
+        const total = s.attendances.length;
+        const present = s.attendances.filter((a) => a.present).length;
+        const percentage = total > 0 ? ((present / total) * 100).toFixed(1) : "0.0";
+        return {
+            id: s.id,
+            username: s.username,
+            name: s.name,
+            surname: s.surname,
+            className: s.class?.name || className,
+            totalSessions: total,
+            presentSessions: present,
+            percentage,
+            biometricId: s.biometricId,
+        };
+    });
 
     // Transform lessons for the component
     const formattedLessons = lessons.map(lesson => ({
@@ -219,8 +262,17 @@ const ClassAttendancePage = async ({
                                 <p className="text-xs sm:text-sm text-gray-500">{count} students enrolled</p>
                             </div>
                         </div>
-                        <div className="w-full sm:w-auto">
-                            <div className="bg-white rounded-xl border border-gray-200 px-4 py-2 shadow-sm">
+                        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                            <DownloadAttendanceReportButton
+                                type="class"
+                                title={`${className} Level Attendance Report`}
+                                sessionYear={sessionYear}
+                                semester={semesterText}
+                                data={reportData}
+                                fileName={`Attendance_${className}_${new Date().toISOString().slice(0, 10)}.csv`}
+                                buttonText="Download Report (CSV)"
+                            />
+                            <div className="flex-1 sm:flex-none bg-white rounded-xl border border-gray-200 px-4 py-2 shadow-sm">
                                 <TableSearch />
                             </div>
                         </div>
