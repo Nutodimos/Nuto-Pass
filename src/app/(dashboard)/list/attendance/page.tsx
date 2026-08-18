@@ -11,6 +11,7 @@ import { redirect } from "next/navigation";
 import AttendanceCalendarContainer from "@/components/AttendanceCalendarContainer";
 import SubjectAttendanceSummary from "@/components/SubjectAttendanceSummary";
 import DownloadAttendanceReportButton from "@/components/DownloadAttendanceReportButton";
+import SemesterAnalyticsWidget from "@/components/SemesterAnalyticsWidget";
 
 type ClassWithDetails = Class & {
     supervisor: Teacher | null;
@@ -397,6 +398,13 @@ const AttendanceClassListPage = async ({
                     </div>
                 </div>
             </div>
+
+            {/* SEMESTER ANALYTICS */}
+            <SemesterAnalyticsWidget
+                currentSession={sessionYear}
+                currentSemester={currentSemester}
+                semesterText={semesterText}
+            />
 
             {/* CLASSES GRID */}
             {data.length === 0 ? (

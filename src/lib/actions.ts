@@ -1232,3 +1232,272 @@ export const markAllAnnouncementsAsRead = async () => {
     return handleActionError(err);
   }
 };
+
+// ─── Academic Period Lifecycle & Rollovers ────────────────────────
+
+export const advanceSemester = async (
+  targetSemester?: string
+) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
+
+  try {
+    const [sessionConfig, semesterConfig] = await Promise.all([
+      db.schoolConfig.findFirst({ where: { key: "sessionYear" } }),
+      db.schoolConfig.findFirst({ where: { key: "currentSemester" } }),
+    ]);
+
+    const activeSession = sessionConfig?.value || "2024/25";
+    const currentSem = semesterConfig?.value ? parseInt(semesterConfig.value) : 1;
+    const nextSem = targetSemester ? targetSemester : currentSem === 1 ? "2" : "1";
+
+    // 1. Tag any untagged sessions and attendances before advancing
+    await db.attendanceSession.updateMany({
+      where: { organizationId: authCheck.organizationId, academicSession: null },
+      data: { academicSession: activeSession, semester: currentSem }
+    });
+
+    await db.attendance.updateMany({
+      where: { organizationId: authCheck.organizationId, academicSession: null },
+      data: { academicSession: activeSession, semester: currentSem }
+    });
+
+    // 2. Conclude all open attendance sessions
+    await db.attendanceSession.updateMany({
+      where: { organizationId: authCheck.organizationId, status: "OPEN" },
+      data: { status: "CLOSED", endTime: new Date() }
+    });
+
+    // 3. Reset ESP32 biometric device to IDLE
+    await db.deviceHeartbeat.updateMany({
+      where: { organizationId: authCheck.organizationId, deviceId: "ESP32_MAIN" },
+      data: { pendingCommand: "VERIFY:STOP" }
+    });
+
+    // 4. Update current semester config
+    await db.schoolConfig.upsert({
+      where: { organizationId_key: { organizationId: authCheck.organizationId, key: "currentSemester" } },
+      update: { value: nextSem },
+      create: { key: "currentSemester", value: nextSem, organizationId: authCheck.organizationId },
+    });
+
+    // 5. Broadcast system announcement
+    const semName = nextSem === "1" ? "First / Harmattan Semester" : "Second / Rain Semester";
+    await db.announcement.create({
+      data: {
+        title: `Academic Transition: ${semName} Activated`,
+        description: `The academic period has officially transitioned to ${semName} for the ${activeSession} academic session. Timetables and course activities are now live.`,
+        date: new Date(),
+        targetAudience: "all",
+        organizationId: authCheck.organizationId,
+      }
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/student");
+    revalidatePath("/teacher");
+    revalidatePath("/settings");
+    revalidatePath("/list/courses");
+    revalidatePath("/list/attendance");
+    revalidatePath("/list/lessons");
+    return { success: true, error: false, message: `Successfully transitioned to ${semName}!` };
+  } catch (err) {
+    return handleActionError(err);
+  }
+};
+
+export const rolloverAcademicSessionAndPromote = async (
+  newSessionYear: string,
+  promoteStudents: boolean = true
+) => {
+  const authCheck = requireRole(["admin"]);
+  if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
+
+  if (!newSessionYear || !newSessionYear.trim()) {
+    return { success: false, error: true, messages: ["New academic session year is required (e.g. 2025/26)"] };
+  }
+
+  try {
+    // 1. Tag untagged sessions and attendances
+    const [currentSessionConfig, currentSemesterConfig] = await Promise.all([
+      db.schoolConfig.findFirst({ where: { key: "sessionYear" } }),
+      db.schoolConfig.findFirst({ where: { key: "currentSemester" } }),
+    ]);
+
+    const oldSession = currentSessionConfig?.value || "2024/25";
+    const oldSemester = currentSemesterConfig?.value ? parseInt(currentSemesterConfig.value) : 1;
+
+    await db.attendanceSession.updateMany({
+      where: { organizationId: authCheck.organizationId, academicSession: null },
+      data: { academicSession: oldSession, semester: oldSemester }
+    });
+
+    await db.attendance.updateMany({
+      where: { organizationId: authCheck.organizationId, academicSession: null },
+      data: { academicSession: oldSession, semester: oldSemester }
+    });
+
+    // Close any open sessions
+    await db.attendanceSession.updateMany({
+      where: { organizationId: authCheck.organizationId, status: "OPEN" },
+      data: { status: "CLOSED", endTime: new Date() }
+    });
+
+    // 2. Perform student promotion if requested
+    let promotedCount = 0;
+    let graduatedCount = 0;
+
+    if (promoteStudents) {
+      // Fetch all classes and their associated grades ordered by level ascending
+      const classes = await db.class.findMany({
+        where: { organizationId: authCheck.organizationId, isActive: true },
+        include: { grade: true },
+        orderBy: { grade: { level: "asc" } },
+      });
+
+      if (classes.length > 0) {
+        // Group classes in order of level
+        const maxLevel = classes[classes.length - 1].grade.level;
+
+        // Process from highest level down to avoid duplicate promotions
+        for (let i = classes.length - 1; i >= 0; i--) {
+          const currentClass = classes[i];
+          const isFinalLevel = currentClass.grade.level >= maxLevel;
+
+          if (isFinalLevel) {
+            // Final year students become alumni / deactivated
+            const res = await db.student.updateMany({
+              where: {
+                organizationId: authCheck.organizationId,
+                classId: currentClass.id,
+                isActive: true,
+              },
+              data: {
+                isActive: false, // Mark graduated / inactive
+                biometricId: null, // Free up hardware slot
+              }
+            });
+            graduatedCount += res.count;
+          } else {
+            // Promote to next higher class
+            const nextClass = classes[i + 1];
+            if (nextClass) {
+              const res = await db.student.updateMany({
+                where: {
+                  organizationId: authCheck.organizationId,
+                  classId: currentClass.id,
+                  isActive: true,
+                },
+                data: {
+                  classId: nextClass.id,
+                  gradeId: nextClass.gradeId,
+                }
+              });
+              promotedCount += res.count;
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Update session config to new year and reset semester to 1
+    await Promise.all([
+      db.schoolConfig.upsert({
+        where: { organizationId_key: { organizationId: authCheck.organizationId, key: "sessionYear" } },
+        update: { value: newSessionYear },
+        create: { key: "sessionYear", value: newSessionYear, organizationId: authCheck.organizationId },
+      }),
+      db.schoolConfig.upsert({
+        where: { organizationId_key: { organizationId: authCheck.organizationId, key: "currentSemester" } },
+        update: { value: "1" },
+        create: { key: "currentSemester", value: "1", organizationId: authCheck.organizationId },
+      }),
+    ]);
+
+    // 4. Create broadcast announcement
+    await db.announcement.create({
+      data: {
+        title: `Welcome to Academic Session ${newSessionYear}`,
+        description: `The institution has officially rolled over to the ${newSessionYear} academic session (1st / Harmattan Semester). All students have been updated to their new levels.`,
+        date: new Date(),
+        targetAudience: "all",
+        organizationId: authCheck.organizationId,
+      }
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/student");
+    revalidatePath("/teacher");
+    revalidatePath("/settings");
+    revalidatePath("/list/students");
+    revalidatePath("/list/courses");
+    revalidatePath("/list/levels");
+    revalidatePath("/list/attendance");
+    return {
+      success: true,
+      error: false,
+      message: `Rollover complete! Promoted ${promotedCount} students, graduated ${graduatedCount} finalists, and activated ${newSessionYear} (1st Semester).`,
+    };
+  } catch (err) {
+    return handleActionError(err);
+  }
+};
+
+export const bulkEnrollLevelInCourses = async (
+  classId: number,
+  subjectIds: number[]
+) => {
+  const authCheck = requireRole(["admin", "teacher"]);
+  if (!authCheck.authorized) return authCheck.error;
+  const db = getTenantClient(authCheck.organizationId);
+
+  if (!classId || !subjectIds || subjectIds.length === 0) {
+    return { success: false, error: true, messages: ["Class and at least one course must be selected."] };
+  }
+
+  try {
+    // 1. Fetch all active students in this class
+    const students = await db.student.findMany({
+      where: {
+        organizationId: authCheck.organizationId,
+        classId: classId,
+        isActive: true,
+      },
+      select: { id: true }
+    });
+
+    if (students.length === 0) {
+      return { success: false, error: true, messages: ["No active students found in the selected level/class."] };
+    }
+
+    // 2. Prepare enrollment records
+    const enrollmentData: { studentId: string; subjectId: number; organizationId: string }[] = [];
+    for (const student of students) {
+      for (const subjectId of subjectIds) {
+        enrollmentData.push({
+          studentId: student.id,
+          subjectId: subjectId,
+          organizationId: authCheck.organizationId,
+        });
+      }
+    }
+
+    await db.courseEnrollment.createMany({
+      data: enrollmentData,
+      skipDuplicates: true,
+    });
+
+    revalidatePath("/list/courses");
+    revalidatePath("/list/students");
+    revalidatePath("/list/attendance");
+    return {
+      success: true,
+      error: false,
+      message: `Successfully enrolled ${students.length} students into ${subjectIds.length} courses!`,
+    };
+  } catch (err) {
+    return handleActionError(err);
+  }
+};

@@ -12,6 +12,9 @@ import CourseLevelFilter from "@/components/CourseLevelFilter";
 import { getOrgContext } from "@/lib/tenant";
 import { getTerm } from "@/lib/terminology";
 
+import CourseSemesterFilter from "@/components/CourseSemesterFilter";
+import BulkEnrollCoursesModal from "@/components/BulkEnrollCoursesModal";
+
 type SubjectWithCounts = Subject & {
   teachers: Teacher[];
   _count: {
@@ -50,15 +53,27 @@ const CoursesPage = async ({
   const semesterConfig = await prisma.schoolConfig.findFirst({
     where: { key: "currentSemester" },
   });
-  const currentSemester = semesterConfig?.value ? parseInt(semesterConfig.value) : null;
+  const currentSemester = semesterConfig?.value ? parseInt(semesterConfig.value) : 1;
 
   // URL PARAMS CONDITION
   const query: Prisma.SubjectWhereInput = {
     isActive: true, // Hide archived courses
   };
 
-  // Filter by semester: show courses for current semester OR courses marked for both (null)
-  if (currentSemester && currentSemester !== 0) {
+  // Filter by semester: check explicit query param or default to current semester
+  const selectedSemesterParam = queryParams.semester;
+  if (selectedSemesterParam === "all") {
+    // Show all courses across all semesters
+  } else if (selectedSemesterParam && selectedSemesterParam !== "") {
+    const semNum = parseInt(selectedSemesterParam);
+    if (!isNaN(semNum)) {
+      query.OR = [
+        { semester: semNum },
+        { semester: null }, // Both/Full year courses always show
+      ];
+    }
+  } else if (currentSemester && currentSemester !== 0) {
+    // Default to active semester
     query.OR = [
       { semester: currentSemester },
       { semester: null }, // Both/Full year courses always show
@@ -130,12 +145,30 @@ const CoursesPage = async ({
   ]);
 
   let allStudents: any[] = [];
+  let availableClasses: any[] = [];
+  let availableCourses: any[] = [];
+
   if (role === "admin" || role === "teacher") {
-    allStudents = await prisma.student.findMany({
-      select: { id: true, name: true, surname: true, username: true },
-      where: { isActive: true },
-      orderBy: { name: "asc" }
-    });
+    const [students, classes, subjects] = await Promise.all([
+      prisma.student.findMany({
+        select: { id: true, name: true, surname: true, username: true },
+        where: { isActive: true },
+        orderBy: { name: "asc" }
+      }),
+      prisma.class.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, _count: { select: { students: true } } },
+        orderBy: { name: "asc" }
+      }),
+      prisma.subject.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, title: true, level: true, semester: true },
+        orderBy: { name: "asc" }
+      }),
+    ]);
+    allStudents = students;
+    availableClasses = classes;
+    availableCourses = subjects;
   }
 
   return (
@@ -143,26 +176,31 @@ const CoursesPage = async ({
       {/* HEADER */}
       <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
-              <BookOpen className="w-7 h-7 text-white" />
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
+                <BookOpen className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-white">
+                <h1 className="text-2xl font-bold">{termSubjectPlural}</h1>
+                <p className="text-white/80 text-sm">{count} {termSubjectPlural.toLowerCase()} available</p>
+              </div>
             </div>
-            <div className="text-white">
-              <h1 className="text-2xl font-bold">{termSubjectPlural}</h1>
-              <p className="text-white/80 text-sm">{count} {termSubjectPlural.toLowerCase()} available</p>
-            </div>
-          </div>
 
-            <div className="flex items-center gap-3">
-
-
+            <div className="flex flex-wrap items-center gap-3">
+              {(role === "admin" || role === "teacher") && availableClasses.length > 0 && (
+                <BulkEnrollCoursesModal
+                  classes={availableClasses}
+                  courses={availableCourses}
+                  currentSemester={String(currentSemester)}
+                />
+              )}
               <TableSearch />
             </div>
           </div>
-          <div className="w-full md:w-auto">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full">
+            <CourseSemesterFilter currentSemester={String(currentSemester)} />
             <CourseLevelFilter />
-
           </div>
         </div>
       </div>

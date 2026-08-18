@@ -4,6 +4,8 @@ import ProfileSettings from "@/components/forms/ProfileSettings";
 import ThemeSettings from "@/components/forms/ThemeSettings";
 import SecuritySettings from "@/components/forms/SecuritySettings";
 import AttendanceArchiveSettings from "@/components/forms/AttendanceArchiveSettings";
+import AcademicPeriodHub from "@/components/forms/AcademicPeriodHub";
+import SemesterAnalyticsWidget from "@/components/SemesterAnalyticsWidget";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Settings, Shield } from "lucide-react";
@@ -202,34 +204,38 @@ const SettingsPage = async () => {
         content: <SecuritySettings />,
     });
 
+    // Fetch active students and courses counts for admin
+    let totalStudents = 0;
+    let totalCourses = 0;
+    if (role === "admin") {
+        const [studentCount, courseCount] = await Promise.all([
+            prisma.student.count({ where: { isActive: true } }),
+            prisma.subject.count({ where: { isActive: true } }),
+        ]);
+        totalStudents = studentCount;
+        totalCourses = courseCount;
+    }
+
     if (role === "admin") {
         tabs.push({
             id: "school",
-            label: "School Config",
+            label: "Academic Period",
             icon: "shield",
             content: (
-                <div className="space-y-4">
-                    {/* Current Status Banner */}
-                    <div
-                        className="rounded-xl p-4 border"
-                        style={{
-                            backgroundColor: 'var(--bg-card)',
-                            borderColor: 'var(--border-primary)',
-                        }}
-                    >
-                        <div className="flex items-center gap-3">
-                            <Shield className="w-5 h-5 text-CPENavy" />
-                            <div>
-                                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Current Status: </span>
-                                <span className="font-semibold text-CPENavy">{currentSession}</span>
-                                <span className="mx-2" style={{ color: 'var(--text-tertiary)' }}>•</span>
-                                <span className="font-semibold text-amber-600">{semesterText}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <SettingsForm
+                <div className="space-y-6">
+                    <AcademicPeriodHub
                         currentSession={currentSession}
                         currentSemester={currentSemester}
+                        semesterText={semesterText}
+                        totalStudents={totalStudents}
+                        totalCourses={totalCourses}
+                        activeSessionsList={academicSessionsList}
+                    />
+
+                    <SemesterAnalyticsWidget
+                        currentSession={currentSession}
+                        currentSemester={currentSemester}
+                        semesterText={semesterText}
                     />
                 </div>
             ),

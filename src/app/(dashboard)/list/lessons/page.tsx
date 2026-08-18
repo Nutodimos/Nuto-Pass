@@ -5,6 +5,7 @@ import { Class, Lesson, Prisma, Subject, Teacher } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { BookOpen, Calendar, Clock, User, Users, Presentation } from "lucide-react";
 import Link from "next/link";
+import CourseSemesterFilter from "@/components/CourseSemesterFilter";
 
 type LessonList = Lesson & {
   subject: { name: string };
@@ -22,9 +23,42 @@ const LessonListPage = async ({
 
   const { ...queryParams } = searchParams;
 
+  // Fetch current semester setting
+  const semesterConfig = await prisma.schoolConfig.findFirst({
+    where: { key: "currentSemester" },
+  });
+  const currentSemester = semesterConfig?.value ? parseInt(semesterConfig.value) : 1;
+
   // QUERY GENERATION
   const query: Prisma.LessonWhereInput = {};
   query.isActive = true;
+
+  // Semester filtering on lessons through subject
+  const selectedSemesterParam = queryParams.semester;
+  if (selectedSemesterParam === "all") {
+    // Show all lessons across all semesters
+  } else if (selectedSemesterParam && selectedSemesterParam !== "") {
+    const semNum = parseInt(selectedSemesterParam);
+    if (!isNaN(semNum)) {
+      query.subject = {
+        is: {
+          OR: [
+            { semester: semNum },
+            { semester: null },
+          ],
+        },
+      };
+    }
+  } else if (currentSemester && currentSemester !== 0) {
+    query.subject = {
+      is: {
+        OR: [
+          { semester: currentSemester },
+          { semester: null },
+        ],
+      },
+    };
+  }
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
@@ -75,7 +109,6 @@ const LessonListPage = async ({
       class: { select: { name: true } },
       teacher: { select: { name: true, surname: true } },
     },
-    // No take/skip - we want the full week's schedule
   });
 
   // GROUP BY DAY
@@ -111,7 +144,8 @@ const LessonListPage = async ({
               <p className="text-white/70 text-sm">Full weekly timetable</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            <CourseSemesterFilter currentSemester={String(currentSemester)} />
             <div className="flex-1 md:flex-none bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2">
               <TableSearch />
             </div>
@@ -156,26 +190,41 @@ const LessonListPage = async ({
                           <h3 className="font-bold text-slate-800 text-lg leading-tight mb-1 group-hover:text-CPENavy transition-colors">
                             {lesson.subject.name}
                           </h3>
-                          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mt-2">
-                            <Clock className="w-3.5 h-3.5" />
-                            {formatTime(lesson.startTime)} - {formatTime(lesson.endTime)}
+                          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                            <Clock className="w-3.5 h-3.5 text-CPEGold" />
+                            <span>
+                              {formatTime(lesson.startTime)} - {formatTime(lesson.endTime)}
+                            </span>
                           </div>
                         </div>
+
+                        {/* Action buttons (Higher z-index than Link Layer) */}
+                        {role === "admin" && (
+                          <div className="flex items-center gap-1 ml-2 relative z-30 pointer-events-auto">
+                            <FormContainer table="lesson" type="update" data={lesson} />
+                            <FormContainer table="lesson" type="delete" id={lesson.id} />
+                          </div>
+                        )}
                       </div>
 
                       {/* DETAILS: Class & Teacher */}
-                      <div className="space-y-2 pt-3 mt-auto border-t border-slate-50 block pointer-events-none">
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                          <div className="p-1.5 bg-slate-100 rounded-md text-slate-500 group-hover:bg-slate-200 transition-colors">
-                            <Users className="w-4 h-4" />
+                      <div className="space-y-2 mt-auto pt-4 border-t border-slate-100 text-xs">
+                        <div className="flex items-center justify-between text-slate-600">
+                          <div className="flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Level:</span>
                           </div>
-                          <span className="font-medium">{lesson.class.name}</span>
+                          <span className="font-semibold text-slate-700">{lesson.class.name}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                          <div className="p-1.5 bg-slate-100 rounded-md text-slate-500 group-hover:bg-slate-200 transition-colors">
-                            <User className="w-4 h-4" />
+
+                        <div className="flex items-center justify-between text-slate-600">
+                          <div className="flex items-center gap-1.5">
+                            <User className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Lecturer:</span>
                           </div>
-                          <span>{lesson.teacher.name} {lesson.teacher.surname}</span>
+                          <span className="font-semibold text-slate-700 truncate max-w-[120px]">
+                            {lesson.teacher.name} {lesson.teacher.surname}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -186,11 +235,11 @@ const LessonListPage = async ({
           );
         })}
 
-        {data.length === 0 && (
-          <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>No lessons schedules found.</p>
-            {role === "admin" && <p className="text-sm mt-2 text-CPENavyUnderline">Try adding a new lesson.</p>}
+        {Object.values(groupedLessons).every((l) => l.length === 0) && (
+          <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-dashed border-slate-200">
+            <Presentation className="w-12 h-12 text-slate-300 mb-3" />
+            <h3 className="text-base font-semibold text-slate-700">No lessons scheduled</h3>
+            <p className="text-sm text-slate-400">Try adjusting your semester or search filter</p>
           </div>
         )}
       </div>
@@ -205,7 +254,7 @@ const LessonListPage = async ({
             </div>
             <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
               <div className="bg-slate-800 text-white text-sm px-3 py-2 rounded-lg shadow-lg">
-                Create New Lesson
+                Add Lesson
                 <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
                   <div className="border-8 border-transparent border-l-slate-800"></div>
                 </div>
