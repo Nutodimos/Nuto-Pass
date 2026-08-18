@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "react-toastify";
 import {
     Archive,
     Calendar,
@@ -101,6 +102,7 @@ export default function AttendanceArchiveSettings({
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        toast.success(`Downloaded attendance CSV for ${session.courseCode}`);
     };
 
     return (

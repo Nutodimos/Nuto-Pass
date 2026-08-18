@@ -5,16 +5,49 @@ import { auth } from "@clerk/nextjs/server";
 import Papa from "papaparse";
 
 type CsvTimetableRow = {
-    Subject: string;
-    Class: string;
-    Day: string;
-    "Start Time": string;
-    "End Time": string;
+    Subject?: string;
+    Course?: string;
+    Module?: string;
+    "Course Code"?: string;
+    "Subject Code"?: string;
+    Class?: string;
+    Level?: string;
+    Cohort?: string;
+    Group?: string;
+    Day?: string;
+    day?: string;
+    "Start Time"?: string;
+    "End Time"?: string;
+    startTime?: string;
+    endTime?: string;
+    Start?: string;
+    End?: string;
 };
 
-export async function POST(req: NextRequest) {
- 
+function normalizeTimeString(timeStr: string): string | null {
+    if (!timeStr) return null;
+    const clean = timeStr.trim();
+    // Match HH:mm or H:mm
+    const match24 = clean.match(/^(\d{1,2}):(\d{2})(:00)?$/);
+    if (match24) {
+        const h = match24[1].padStart(2, "0");
+        const m = match24[2];
+        return `${h}:${m}`;
+    }
+    // Match 12h format like "8:00 AM" or "02:30 PM"
+    const match12 = clean.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (match12) {
+        let h = parseInt(match12[1], 10);
+        const m = match12[2];
+        const ampm = match12[3].toUpperCase();
+        if (ampm === "PM" && h < 12) h += 12;
+        if (ampm === "AM" && h === 12) h = 0;
+        return `${h.toString().padStart(2, "0")}:${m}`;
+    }
+    return clean;
+}
 
+export async function POST(req: NextRequest) {
     try {
         const { userId, sessionClaims } = auth();
         if (!userId) {
@@ -67,47 +100,52 @@ export async function POST(req: NextRequest) {
             errors: [] as string[],
         };
 
-        // Pre-fetch all active subjects and classes to minimize DB queries in the loop
+        // Pre-fetch all active subjects and classes for THIS tenant
         const [allSubjects, allClasses] = await Promise.all([
             prisma.subject.findMany({
-                where: { isActive: true },
+                where: { isActive: true, organizationId },
                 include: { teachers: true }
             }),
             prisma.class.findMany({
-                where: { isActive: true }
+                where: { isActive: true, organizationId }
             })
         ]);
 
         const validDays = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
-        const dateBase = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+        const dateBase = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
 
+        let rowIdx = 0;
         for (const row of parsed.data) {
-            const subjectName = row.Subject?.trim();
-            const className = row.Class?.trim();
-            const dayStr = row.Day?.trim().toUpperCase();
-            const startTimeStr = row["Start Time"]?.trim();
-            const endTimeStr = row["End Time"]?.trim();
+            rowIdx++;
+            const subjectName = (row.Subject || row.Course || row.Module || row["Course Code"] || row["Subject Code"])?.trim();
+            const className = (row.Class || row.Level || row.Cohort || row.Group)?.trim();
+            const dayStr = (row.Day || row.day)?.trim().toUpperCase();
+            const rawStart = (row["Start Time"] || row.startTime || row.Start || (row as any)["start_time"])?.trim();
+            const rawEnd = (row["End Time"] || row.endTime || row.End || (row as any)["end_time"])?.trim();
 
-            if (!subjectName || !className || !dayStr || !startTimeStr || !endTimeStr) {
-                results.errors.push(`Row missing required fields (Subject, Class, Day, Start Time, or End Time)`);
+            if (!subjectName || !className || !dayStr || !rawStart || !rawEnd) {
+                results.errors.push(`Row ${rowIdx}: Missing required fields (Course/Subject, Class/Level, Day, Start Time, or End Time)`);
                 continue;
             }
 
             if (!validDays.includes(dayStr)) {
-                results.errors.push(`Invalid day '${dayStr}' for Subject '${subjectName}'`);
+                results.errors.push(`Row ${rowIdx}: Invalid day '${dayStr}' for '${subjectName}'`);
                 continue;
             }
 
-            // Find subject
-            const subject = allSubjects.find((s) => s.name.toLowerCase() === subjectName.toLowerCase());
+            // Find subject by code or title
+            const subject = allSubjects.find((s) =>
+                s.name.toLowerCase() === subjectName.toLowerCase() ||
+                (s.title && s.title.toLowerCase() === subjectName.toLowerCase())
+            );
             if (!subject) {
-                results.errors.push(`Subject '${subjectName}' not found`);
+                results.errors.push(`Row ${rowIdx}: Subject/Course '${subjectName}' not found in your organization`);
                 continue;
             }
 
             // Ensure subject has at least one teacher
             if (subject.teachers.length === 0) {
-                results.errors.push(`Subject '${subjectName}' has no assigned teachers`);
+                results.errors.push(`Row ${rowIdx}: Subject/Course '${subjectName}' has no assigned teachers/lecturers`);
                 continue;
             }
             const teacherId = subject.teachers[0].id;
@@ -115,9 +153,12 @@ export async function POST(req: NextRequest) {
             // Find class
             const classItem = allClasses.find((c) => c.name.toLowerCase() === className.toLowerCase());
             if (!classItem) {
-                results.errors.push(`Class '${className}' not found`);
+                results.errors.push(`Row ${rowIdx}: Class/Level '${className}' not found in your organization`);
                 continue;
             }
+
+            const startTimeStr = normalizeTimeString(rawStart);
+            const endTimeStr = normalizeTimeString(rawEnd);
 
             try {
                 // Parse times
@@ -125,7 +166,12 @@ export async function POST(req: NextRequest) {
                 const endTime = new Date(`${dateBase}T${endTimeStr}:00`);
 
                 if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-                    results.errors.push(`Invalid time format for ${subjectName} in ${className}`);
+                    results.errors.push(`Row ${rowIdx}: Invalid time format (${rawStart} - ${rawEnd}) for ${subjectName}`);
+                    continue;
+                }
+
+                if (startTime >= endTime) {
+                    results.errors.push(`Row ${rowIdx}: Start time must be earlier than End time for ${subjectName}`);
                     continue;
                 }
 
@@ -146,7 +192,7 @@ export async function POST(req: NextRequest) {
                 results.created++;
             } catch (err: any) {
                 const message = err?.message || "Unknown error";
-                results.errors.push(`Error creating ${subjectName} in ${className}: ${message}`);
+                results.errors.push(`Row ${rowIdx} (${subjectName} in ${className}): ${message}`);
             }
         }
 

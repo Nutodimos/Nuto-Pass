@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import TableSearch from "@/components/TableSearch";
+import CsvImportModal from "@/components/CsvImportModal";
 import { Class, Prisma, Subject, Teacher } from "@prisma/client";
 import { Users, BookOpen, GraduationCap, Mail, Phone, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -23,6 +24,7 @@ const LecturersPage = async ({
 }) => {
   const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
+  const organizationId = (sessionClaims?.metadata as any)?.organizationId;
 
   // Access control: Only admin can access this page
   if (role !== "admin") {
@@ -35,6 +37,7 @@ const LecturersPage = async ({
   // URL PARAMS CONDITION
   const query: Prisma.TeacherWhereInput = {
     isActive: true, // Hide soft-deleted teachers
+    ...(organizationId ? { organizationId } : {}),
   };
 
   if (queryParams) {
@@ -87,21 +90,22 @@ const LecturersPage = async ({
     <div className="flex-1 p-4 flex flex-col gap-4">
       {/* HEADER */}
       <div className="bg-gradient-to-br from-CPENavy to-CPENavyDark p-6 rounded-2xl shadow-lg">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
               <Users className="w-7 h-7 text-white" />
             </div>
             <div className="text-white">
-              <h1 className="text-2xl font-bold">Lecturers</h1>
-              <p className="text-white/80 text-sm">{count} lecturers available</p>
+              <h1 className="text-2xl font-bold">Faculty / Staff</h1>
+              <p className="text-white/80 text-sm">{count} registered</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-
-              <TableSearch />
-
+          <div className="flex items-center flex-wrap gap-3 w-full md:w-auto">
+            <TableSearch />
+            {role === "admin" && (
+              <CsvImportModal mode="import-lecturers" />
+            )}
           </div>
         </div>
       </div>
@@ -111,7 +115,7 @@ const LecturersPage = async ({
         <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl">
           <Users className="w-16 h-16 text-gray-300 mb-4" />
           <h3 className="text-lg font-medium text-gray-500">No lecturers found</h3>
-          <p className="text-sm text-gray-400">Try adjusting your search</p>
+          <p className="text-sm text-gray-400">Try adjusting your search or import new staff</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -169,13 +173,13 @@ const LecturersPage = async ({
                       {lecturer.subjects.slice(0, 3).map((subject) => (
                         <span
                           key={subject.id}
-                          className="px-2 py-1 bg-CPENavy/10 text-CPENavy text-xs rounded-md"
+                          className="px-2 py-1 bg-CPENavy/10 text-CPENavy rounded-lg text-xs font-medium"
                         >
                           {subject.name}
                         </span>
                       ))}
                       {lecturer.subjects.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-md">
+                        <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded-lg text-xs">
                           +{lecturer.subjects.length - 3} more
                         </span>
                       )}
@@ -183,20 +187,33 @@ const LecturersPage = async ({
                   </div>
                 )}
 
+                {/* Classes Supervised */}
+                {lecturer.classes.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <GraduationCap className="w-4 h-4 text-CPEGold" />
+                      <span className="text-xs font-medium text-gray-500">Advising</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {lecturer.classes.map((cls) => (
+                        <span
+                          key={cls.id}
+                          className="px-2 py-1 bg-CPEGold/10 text-CPEGold rounded-lg text-xs font-medium"
+                        >
+                          {cls.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Stats */}
-                <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
-                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                    <BookOpen className="w-4 h-4 text-CPENavy" />
-                    <span>{lecturer.subjects.length} Courses</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                    <GraduationCap className="w-4 h-4 text-CPEGold" />
-                    <span>{lecturer._count.lessons} Lessons</span>
-                  </div>
+                <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-xs text-gray-500">
+                  <span>{lecturer.subjects.length} courses</span>
+                  <span>{lecturer._count.lessons} lessons/week</span>
                 </div>
               </Link>
 
-              {/* Admin Actions - Outside the Link */}
               {role === "admin" && (
                 <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100 relative z-10">
                   <FormContainer table="teacher" type="update" data={lecturer} />
@@ -223,7 +240,7 @@ const LecturersPage = async ({
             </div>
             <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
               <div className="bg-slate-800 text-white text-sm px-3 py-2 rounded-lg shadow-lg">
-                Add Lecturer
+                Add Staff / Lecturer
                 <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
                   <div className="border-8 border-transparent border-l-slate-800"></div>
                 </div>

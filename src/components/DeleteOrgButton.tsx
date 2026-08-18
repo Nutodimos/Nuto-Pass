@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { deleteOrganization } from "@/lib/super-admin-actions";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 interface DeleteOrgButtonProps {
   orgId: string;
@@ -25,8 +26,9 @@ export function DeleteOrgButton({ orgId, orgName, variant = "icon" }: DeleteOrgB
     try {
       const result = await deleteOrganization(orgId);
       if (result && result.error) {
-        window.alert(result.messages?.join("\n") || "Failed to delete organization");
+        toast.error(result.messages?.join("\n") || "Failed to delete organization");
       } else {
+        toast.success(`Organisation "${orgName}" deleted successfully!`);
         if (variant === "button") {
           router.push("/super-admin/organisations");
         } else {
@@ -34,7 +36,7 @@ export function DeleteOrgButton({ orgId, orgName, variant = "icon" }: DeleteOrgB
         }
       }
     } catch (err: any) {
-      window.alert("Error: " + (err.message || "An unexpected error occurred."));
+      toast.error("Error: " + (err.message || "An unexpected error occurred."));
     } finally {
       setIsDeleting(false);
     }

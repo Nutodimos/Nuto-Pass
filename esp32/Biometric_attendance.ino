@@ -50,9 +50,12 @@ const char* modeToString(Mode m){
 // ══════════ Event POST ══════════
 bool postToServer(String event, int id, String status) {
   if (!wifiConnected) return false;
+  WiFiClientSecure client;
+  client.setInsecure(); // Enable secure HTTPS connectivity without requiring hardcoded CA roots
   HTTPClient http;
   String url = String(SERVER_URL) + String(API_PATH);
-  http.begin(url); http.addHeader("Content-Type","application/json"); http.setTimeout(8000);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.begin(client, url); http.addHeader("Content-Type","application/json"); http.setTimeout(8000);
   char ts[24]="unknown"; struct tm t;
   if(getLocalTime(&t)) snprintf(ts,sizeof(ts),"%04d-%02d-%02dT%02d:%02d:%02d",t.tm_year+1900,t.tm_mon+1,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
   String json="{\"deviceSecret\":\""+String(DEVICE_SECRET)+"\",\"event\":\""+event+"\",\"userID\":\""+makeUserID(id)+"\",\"status\":\""+status+"\",\"timestamp\":\""+String(ts)+"\"}";
@@ -63,9 +66,12 @@ bool postToServer(String event, int id, String status) {
 // ══════════ Heartbeat ══════════
 void sendHeartbeat() {
   if (!wifiConnected) return;
+  WiFiClientSecure client;
+  client.setInsecure(); // Enable secure HTTPS connectivity without requiring hardcoded CA roots
   HTTPClient http;
   String url = String(SERVER_URL) + "/api/esp32/heartbeat";
-  http.begin(url); http.addHeader("Content-Type","application/json"); http.setTimeout(5000);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.begin(client, url); http.addHeader("Content-Type","application/json"); http.setTimeout(5000);
   unsigned long up = (millis() - bootTime) / 1000;
   int rssi = WiFi.RSSI(); int heap = ESP.getFreeHeap();
   int stored = finger.templateCount; // AS608 reports stored template count

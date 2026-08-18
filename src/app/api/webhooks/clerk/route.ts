@@ -71,17 +71,15 @@ export async function POST(req: Request) {
                 );
             }
 
-            // Try to delete from each user table (Student, Teacher, User)
-            // Only one will succeed based on user role
-            const results = await Promise.allSettled([
-                prismaBase.student.delete({ where: { id } }).catch(() => null),
-                prismaBase.teacher.delete({ where: { id } }).catch(() => null),
+            // Soft delete student/teacher to preserve historical attendance & grade integrity; hard delete admin User row
+            await Promise.allSettled([
+                prismaBase.student.update({ where: { id }, data: { isActive: false, biometricId: null } }).catch(() => null),
+                prismaBase.teacher.update({ where: { id }, data: { isActive: false } }).catch(() => null),
+                prismaBase.class.updateMany({ where: { supervisorId: id }, data: { supervisorId: null } }).catch(() => null),
                 prismaBase.user.delete({ where: { clerkId: id } }).catch(() => null),
             ]);
 
-
-
-            return NextResponse.json({ success: true, message: "User deleted from database" });
+            return NextResponse.json({ success: true, message: "User deactivated/removed from database" });
         }
 
         if (eventType === "user.updated") {

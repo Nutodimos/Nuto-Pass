@@ -18,14 +18,20 @@ const SingleLessonPage = async ({
     const role = (sessionClaims?.metadata as { role?: string })?.role;
     const currentUserId = sessionClaims?.sub; // User ID from Clerk
 
+    const lessonId = parseInt(id);
+    if (isNaN(lessonId)) {
+        return notFound();
+    }
+
     const lesson = await prisma.lesson.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: lessonId },
         include: {
             subject: true,
             teacher: true,
             class: {
                 include: {
                     students: {
+                        where: { isActive: true },
                         orderBy: { surname: "asc" },
                     },
                 },
@@ -33,7 +39,7 @@ const SingleLessonPage = async ({
         },
     });
 
-    if (!lesson) {
+    if (!lesson || !lesson.isActive) {
         return notFound();
     }
 
@@ -72,7 +78,7 @@ const SingleLessonPage = async ({
 
                 {/* --- HERO HEADER CARD --- */}
                 <div className="cpe-card relative bg-white p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start group z-10 w-full min-h-max">
-                    {/* Fancy background gradients - contained in their own layer so they don't clip the card content */}
+                    {/* Fancy background gradients */}
                     <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none z-0">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-CPEGold/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
                         <div className="absolute bottom-0 left-0 w-64 h-64 bg-CPENavy/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3"></div>
@@ -104,7 +110,7 @@ const SingleLessonPage = async ({
                             )}
                         </div>
 
-                        {/* Title - Removing meaningless "Lesson format" and using Subject */}
+                        {/* Title */}
                         <h1 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight mb-2 break-words">
                             {lesson.subject.name}
                         </h1>

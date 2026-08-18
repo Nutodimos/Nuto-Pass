@@ -41,7 +41,7 @@ const SingleTeacherPage = async ({
       },
     });
 
-  if (!teacher) {
+  if (!teacher || !teacher.isActive) {
     return notFound();
   }
 

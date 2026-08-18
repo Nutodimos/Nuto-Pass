@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { updateOrgMetadata } from "@/lib/super-admin-actions";
 import type { InstitutionType, NavItem, OrgMetadata } from "@/types/organization";
+import { toast } from "react-toastify";
 
 const INSTITUTION_TYPES: { value: InstitutionType; label: string; description: string }[] = [
   { value: "UNIVERSITY_DEPARTMENT", label: "University Department", description: "Lecturers, Students, Courses, Levels, Semesters" },
@@ -95,8 +96,10 @@ export default function CustomizeForm({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
       setUrl(data.url);
+      toast.success(`${type === "logo" ? "Logo" : "Favicon"} uploaded successfully!`);
     } catch (err: any) {
       setError(err.message);
+      toast.error(err.message || "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -118,8 +121,15 @@ export default function CustomizeForm({
     };
     const result = await updateOrgMetadata(orgId, { institutionType, metadata });
     setSaving(false);
-    if (result.success) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
-    else setError(result.messages?.[0] || "Failed to save");
+    if (result.success) {
+      setSaved(true);
+      toast.success("Organisation customization saved successfully!");
+      setTimeout(() => setSaved(false), 3000);
+    } else {
+      const msg = result.messages?.[0] || "Failed to save organisation settings";
+      setError(msg);
+      toast.error(msg);
+    }
   };
 
   const addNavItem = () => setNavItems([...navItems, { label: "", href: "/", icon: "Home" }]);

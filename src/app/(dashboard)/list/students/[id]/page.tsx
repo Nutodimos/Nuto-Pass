@@ -40,7 +40,7 @@ const SingleStudentPage = async ({
       },
     });
 
-  if (!student) {
+  if (!student || !student.isActive) {
     return notFound();
   }
 

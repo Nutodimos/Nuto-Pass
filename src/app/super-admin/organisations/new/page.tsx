@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useFormState } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 function slugify(text: string) {
   return text
@@ -26,9 +27,16 @@ export default function NewOrganisationPage() {
 
   useEffect(() => {
     if (state.success) {
+      toast.success("Organisation onboarded successfully!");
       router.push("/super-admin/organisations");
+    } else if (state.error) {
+      toast.error(
+        (state as any).messages
+          ? (state as any).messages.join("\n")
+          : "Failed to create organisation."
+      );
     }
-  }, [state.success, router]);
+  }, [state, router]);
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">

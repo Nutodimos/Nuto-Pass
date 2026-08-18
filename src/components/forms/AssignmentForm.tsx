@@ -69,7 +69,11 @@ const AssignmentForm = ({
                 router.refresh();
             }, 100);
         } else if (state.error) {
-            toast.error("Something went wrong!");
+            toast.error(
+                (state as any).messages
+                    ? (state as any).messages.join("\n")
+                    : "Failed to save assignment. Please try again."
+            );
         }
     }, [state, router, type, setOpen]);
 

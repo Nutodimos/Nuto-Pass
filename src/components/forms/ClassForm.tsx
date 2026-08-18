@@ -19,6 +19,7 @@ import { useFormState } from "react-dom";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { useTaxonomy } from "@/hooks/use-taxonomy";
 
 const ClassForm = ({
   type,
@@ -31,6 +32,7 @@ const ClassForm = ({
   setOpen: Dispatch<SetStateAction<boolean>>;
   relatedData?: any;
 }) => {
+  const taxonomy = useTaxonomy();
   const {
     register,
     handleSubmit,
@@ -45,8 +47,6 @@ const ClassForm = ({
     }
   });
 
-  // AFTER REACT 19 IT'LL BE USEACTIONSTATE
-
   const [state, formAction] = useFormState(
     type === "create" ? createClass : updateClass,
     {
@@ -56,7 +56,6 @@ const ClassForm = ({
   );
 
   const onSubmit = handleSubmit((data) => {
-
     formAction(data);
   });
 
@@ -64,13 +63,13 @@ const ClassForm = ({
 
   useEffect(() => {
     if (state.success) {
-      toast.success(`Level ${type === "create" ? "created" : "updated"} successfully!`);
+      toast.success(`${taxonomy.class} ${type === "create" ? "created" : "updated"} successfully!`);
       setOpen(false);
       router.refresh();
     } else if (state.error) {
       toast.error((state as any).messages ? (state as any).messages.join("\n") : "Something went wrong!");
     }
-  }, [state, router, type, setOpen]);
+  }, [state, router, type, setOpen, taxonomy.class]);
 
   const { teachers } = relatedData;
 
@@ -78,16 +77,16 @@ const ClassForm = ({
     <form className="flex flex-col gap-6" onSubmit={onSubmit}>
       <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-CPENavy to-CPENavyDark flex items-center justify-center">
-          <span className="text-white font-bold">L</span>
+          <span className="text-white font-bold">{taxonomy.class.charAt(0)}</span>
         </div>
         <h1 className="text-xl font-bold text-CPENavyDark">
-          {type === "create" ? "Create New Level" : "Update Level"}
+          {type === "create" ? `Create New ${taxonomy.class}` : `Update ${taxonomy.class}`}
         </h1>
       </div>
 
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Level Name"
+          label={`${taxonomy.class} Name`}
           name="name"
           defaultValue={data?.name}
           register={register}

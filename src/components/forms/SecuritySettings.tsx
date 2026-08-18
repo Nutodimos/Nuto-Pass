@@ -58,12 +58,9 @@ const SecuritySettings = () => {
             setConfirmPassword("");
         } catch (err: any) {
             console.error(err);
-            // Clerk errors usually have an array of errors
-            if (err.errors && err.errors.length > 0) {
-                setError(err.errors[0].message || err.errors[0].longMessage);
-            } else {
-                setError(err.message || "An unexpected error occurred.");
-            }
+            const msg = err.errors?.[0]?.message || err.errors?.[0]?.longMessage || err.message || "An unexpected error occurred.";
+            setError(msg);
+            toast.error(msg);
         } finally {
             setIsLoading(false);
         }

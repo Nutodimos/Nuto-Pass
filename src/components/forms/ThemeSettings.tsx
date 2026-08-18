@@ -2,6 +2,7 @@
 
 import { useTheme, Theme } from "@/components/ThemeProvider";
 import { Sun, Moon, Eclipse, Monitor, Check } from "lucide-react";
+import { toast } from "react-toastify";
 
 const themes: {
     id: Theme;
@@ -82,7 +83,10 @@ const ThemeSettings = () => {
                     return (
                         <button
                             key={t.id}
-                            onClick={() => setTheme(t.id)}
+                            onClick={() => {
+                                setTheme(t.id);
+                                toast.info(`Theme changed to ${t.name}`, { autoClose: 2000 });
+                            }}
                             className={`group relative rounded-2xl p-1 transition-all duration-300 ${isActive
                                 ? "ring-2 ring-CPEGold shadow-lg shadow-CPEGold/20 scale-[1.02]"
                                 : "ring-1 hover:ring-2 hover:scale-[1.01]"

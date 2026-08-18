@@ -22,8 +22,11 @@ const SingleCoursePage = async ({
     const course = await prisma.subject.findUnique({
         where: { id: courseId },
         include: {
-            teachers: true,
+            teachers: {
+                where: { isActive: true },
+            },
             lessons: {
+                where: { isActive: true },
                 include: {
                     class: { select: { name: true } },
                 },
@@ -39,15 +42,15 @@ const SingleCoursePage = async ({
             },
             _count: {
                 select: {
-                    teachers: true,
-                    lessons: true,
+                    teachers: { where: { isActive: true } },
+                    lessons: { where: { isActive: true } },
                     materials: true,
                 },
             },
         },
     });
 
-    if (!course) {
+    if (!course || !course.isActive) {
         return notFound();
     }
 

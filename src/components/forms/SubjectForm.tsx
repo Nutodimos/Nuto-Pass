@@ -10,6 +10,8 @@ import { Dispatch, SetStateAction, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 
+import { useTaxonomy } from "@/hooks/use-taxonomy";
+
 const SubjectForm = ({
   type,
   data,
@@ -21,6 +23,7 @@ const SubjectForm = ({
   setOpen: Dispatch<SetStateAction<boolean>>;
   relatedData?: any;
 }) => {
+  const taxonomy = useTaxonomy();
   const {
     register,
     handleSubmit,
@@ -28,8 +31,6 @@ const SubjectForm = ({
   } = useForm<SubjectSchema>({
     resolver: zodResolver(subjectSchema),
   });
-
-  // AFTER REACT 19 IT'LL BE USEACTIONSTATE
 
   const [state, formAction] = useFormState(
     type === "create" ? createSubject : updateSubject,
@@ -40,26 +41,26 @@ const SubjectForm = ({
   );
 
   const onSubmit = handleSubmit((data) => {
-    console.log("Form Submitted:", data);
     formAction(data);
   });
 
   const router = useRouter();
 
   useEffect(() => {
-    console.log("Form State:", state);
     if (state.success) {
-      console.log("Action Success! Triggering Toast...");
-      toast.success(`Course ${type === "create" ? "created" : "updated"} successfully!`);
+      toast.success(`${taxonomy.subject} ${type === "create" ? "created" : "updated"} successfully!`);
       setTimeout(() => {
         setOpen(false);
         router.refresh();
       }, 100);
     } else if (state.error) {
-      console.log("Action Error!", state);
-      toast.error(`Something went wrong!`);
+      toast.error(
+        (state as any).messages
+          ? (state as any).messages.join("\n")
+          : "Failed to save. Please try again."
+      );
     }
-  }, [state, router, type, setOpen]);
+  }, [state, router, type, setOpen, taxonomy.subject]);
 
   const { teachers } = relatedData;
 
@@ -67,16 +68,10 @@ const SubjectForm = ({
     <form className="flex flex-col gap-6" onSubmit={onSubmit}>
       <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-CPEGold to-CPEGoldDark flex items-center justify-center">
-          <span className="text-white font-bold">C</span>
+          <span className="text-white font-bold">{taxonomy.subject.charAt(0)}</span>
         </div>
-        <h1 
-          className="text-xl font-bold text-CPENavyDark cursor-pointer" 
-          onClick={() => {
-            console.log("Manual Toast Triggered");
-            toast.info("Manual Toast Test");
-          }}
-        >
-          {type === "create" ? "Create New Course" : "Update Course"}
+        <h1 className="text-xl font-bold text-CPENavyDark">
+          {type === "create" ? `Create New ${taxonomy.subject}` : `Update ${taxonomy.subject}`}
         </h1>
       </div>
 

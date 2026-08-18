@@ -17,9 +17,9 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
 
     const levelClassInfo = await prisma.class.findUnique({
         where: { id: levelId },
-        select: { grade: { select: { level: true } } }
+        select: { isActive: true, grade: { select: { level: true } } }
     });
-    if (!levelClassInfo) return notFound();
+    if (!levelClassInfo || !levelClassInfo.isActive) return notFound();
 
     const level = await prisma.class.findUnique({
         where: { id: levelId },
@@ -28,9 +28,12 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
             grade: true,
             _count: {
                 select: {
-                    students: true,
+                    students: {
+                        where: { isActive: true }
+                    },
                     lessons: {
                         where: {
+                            isActive: true,
                             subject: {
                                 OR: [
                                     { level: null },
@@ -43,6 +46,7 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
             },
             lessons: {
                 where: {
+                    isActive: true,
                     subject: {
                         OR: [
                             { level: null },
@@ -62,13 +66,14 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
         }
     });
 
-    if (!level) return notFound();
+    if (!level || !level.isActive) return notFound();
 
-    // 2. Fetch Aggregate Attendance Stats for this level's students
+    // 2. Fetch Aggregate Attendance Stats for this level's active students
     const attendanceStats = await prisma.attendance.aggregate({
         where: {
             student: {
-                classId: levelId
+                classId: levelId,
+                isActive: true,
             }
         },
         _count: {
@@ -79,7 +84,8 @@ const LevelDetailsPage = async ({ params }: { params: { id: string } }) => {
     const presentStats = await prisma.attendance.aggregate({
         where: {
             student: {
-                classId: levelId
+                classId: levelId,
+                isActive: true,
             },
             present: true
         },

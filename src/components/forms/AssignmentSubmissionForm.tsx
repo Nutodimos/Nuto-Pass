@@ -57,7 +57,11 @@ const AssignmentSubmissionForm = ({
             setOpen(false);
             router.refresh();
         } else if (state.error) {
-            toast.error("Failed to submit assignment.");
+            toast.error(
+                (state as any).messages
+                    ? (state as any).messages.join("\n")
+                    : "Failed to submit assignment. Please try again."
+            );
         }
     }, [state, router, setOpen]);
 

@@ -36,6 +36,8 @@ export default function MarkReadButton({
         // Show lightweight toast on Mark All
         if (isAll) {
           toast.success("All announcements marked as read!");
+        } else {
+          toast.success("Marked as read", { autoClose: 2000 });
         }
       } else {
         toast.error("Failed to mark as read");

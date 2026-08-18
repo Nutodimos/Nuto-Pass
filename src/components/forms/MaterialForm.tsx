@@ -61,11 +61,15 @@ const MaterialForm = ({
 
     useEffect(() => {
         if (state.success) {
-            toast.success(`Material created successfully!`);
+            toast.success(`Material uploaded successfully!`);
             setOpen(false);
             router.refresh();
         } else if (state.error) {
-            toast.error("Something went wrong!");
+            toast.error(
+                (state as any).messages
+                    ? (state as any).messages.join("\n")
+                    : "Failed to upload material. Please try again."
+            );
         }
     }, [state, router, setOpen]);
 

@@ -236,9 +236,10 @@ export const createTeacher = async (
   const db = getTenantClient(authCheck.organizationId);
 
   try {
+    const password = data.password?.trim() || data.username;
     const user = await clerkClient().users.createUser({
       username: data.username,
-      password: data.password,
+      password: password,
       firstName: data.name,
       lastName: data.surname,
       publicMetadata: { role: "teacher", organizationId: authCheck.organizationId },
@@ -253,7 +254,7 @@ export const createTeacher = async (
         surname: data.surname,
         email: data.email || null,
         phone: data.phone || null,
-        address: data.address,
+        address: data.address || null,
         img: data.img || null,
         bloodType: data.bloodType || null,
         sex: data.sex,
@@ -307,7 +308,7 @@ export const updateTeacher = async (
         surname: data.surname,
         email: data.email || null,
         phone: data.phone || null,
-        address: data.address,
+        address: data.address || null,
         img: data.img || null,
         bloodType: data.bloodType || null,
         sex: data.sex,
@@ -342,6 +343,17 @@ export const deleteTeacher = async (
       console.error("Clerk user delete failed:", e);
     }
 
+    // 1. Unlink this teacher from any class they supervise
+    await db.class.updateMany({
+      where: {
+        supervisorId: id,
+      },
+      data: {
+        supervisorId: null,
+      },
+    });
+
+    // 2. Soft-delete the teacher
     await db.teacher.update({
       where: {
         id: id,
@@ -352,6 +364,7 @@ export const deleteTeacher = async (
     });
 
     revalidatePath("/list/lecturers");
+    revalidatePath("/list/levels");
     return { success: true, error: false };
   } catch (err) {
     return handleActionError(err);
@@ -368,12 +381,19 @@ export const createStudent = async (
   try {
     const classItem = await db.class.findUnique({
       where: { id: data.classId },
-      include: { _count: { select: { students: true } } },
+      select: { id: true, gradeId: true, _count: { select: { students: true } } },
     });
+
+    if (!classItem) {
+      return { success: false, error: true, messages: ["Selected class/cohort not found"] };
+    }
+
+    const resolvedGradeId = data.gradeId || classItem.gradeId;
+    const password = data.password?.trim() || data.username;
 
     const user = await clerkClient().users.createUser({
       username: data.username,
-      password: data.password,
+      password: password,
       firstName: data.name,
       lastName: data.surname,
       publicMetadata: { role: "student", organizationId: authCheck.organizationId },
@@ -388,12 +408,12 @@ export const createStudent = async (
         surname: data.surname,
         email: data.email || null,
         phone: data.phone || null,
-        address: data.address,
+        address: data.address || "",
         img: data.img || null,
         bloodType: data.bloodType || null,
         sex: data.sex,
         birthday: data.birthday,
-        gradeId: data.gradeId,
+        gradeId: resolvedGradeId,
         classId: data.classId,
         organizationId: authCheck.organizationId,
       },
@@ -471,12 +491,30 @@ export const deleteStudent = async (
       console.error("Clerk user delete failed (ignorable if user missing):", e);
     }
 
+    // 1. Fetch student to check if biometric slot needs freeing on hardware
+    const existingStudent = await db.student.findUnique({
+      where: { id: id },
+      select: { biometricId: true },
+    });
+
+    if (existingStudent?.biometricId) {
+      const slotNum = parseInt(existingStudent.biometricId.replace("USER", ""), 10);
+      if (!isNaN(slotNum) && slotNum > 0) {
+        await db.deviceHeartbeat.updateMany({
+          where: { deviceId: "ESP32_MAIN" },
+          data: { pendingCommand: `DELETE:${slotNum}` },
+        });
+      }
+    }
+
+    // 2. Soft-delete student and release biometric registration slot
     await db.student.update({
       where: {
         id: id,
       },
       data: {
         isActive: false,
+        biometricId: null,
       },
     });
 

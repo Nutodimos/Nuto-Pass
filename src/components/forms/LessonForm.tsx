@@ -4,15 +4,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { lessonSchema, LessonSchema } from "@/lib/formValidationSchemas";
-import { useFormState } from "react-dom";
 import { createLesson, updateLesson } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { UploadCloud, CheckCircle2, AlertCircle, FileText } from "lucide-react";
+import { UploadCloud, CheckCircle2, AlertCircle, FileText, Download } from "lucide-react";
+import { useTaxonomy } from "@/hooks/use-taxonomy";
+import { useOrgMetadata } from "@/components/OrgMetadataProvider";
 
 type SubjectWithTeachers = {
     id: number;
     name: string;
+    title?: string;
     teachers: { id: string; name: string; surname: string }[];
 };
 
@@ -27,6 +29,10 @@ const LessonForm = ({
     setOpen: Dispatch<SetStateAction<boolean>>;
     relatedData?: any;
 }) => {
+    const taxonomy = useTaxonomy();
+    const { institutionType } = useOrgMetadata();
+    const isUni = institutionType === "UNIVERSITY_DEPARTMENT";
+
     const [activeTab, setActiveTab] = useState<"manual" | "csv">("manual");
 
     // --- CSV Upload State ---
@@ -48,10 +54,10 @@ const LessonForm = ({
     const router = useRouter();
 
     const onSubmit = handleSubmit(async (formData) => {
-        const dateBase = new Date().toISOString().split('T')[0];
+        const dateBase = new Date().toISOString().split("T")[0];
 
         const formatDateTime = (timeInput: any) => {
-            if (typeof timeInput === 'string' && timeInput.includes(':')) {
+            if (typeof timeInput === "string" && timeInput.includes(":")) {
                 return new Date(`${dateBase}T${timeInput}:00`);
             }
             return timeInput;
@@ -66,7 +72,7 @@ const LessonForm = ({
         try {
             const action = type === "create" ? createLesson : updateLesson;
             const res = await action({ success: false, error: false }, finalData);
-            
+
             if (res.success) {
                 toast.success(`Lesson ${type === "create" ? "created" : "updated"} successfully!`);
                 setOpen(false);
@@ -74,7 +80,7 @@ const LessonForm = ({
             } else {
                 toast.error(res.messages?.[0] || "Something went wrong!");
             }
-        } catch (err) {
+        } catch {
             toast.error("An unexpected error occurred");
         }
     });
@@ -108,23 +114,20 @@ const LessonForm = ({
                 body: formData,
             });
 
-            const data = await res.json();
+            const resData = await res.json();
 
             if (!res.ok) {
-                toast.error(data.error || "Upload failed");
-                if (data.details) {
-                    console.error("Upload details:", data.details);
-                }
+                toast.error(resData.error || "Upload failed");
                 setUploading(false);
                 return;
             }
 
-            setResults(data);
-            if (data.created > 0) {
-                toast.success(`Successfully uploaded ${data.created} lessons!`);
+            setResults(resData);
+            if (resData.created > 0) {
+                toast.success(`Successfully uploaded ${resData.created} lessons!`);
                 router.refresh();
             } else {
-                toast.warning("No lessons were created. Check errors.");
+                toast.warning("No lessons were created. Check reported notices.");
             }
         } catch (error) {
             console.error("CSV Upload Error:", error);
@@ -135,7 +138,17 @@ const LessonForm = ({
     };
 
     const handleDownloadTemplate = () => {
-        const content = "Course,Class,Day,Start Time,End Time\nMathematics,JSS 1A,MONDAY,08:00,08:45\nEnglish,JSS 1A,MONDAY,08:45,09:30\nBiology,SSS 1B,TUESDAY,10:00,11:30";
+        const exampleRow1 = isUni
+            ? "CPE 311,CPE 300L,MONDAY,08:00,10:00"
+            : "Mathematics,JSS 1A,MONDAY,08:00,08:45";
+        const exampleRow2 = isUni
+            ? "CPE 321,CPE 300L,TUESDAY,10:00,12:00"
+            : "English,JSS 1A,MONDAY,08:45,09:30";
+        const exampleRow3 = isUni
+            ? "CPE 341,CPE 300L,WEDNESDAY,14:00,16:00"
+            : "Biology,SSS 1B,TUESDAY,10:00,11:30";
+
+        const content = `Course,Class,Day,Start Time,End Time\n${exampleRow1}\n${exampleRow2}\n${exampleRow3}\n`;
         const blob = new Blob([content], { type: "text/csv" });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -147,7 +160,7 @@ const LessonForm = ({
         document.body.removeChild(a);
     };
 
-    const { subjects, classes } = relatedData;
+    const { subjects = [], classes = [] } = relatedData || {};
 
     // Watch the selected subject and auto-set the lecturer
     const selectedSubjectId = watch("subjectId");
@@ -157,30 +170,28 @@ const LessonForm = ({
             const subject = subjects.find(
                 (s: SubjectWithTeachers) => s.id === Number(selectedSubjectId)
             );
-            if (subject && subject.teachers.length > 0) {
+            if (subject && subject.teachers?.length > 0) {
                 setValue("teacherId", subject.teachers[0].id);
             }
         }
     }, [selectedSubjectId, subjects, setValue]);
 
-    // Get the currently resolved lecturer name for display
     const resolvedTeacher = (() => {
         if (!selectedSubjectId || !subjects) return null;
         const subject = subjects.find(
             (s: SubjectWithTeachers) => s.id === Number(selectedSubjectId)
         );
-        if (subject && subject.teachers.length > 0) {
+        if (subject && subject.teachers?.length > 0) {
             const t = subject.teachers[0];
             return `${t.name} ${t.surname}`;
         }
         return null;
     })();
 
-    // Helper to get default time string if data exists
     const getDefaultTime = (date?: Date | string) => {
         if (!date) return "";
         const d = new Date(date);
-        const pad = (n: number) => n < 10 ? '0' + n : n;
+        const pad = (n: number) => (n < 10 ? "0" + n : n);
         return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
     };
 
@@ -200,86 +211,43 @@ const LessonForm = ({
                     <button
                         type="button"
                         onClick={() => { setActiveTab("manual"); setResults(null); }}
-                        className={`flex-1 flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === "manual"
-                            ? "bg-white text-CPENavy shadow-sm"
-                            : "text-gray-500 hover:text-gray-700"
-                            }`}
+                        className={`flex-1 flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                            activeTab === "manual"
+                                ? "bg-white text-CPENavy shadow-sm"
+                                : "text-gray-500 hover:text-gray-700"
+                        }`}
                     >
                         Manual Entry
                     </button>
                     <button
                         type="button"
                         onClick={() => setActiveTab("csv")}
-                        className={`flex-1 flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === "csv"
-                            ? "bg-white text-CPENavy shadow-sm"
-                            : "text-gray-500 hover:text-gray-700"
-                            }`}
+                        className={`flex-1 flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                            activeTab === "csv"
+                                ? "bg-white text-CPENavy shadow-sm"
+                                : "text-gray-500 hover:text-gray-700"
+                        }`}
                     >
-                        CSV Upload
+                        Timetable CSV Upload
                     </button>
                 </div>
             )}
 
             {activeTab === "manual" && (
                 <form className="flex flex-col gap-6" onSubmit={onSubmit}>
-
-
                     <div className="flex justify-between flex-wrap gap-4">
-
-                        <div className="flex flex-col gap-2 w-full md:w-1/4">
-                            <label className="text-sm font-medium text-CPENavyDark">Day</label>
-                            <select
-                                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
-                                {...register("day")}
-                                defaultValue={data?.day || ""}
-                            >
-                                <option value="" disabled>Select Day</option>
-                                {["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"].map(day => (
-                                    <option key={day} value={day}>{day}</option>
-                                ))}
-                            </select>
-                            {errors.day?.message && (
-                                <p className="text-xs text-red-400">{errors.day.message.toString()}</p>
-                            )}
-                        </div>
-
-                        <div className="flex flex-col gap-2 w-full md:w-1/4">
-                            <label className="text-sm font-medium text-CPENavyDark">Start Time</label>
-                            <input
-                                type="time"
-                                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
-                                {...register("startTime")}
-                                defaultValue={getDefaultTime(data?.startTime)}
-                            />
-                            {errors.startTime?.message && (
-                                <p className="text-xs text-red-400">{errors.startTime.message.toString()}</p>
-                            )}
-                        </div>
-
-                        <div className="flex flex-col gap-2 w-full md:w-1/4">
-                            <label className="text-sm font-medium text-CPENavyDark">End Time</label>
-                            <input
-                                type="time"
-                                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
-                                {...register("endTime")}
-                                defaultValue={getDefaultTime(data?.endTime)}
-                            />
-                            {errors.endTime?.message && (
-                                <p className="text-xs text-red-400">{errors.endTime.message.toString()}</p>
-                            )}
-                        </div>
-
-                        <div className="flex flex-col gap-2 w-full md:w-1/4">
-                            <label className="text-sm font-medium text-CPENavyDark">Course</label>
+                        {/* Course / Subject */}
+                        <div className="flex flex-col gap-2 w-full md:w-[48%]">
+                            <label className="text-sm font-medium text-CPENavyDark">{taxonomy.subject}</label>
                             <select
                                 className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
                                 {...register("subjectId")}
                                 defaultValue={data?.subjectId || ""}
                             >
-                                <option value="" disabled>Select Course</option>
+                                <option value="" disabled>Select {taxonomy.subject}</option>
                                 {subjects?.map((item: SubjectWithTeachers) => (
                                     <option value={item.id} key={item.id}>
-                                        {item.name}
+                                        {item.name} {item.title ? `- ${item.title}` : ""}
                                     </option>
                                 ))}
                             </select>
@@ -290,14 +258,15 @@ const LessonForm = ({
                             )}
                         </div>
 
-                        <div className="flex flex-col gap-2 w-full md:w-1/4">
-                            <label className="text-sm font-medium text-CPENavyDark">Class</label>
+                        {/* Class / Level */}
+                        <div className="flex flex-col gap-2 w-full md:w-[48%]">
+                            <label className="text-sm font-medium text-CPENavyDark">{taxonomy.class}</label>
                             <select
                                 className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
                                 {...register("classId")}
                                 defaultValue={data?.classId || ""}
                             >
-                                <option value="" disabled>Select Class</option>
+                                <option value="" disabled>Select {taxonomy.class}</option>
                                 {classes?.map((item: { id: number; name: string }) => (
                                     <option value={item.id} key={item.id}>
                                         {item.name}
@@ -311,13 +280,15 @@ const LessonForm = ({
                             )}
                         </div>
 
-                        {/* Lecturer — auto-selected from the chosen subject */}
-                        <div className="flex flex-col gap-2 w-full md:w-1/4">
-                            <label className="text-sm font-medium text-CPENavyDark">Lecturer</label>
+                        {/* Lecturer (Auto-derived) */}
+                        <div className="flex flex-col gap-2 w-full md:w-[48%]">
+                            <label className="text-sm font-medium text-CPENavyDark">{taxonomy.teacher}</label>
                             <input type="hidden" {...register("teacherId")} />
-                            <div className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-100 text-sm text-gray-600 cursor-not-allowed">
-                                {resolvedTeacher || (
-                                    <span className="text-gray-400 italic">Select a subject first</span>
+                            <div className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-100 text-sm text-gray-700">
+                                {resolvedTeacher ? (
+                                    <span className="font-medium text-slate-800">{resolvedTeacher}</span>
+                                ) : (
+                                    <span className="text-gray-400 italic">Auto-resolved from {taxonomy.subject.toLowerCase()}</span>
                                 )}
                             </div>
                             {errors.teacherId?.message && (
@@ -326,14 +297,61 @@ const LessonForm = ({
                                 </p>
                             )}
                         </div>
+
+                        {/* Day */}
+                        <div className="flex flex-col gap-2 w-full md:w-[48%]">
+                            <label className="text-sm font-medium text-CPENavyDark">Day of Week</label>
+                            <select
+                                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
+                                {...register("day")}
+                                defaultValue={data?.day || ""}
+                            >
+                                <option value="" disabled>Select Day</option>
+                                {["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"].map((day) => (
+                                    <option key={day} value={day}>{day}</option>
+                                ))}
+                            </select>
+                            {errors.day?.message && (
+                                <p className="text-xs text-red-400">{errors.day.message.toString()}</p>
+                            )}
+                        </div>
+
+                        {/* Start Time */}
+                        <div className="flex flex-col gap-2 w-full md:w-[48%]">
+                            <label className="text-sm font-medium text-CPENavyDark">Start Time</label>
+                            <input
+                                type="time"
+                                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
+                                {...register("startTime")}
+                                defaultValue={getDefaultTime(data?.startTime)}
+                            />
+                            {errors.startTime?.message && (
+                                <p className="text-xs text-red-400">{errors.startTime.message.toString()}</p>
+                            )}
+                        </div>
+
+                        {/* End Time */}
+                        <div className="flex flex-col gap-2 w-full md:w-[48%]">
+                            <label className="text-sm font-medium text-CPENavyDark">End Time</label>
+                            <input
+                                type="time"
+                                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
+                                {...register("endTime")}
+                                defaultValue={getDefaultTime(data?.endTime)}
+                            />
+                            {errors.endTime?.message && (
+                                <p className="text-xs text-red-400">{errors.endTime.message.toString()}</p>
+                            )}
+                        </div>
                     </div>
+
                     {/* Hidden input ID for update */}
                     {data && (
                         <input type="hidden" {...register("id")} value={data.id} />
                     )}
 
-                    <button className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-CPENavy to-CPENavyDark text-white font-semibold text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200">
-                        {type === "create" ? "Create" : "Update"}
+                    <button className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-CPENavy to-CPENavyDark text-white font-semibold text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200">
+                        {type === "create" ? "Create Lesson" : "Update Lesson"}
                     </button>
                 </form>
             )}
@@ -342,17 +360,31 @@ const LessonForm = ({
                 <div className="flex flex-col gap-4 animate-in fade-in zoom-in duration-300">
                     {!results ? (
                         <>
-                            <div className="flex justify-end mb-2">
-                                <button
-                                    type="button"
-                                    onClick={handleDownloadTemplate}
-                                    className="text-sm text-CPENavy hover:text-CPENavyDark font-medium flex items-center gap-1 bg-CPENavy/5 px-4 py-2 rounded-lg transition-colors border border-CPENavy/10"
-                                >
-                                    <FileText className="w-4 h-4" />
-                                    Download sample timetable template
-                                </button>
+                            {/* GUIDANCE BOX */}
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-2.5">
+                                <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <span className="text-xs font-bold text-CPENavy uppercase tracking-wider">
+                                        Step 1: Download & Fill Timetable CSV
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={handleDownloadTemplate}
+                                        className="flex items-center gap-1.5 text-xs font-semibold text-CPENavy hover:text-CPENavyDark bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:border-CPENavy shadow-sm transition-all"
+                                    >
+                                        <Download className="w-3.5 h-3.5" />
+                                        Download Template CSV
+                                    </button>
+                                </div>
+
+                                <div className="text-xs text-slate-600">
+                                    <p>
+                                        <span className="font-semibold text-slate-800">Required columns:</span>{" "}
+                                        <code>Course</code> (or <code>Subject</code>), <code>Class</code> (or <code>Level</code>), <code>Day</code>, <code>Start Time</code> (HH:MM), <code>End Time</code> (HH:MM)
+                                    </p>
+                                </div>
                             </div>
 
+                            {/* DROP ZONE */}
                             <div className="relative group">
                                 <input
                                     type="file"
@@ -361,19 +393,23 @@ const LessonForm = ({
                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     disabled={uploading}
                                 />
-                                <div className={`flex flex-col items-center justify-center p-10 border-2 border-dashed rounded-2xl transition-all duration-300 ${file ? "border-CPENavy bg-CPENavy/5" : "border-gray-200 bg-gray-50 group-hover:bg-gray-100 group-hover:border-CPENavy/50"}`}>
-                                    <UploadCloud className={`w-12 h-12 mb-4 transition-colors duration-300 ${file ? "text-CPENavy" : "text-gray-400 group-hover:text-CPENavy/50"}`} />
+                                <div className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-2xl transition-all duration-300 ${
+                                    file ? "border-CPENavy bg-CPENavy/5" : "border-gray-200 bg-gray-50 group-hover:bg-gray-100 group-hover:border-CPENavy/50"
+                                }`}>
+                                    <UploadCloud className={`w-10 h-10 mb-3 transition-colors duration-300 ${file ? "text-CPENavy" : "text-gray-400 group-hover:text-CPENavy/50"}`} />
 
                                     {file ? (
                                         <div className="flex flex-col items-center">
-                                            <p className="text-CPENavy font-medium text-lg text-center break-all">{file.name}</p>
-                                            <p className="text-gray-500 text-sm mt-1">{(file.size / 1024).toFixed(1)} KB</p>
-                                            <p className="text-blue-500 text-sm mt-4 font-medium">Click or drag to change file</p>
+                                            <p className="text-CPENavy font-medium text-base text-center break-all">{file.name}</p>
+                                            <p className="text-gray-500 text-xs mt-1">{(file.size / 1024).toFixed(1)} KB</p>
+                                            <p className="text-blue-500 text-xs mt-3 font-medium">Click or drag to replace file</p>
                                         </div>
                                     ) : (
                                         <>
-                                            <p className="text-gray-700 font-medium text-lg">Drop your timetable CSV here, or click to select</p>
-                                            <p className="text-gray-400 text-sm mt-2 font-medium">Only .csv files are supported</p>
+                                            <p className="text-gray-700 font-medium text-sm">
+                                                Step 2: Drop your completed timetable CSV here, or click to select
+                                            </p>
+                                            <p className="text-gray-400 text-xs mt-1">Accepts standard .csv files</p>
                                         </>
                                     )}
                                 </div>
@@ -394,35 +430,35 @@ const LessonForm = ({
                                         Processing Timetable...
                                     </span>
                                 ) : (
-                                    "Upload Timetable"
+                                    "Upload & Import Timetable"
                                 )}
                             </button>
                         </>
                     ) : (
                         <div className="flex flex-col gap-4 animate-in fade-in duration-500">
                             {/* Results Summary */}
-                            <div className="bg-green-50/50 border border-green-200 rounded-2xl p-6">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <CheckCircle2 className="w-6 h-6 text-green-600" />
-                                    <h3 className="text-green-800 font-bold text-lg">Upload Complete</h3>
+                            <div className="bg-green-50/50 border border-green-200 rounded-2xl p-5">
+                                <div className="flex items-center gap-3 mb-1">
+                                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                    <h3 className="text-green-800 font-bold text-base">Upload Complete</h3>
                                 </div>
-                                <p className="text-green-700 ml-9 font-medium">
-                                    Successfully processed and created <span className="font-bold text-green-800 text-lg">{results.created}</span> lessons.
+                                <p className="text-green-700 ml-8 text-sm">
+                                    Successfully created <span className="font-bold text-green-900">{results.created}</span> lesson(s).
                                 </p>
                             </div>
 
-                            {/* Errors / Skipped section */}
-                            {(results.errors?.length > 0 || results.skipped?.length > 0) && (
-                                <div className="bg-red-50/50 border border-red-200 rounded-2xl p-6 flex flex-col gap-4 max-h-[400px]">
-                                    <div className="flex items-center gap-3">
-                                        <AlertCircle className="w-6 h-6 text-red-600" />
-                                        <h3 className="text-red-800 font-bold text-lg">Issues Found</h3>
+                            {/* Errors / Notices */}
+                            {results.errors?.length > 0 && (
+                                <div className="bg-red-50/50 border border-red-200 rounded-2xl p-5 flex flex-col gap-3 max-h-[350px]">
+                                    <div className="flex items-center gap-2.5">
+                                        <AlertCircle className="w-5 h-5 text-red-600" />
+                                        <h3 className="text-red-800 font-bold text-sm">Issues Reported</h3>
                                     </div>
 
-                                    <div className="overflow-y-auto pr-2 rounded-xl bg-white/50 border border-red-100 p-4">
-                                        {results.errors?.map((err: string, i: number) => (
-                                            <div key={`err-${i}`} className="text-sm text-red-600 mb-2.5 last:mb-0 flex items-start gap-2 bg-red-50 p-3 rounded-lg border border-red-100">
-                                                <span className="text-red-400 mt-0.5 mt-0 text-lg">•</span>
+                                    <div className="overflow-y-auto pr-2 rounded-xl bg-white/60 border border-red-100 p-3 space-y-2">
+                                        {results.errors.map((err: string, i: number) => (
+                                            <div key={`err-${i}`} className="text-xs text-red-700 flex items-start gap-2 bg-red-50 p-2.5 rounded-lg border border-red-100">
+                                                <span className="text-red-400 mt-0.5">•</span>
                                                 <span className="font-medium">{err}</span>
                                             </div>
                                         ))}
@@ -438,7 +474,7 @@ const LessonForm = ({
                                 }}
                                 className="w-full py-3.5 px-6 rounded-xl border-2 border-CPENavy text-CPENavy font-bold text-sm hover:bg-CPENavy hover:text-white transition-all duration-300"
                             >
-                                Upload Another Form
+                                Upload Another Timetable
                             </button>
                         </div>
                     )}
