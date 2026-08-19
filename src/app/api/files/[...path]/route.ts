@@ -1,8 +1,11 @@
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { readFile, stat } from "fs/promises";
+import { stat } from "fs/promises";
+import { createReadStream } from "fs";
+import { Readable } from "stream";
 import path from "path";
+import { isAzureStorageConfigured, generateBlobReadSas } from "@/lib/azure-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +29,8 @@ export async function GET(
     request: NextRequest,
     { params }: { params: { path: string[] } }
 ) {
- 
-
     try {
-        // Check authentication
+        // 1. Check authentication
         const { userId, sessionClaims } = auth();
         if (!userId) {
             return NextResponse.json(
@@ -38,10 +39,10 @@ export async function GET(
             );
         }
 
-        // Get user role from session claims
+        // 2. Get user role from session claims
         const role = (sessionClaims?.metadata as { role?: string })?.role;
 
-        // Get path segments
+        // 3. Get path segments
         const pathSegments = params.path;
         if (!pathSegments || pathSegments.length < 2) {
             return NextResponse.json(
@@ -59,7 +60,7 @@ export async function GET(
             );
         }
 
-        // Build safe file path - prevent path traversal
+        // Prevent path traversal
         const filename = pathSegments.slice(1).join("/");
         if (filename.includes("..") || filename.includes("~")) {
             return NextResponse.json(
@@ -68,13 +69,11 @@ export async function GET(
             );
         }
 
-        // Full URL path for database lookup
+        // Full URL path matching what's stored in the database
         const fileUrlPath = `/api/files/${category}/${filename}`;
-        const physicalPath = path.join(process.cwd(), "data", "uploads", category, filename);
 
-        // ===== ACCESS CONTROL =====
+        // ===== RBAC ACCESS CONTROL =====
         if (category === "materials") {
-            // Find the material in the database
             const material = await prisma.material.findFirst({
                 where: { filePath: fileUrlPath },
                 include: { class: true },
@@ -87,11 +86,9 @@ export async function GET(
                 );
             }
 
-            // Check access based on role
             if (role === "admin") {
-                // Admin can access everything
+                // Admin can access all materials
             } else if (role === "teacher") {
-                // Teachers can access their own materials OR general materials
                 if (!material.isGeneral && material.teacherId !== userId) {
                     return NextResponse.json(
                         { error: "Access denied. You can only view materials you uploaded." },
@@ -99,15 +96,22 @@ export async function GET(
                     );
                 }
             } else if (role === "student") {
-                // Students can access general materials OR materials for their class
                 if (!material.isGeneral) {
-                    // Get student's class
                     const student = await prisma.student.findUnique({
                         where: { id: userId },
                         select: { classId: true },
                     });
 
-                    if (!student || material.classId !== student.classId) {
+                    // Check if student is in the class OR enrolled in the subject
+                    let hasAccess = student && material.classId === student.classId;
+                    if (!hasAccess) {
+                        const enrollment = await prisma.courseEnrollment.findFirst({
+                            where: { studentId: userId, subjectId: material.subjectId },
+                        });
+                        hasAccess = !!enrollment;
+                    }
+
+                    if (!hasAccess) {
                         return NextResponse.json(
                             { error: "Access denied. This material is not available for your class." },
                             { status: 403 }
@@ -115,14 +119,12 @@ export async function GET(
                     }
                 }
             } else {
-                // Unknown role - deny access
                 return NextResponse.json(
                     { error: "Access denied." },
                     { status: 403 }
                 );
             }
         } else if (category === "assignments") {
-            // Assignment submissions: students can only access their own, teachers can access course submissions
             const submission = await prisma.assignmentSubmission.findFirst({
                 where: { submissionUrl: fileUrlPath },
                 include: { assignment: { include: { subject: { include: { teachers: { select: { id: true } } } } } } },
@@ -135,13 +137,11 @@ export async function GET(
             if (role === "admin") {
                 // Admin can access everything
             } else if (role === "teacher") {
-                // Teachers can access submissions for subjects they teach
                 const isTeacherOfSubject = submission.assignment.subject.teachers.some(t => t.id === userId);
                 if (!isTeacherOfSubject) {
                     return NextResponse.json({ error: "Access denied." }, { status: 403 });
                 }
             } else if (role === "student") {
-                // Students can only access their own submissions
                 if (submission.studentId !== userId) {
                     return NextResponse.json({ error: "Access denied." }, { status: 403 });
                 }
@@ -149,9 +149,40 @@ export async function GET(
                 return NextResponse.json({ error: "Access denied." }, { status: 403 });
             }
         }
-        // Avatars are publicly accessible to any authenticated user (profile pictures)
 
-        // Check if file exists on disk
+        // ===== SERVE FILE: AZURE STORAGE OR LOCAL DISK =====
+
+        // 1. Check Azure Blob Storage if configured
+        if (isAzureStorageConfigured()) {
+            try {
+                // If pathSegments is [category, orgId, safeFilename] -> blobPath is "orgId/category/safeFilename"
+                // If pathSegments is [category, safeFilename] -> blobPath is "default/category/safeFilename"
+                let blobPath = "";
+                if (pathSegments.length >= 3) {
+                    const orgId = pathSegments[1];
+                    const safeName = pathSegments.slice(2).join("/");
+                    blobPath = `${orgId}/${category}/${safeName}`;
+                } else {
+                    blobPath = `default/${category}/${pathSegments[1]}`;
+                }
+
+                const downloadName = path.basename(filename);
+                const readSasUrl = await generateBlobReadSas({
+                    blobPath,
+                    expiresInMinutes: 15,
+                    downloadName,
+                });
+
+                // Redirect to temporary SAS URL (0 Azure App Service bandwidth consumed)
+                return NextResponse.redirect(readSasUrl, 307);
+            } catch (azureErr) {
+                console.warn("Azure SAS read generation failed, checking local disk:", azureErr);
+            }
+        }
+
+        // 2. Fallback to Local Disk (for local dev or legacy files)
+        const physicalPath = path.join(process.cwd(), "data", "uploads", category, filename);
+
         try {
             await stat(physicalPath);
         } catch {
@@ -161,23 +192,20 @@ export async function GET(
             );
         }
 
-        // Read file
-        const fileBuffer = await readFile(physicalPath);
-
-        // Get MIME type
+        // Stream file from disk to avoid RAM spikes
         const ext = path.extname(filename).toLowerCase();
         const contentType = MIME_TYPES[ext] || "application/octet-stream";
+        const nodeStream = createReadStream(physicalPath);
+        const webStream = Readable.toWeb(nodeStream);
 
-        // Return file with proper headers (convert Buffer to Uint8Array for NextResponse)
-        return new NextResponse(new Uint8Array(fileBuffer), {
+        return new NextResponse(webStream as any, {
             status: 200,
             headers: {
                 "Content-Type": contentType,
-                "Content-Disposition": `inline; filename="${path.basename(filename)}"`,
-                "Cache-Control": "public, max-age=2592000", // Cache for 30 days
+                "Content-Disposition": `inline; filename="${encodeURIComponent(path.basename(filename))}"`,
+                "Cache-Control": "public, max-age=2592000",
             },
         });
-
 
     } catch (error) {
         console.error("File serve error:", error);

@@ -11,6 +11,7 @@
     "record-demo": "node scripts/record_demo.js"
   },
   "dependencies": {
+    "@azure/storage-blob": "^12.33.0",
     "@clerk/elements": "^0.14.6",
     "@clerk/nextjs": "^5.4.1",
     "@ducanh2912/next-pwa": "^10.2.9",

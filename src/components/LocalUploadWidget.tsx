@@ -22,24 +22,81 @@ const LocalUploadWidget = ({ category, onSuccess, children, accept }: LocalUploa
         if (uploading) return;
 
         setUploading(true);
-        const toastId = toast.loading("Uploading...");
+        const toastId = toast.loading("Preparing upload...");
 
         try {
-            // Create form data
-            const formData = new FormData();
-            formData.append("file", file);
-            formData.append("category", category);
+            let uploadedFilePath: string | null = null;
 
-            // Upload to API
-            const response = await fetch("/api/upload", {
-                method: "POST",
-                body: formData,
-            });
+            // ─── 1. Attempt Direct Azure Blob Storage Upload (SAS) ───
+            try {
+                const sasResponse = await fetch("/api/upload/azure-sas", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        fileName: file.name,
+                        fileSize: file.size,
+                        fileType: file.type || "application/octet-stream",
+                        category,
+                    }),
+                });
 
-            const result = await response.json();
+                const sasData = await sasResponse.json();
 
-            if (!response.ok) {
-                throw new Error(result.error || "Upload failed");
+                if (sasResponse.ok && sasData.success && sasData.uploadUrl) {
+                    toast.update(toastId, {
+                        render: "Uploading to Azure Storage...",
+                        type: "info",
+                        isLoading: true,
+                    });
+
+                    // Direct PUT to Azure Blob Storage BlockBlob endpoint
+                    const azureUploadResponse = await fetch(sasData.uploadUrl, {
+                        method: "PUT",
+                        headers: {
+                            "x-ms-blob-type": "BlockBlob",
+                            "Content-Type": file.type || "application/octet-stream",
+                        },
+                        body: file,
+                    });
+
+                    if (!azureUploadResponse.ok) {
+                        throw new Error(`Azure upload failed with status ${azureUploadResponse.status}`);
+                    }
+
+                    uploadedFilePath = sasData.filePath;
+                }
+            } catch (azureErr) {
+                console.warn("Azure SAS direct upload unavailable, falling back to local upload:", azureErr);
+            }
+
+            // ─── 2. Fallback to Local Server Upload if Azure not used ───
+            if (!uploadedFilePath) {
+                toast.update(toastId, {
+                    render: "Uploading file...",
+                    type: "info",
+                    isLoading: true,
+                });
+
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("category", category);
+
+                const localResponse = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const localResult = await localResponse.json();
+
+                if (!localResponse.ok) {
+                    throw new Error(localResult.error || "Upload failed");
+                }
+
+                uploadedFilePath = localResult.filePath;
+            }
+
+            if (!uploadedFilePath) {
+                throw new Error("Upload failed to return a valid file path");
             }
 
             toast.update(toastId, {
@@ -53,9 +110,9 @@ const LocalUploadWidget = ({ category, onSuccess, children, accept }: LocalUploa
             // Reset input for future uploads
             if (fileInputRef.current) fileInputRef.current.value = "";
 
-            // Call success callback with Cloudinary-like structure for compatibility
+            // Call success callback
             onSuccess(
-                { info: { secure_url: result.filePath } },
+                { info: { secure_url: uploadedFilePath } },
                 { widget: { close: () => { } } }
             );
 

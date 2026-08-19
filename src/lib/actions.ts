@@ -17,6 +17,7 @@ import { getTenantClient } from "./prisma-tenant";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Day } from "@prisma/client";
 import { handleActionError } from "./utils";
+import { deleteBlobFromStorage } from "./azure-storage";
 
 type CurrentState = { success: boolean; error: boolean; messages?: string[] };
 
@@ -1054,6 +1055,24 @@ export const deleteMaterial = async (
 
   const id = data.get("id") as string;
   try {
+    const material = await db.material.findUnique({
+      where: { id: parseInt(id) },
+      select: { filePath: true },
+    });
+
+    if (material?.filePath?.startsWith("/api/files/")) {
+      const parts = material.filePath.replace("/api/files/", "").split("/");
+      if (parts.length >= 3) {
+        const category = parts[0];
+        const orgId = parts[1];
+        const safeFilename = parts.slice(2).join("/");
+        const blobPath = `${orgId}/${category}/${safeFilename}`;
+        await deleteBlobFromStorage(blobPath).catch((e) =>
+          console.warn("Failed to delete blob from Azure Storage:", e)
+        );
+      }
+    }
+
     await db.material.delete({
       where: {
         id: parseInt(id),
