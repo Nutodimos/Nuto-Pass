@@ -6,14 +6,10 @@ import InputField from "../InputField";
 import {
   classSchema,
   ClassSchema,
-  subjectSchema,
-  SubjectSchema,
 } from "@/lib/formValidationSchemas";
 import {
   createClass,
-  createSubject,
   updateClass,
-  updateSubject,
 } from "@/lib/actions";
 import { useFormState } from "react-dom";
 import { Dispatch, SetStateAction, useEffect } from "react";
@@ -40,7 +36,7 @@ const ClassForm = ({
   } = useForm<ClassSchema>({
     resolver: zodResolver(classSchema),
     defaultValues: {
-      gradeId: 1, // Always use the single grade record
+      gradeId: 1,
       supervisorId: data?.supervisorId || relatedData?.teachers?.[0]?.id,
       name: data?.name || "",
       id: data?.id,
@@ -55,8 +51,8 @@ const ClassForm = ({
     }
   );
 
-  const onSubmit = handleSubmit((data) => {
-    formAction(data);
+  const onSubmit = handleSubmit((formData) => {
+    formAction(formData);
   });
 
   const router = useRouter();
@@ -64,14 +60,20 @@ const ClassForm = ({
   useEffect(() => {
     if (state.success) {
       toast.success(`${taxonomy.class} ${type === "create" ? "created" : "updated"} successfully!`);
-      setOpen(false);
-      router.refresh();
+      setTimeout(() => {
+        setOpen(false);
+        router.refresh();
+      }, 100);
     } else if (state.error) {
-      toast.error((state as any).messages ? (state as any).messages.join("\n") : "Something went wrong!");
+      toast.error(
+        (state as any).messages
+          ? (state as any).messages.join("\n")
+          : `Failed to ${type === "create" ? "create" : "update"} ${taxonomy.class.toLowerCase()}.`
+      );
     }
   }, [state, router, type, setOpen, taxonomy.class]);
 
-  const { teachers } = relatedData;
+  const { teachers = [] } = relatedData || {};
 
   return (
     <form className="flex flex-col gap-6" onSubmit={onSubmit}>
@@ -115,7 +117,6 @@ const ClassForm = ({
                 <option
                   value={teacher.id}
                   key={teacher.id}
-                  selected={data && teacher.id === data.supervisorId}
                 >
                   {teacher.name + " " + teacher.surname}
                 </option>

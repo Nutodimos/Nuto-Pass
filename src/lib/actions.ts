@@ -236,14 +236,16 @@ export const createTeacher = async (
   const db = getTenantClient(authCheck.organizationId);
 
   try {
-    const password = data.password?.trim() || data.username;
+    const password = data.password?.trim() || "CPE@Pass2025!";
+    const clerkUsername = data.username.toLowerCase().replace(/[^a-z0-9_.]/g, "_");
+    const clerkEmail = data.email?.trim() || `${clerkUsername}@staff.cpe.edu.ng`;
     const user = await clerkClient().users.createUser({
-      username: data.username,
+      username: clerkUsername,
       password: password,
       firstName: data.name,
       lastName: data.surname,
+      emailAddress: [clerkEmail],
       publicMetadata: { role: "teacher", organizationId: authCheck.organizationId },
-      ...(data.email ? { emailAddress: [data.email] } : {}),
     });
 
     await db.teacher.create({
@@ -257,8 +259,8 @@ export const createTeacher = async (
         address: data.address || null,
         img: data.img || null,
         bloodType: data.bloodType || null,
-        sex: data.sex,
-        birthday: data.birthday,
+        sex: data.sex || null,
+        birthday: data.birthday || null,
         organizationId: authCheck.organizationId,
         subjects: {
           connect: data.subjects?.map((subjectId: string) => ({
@@ -389,15 +391,18 @@ export const createStudent = async (
     }
 
     const resolvedGradeId = data.gradeId || classItem.gradeId;
-    const password = data.password?.trim() || data.username;
+    const password = data.password?.trim() || "CPE@Pass2025!";
+    const formattedMatric = data.username.toLowerCase().replace(/[\/\\]/g, "-").replace(/[^a-z0-9_-]/g, "");
+    const clerkUsername = data.username.toLowerCase().replace(/[^a-z0-9_.]/g, "_");
+    const studentEmail = data.email?.trim() || `${formattedMatric}@students.unilorin.edu.ng`;
 
     const user = await clerkClient().users.createUser({
-      username: data.username,
+      username: clerkUsername,
       password: password,
       firstName: data.name,
       lastName: data.surname,
+      emailAddress: [studentEmail],
       publicMetadata: { role: "student", organizationId: authCheck.organizationId },
-      ...(data.email ? { emailAddress: [data.email] } : {}),
     });
 
     await db.student.create({
@@ -406,13 +411,13 @@ export const createStudent = async (
         username: data.username,
         name: data.name,
         surname: data.surname,
-        email: data.email || null,
+        email: studentEmail,
         phone: data.phone || null,
-        address: data.address || "",
+        address: data.address || null,
         img: data.img || null,
         bloodType: data.bloodType || null,
-        sex: data.sex,
-        birthday: data.birthday,
+        sex: data.sex || null,
+        birthday: data.birthday || null,
         gradeId: resolvedGradeId,
         classId: data.classId,
         organizationId: authCheck.organizationId,
@@ -439,9 +444,10 @@ export const updateStudent = async (
   }
   try {
     try {
+      const clerkUsername = data.username ? data.username.toLowerCase().replace(/[^a-z0-9_.]/g, "_") : undefined;
       await clerkClient().users.updateUser(data.id, {
-        username: data.username,
-        ...(data.password !== "" && { password: data.password }),
+        ...(clerkUsername ? { username: clerkUsername } : {}),
+        ...(data.password !== "" && data.password ? { password: data.password } : {}),
         firstName: data.name,
         lastName: data.surname,
       });
@@ -459,11 +465,11 @@ export const updateStudent = async (
         surname: data.surname,
         email: data.email || null,
         phone: data.phone || null,
-        address: data.address,
+        address: data.address || null,
         img: data.img || null,
         bloodType: data.bloodType || null,
-        sex: data.sex,
-        birthday: data.birthday,
+        sex: data.sex || null,
+        birthday: data.birthday || null,
         gradeId: data.gradeId,
         classId: data.classId,
       },
@@ -1501,3 +1507,4 @@ export const bulkEnrollLevelInCourses = async (
     return handleActionError(err);
   }
 };
+

@@ -14,9 +14,7 @@ import { auth } from "@clerk/nextjs/server";
 import {
   GraduationCap,
   Phone,
-  MapPin,
   Hash,
-  Eye,
   Users,
   ChevronRight,
   BookOpen
@@ -80,9 +78,16 @@ const StudentListPage = async ({
             <div className="w-8 h-8 rounded-lg bg-CPEGold/10 flex items-center justify-center flex-shrink-0">
               <GraduationCap className="w-4 h-4 text-CPEGold" />
             </div>
-            <div className="min-w-0">
-              <p className="text-xs text-gray-400">Level</p>
-              <p className="text-gray-700 font-medium truncate">{student.class.name}</p>
+            <div className="min-w-0 flex-1 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-400">Level</p>
+                <p className="text-gray-700 font-medium truncate">{student.class?.name || "-"}</p>
+              </div>
+              {student.class?.name?.toLowerCase().includes("spill") && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300 shadow-xs">
+                  Spillover
+                </span>
+              )}
             </div>
           </div>
           {student.phone && (
@@ -190,9 +195,7 @@ const StudentListPage = async ({
               </div>
             </div>
             <div className="flex items-center gap-3">
-
-                <TableSearch />
-
+              <TableSearch />
             </div>
           </div>
         </div>
@@ -326,9 +329,7 @@ const StudentListPage = async ({
           </div>
 
           <div className="flex items-center gap-3">
-
-              <TableSearch />
-
+            <TableSearch />
           </div>
         </div>
       </div>

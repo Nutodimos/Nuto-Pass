@@ -34,11 +34,29 @@ const LoginPage = () => {
 
     setLoading(true);
 
+    const rawIdentifier = matricNo.trim();
+    const normalizedIdentifier = rawIdentifier.includes("/")
+      ? rawIdentifier.toLowerCase().replace(/[^a-z0-9_.]/g, "_")
+      : rawIdentifier;
+
     try {
-      const result = await signIn.create({
-        identifier: matricNo,
-        password,
-      });
+      let result;
+      try {
+        result = await signIn.create({
+          identifier: normalizedIdentifier,
+          password,
+        });
+      } catch (firstErr: any) {
+        if (normalizedIdentifier !== rawIdentifier) {
+          // Fallback to raw identifier if normalized failed
+          result = await signIn.create({
+            identifier: rawIdentifier,
+            password,
+          });
+        } else {
+          throw firstErr;
+        }
+      }
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });

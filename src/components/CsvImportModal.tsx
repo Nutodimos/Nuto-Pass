@@ -42,7 +42,7 @@ type CsvImportModalProps = {
 };
 
 const SAMPLE_STUDENT_CSV =
-    "matricNo,name,surname,email,phone,sex,birthday,address\nCSC/2024/001,John,Doe,john@example.com,08012345678,MALE,2000-01-15,123 Main St\nCSC/2024/002,Jane,Smith,jane@example.com,08087654321,FEMALE,2001-05-20,456 Park Ave";
+    "matricNo,name,surname,email,phone,sex,birthday,address\nCSC/2024/001,John,Doe,john@example.com,08012345678,MALE,2000-01-15,123 Main St\nCSC/2024/002,Jane,Smith,,,,,";
 
 const SAMPLE_ENROLL_CSV = "matricNo\nCSC/2024/001\nCSC/2024/002\nCSC/2024/003";
 
@@ -119,8 +119,6 @@ const CsvImportModal = ({ mode, targetId, targetName, students }: CsvImportModal
                 { key: "matricNo", aliases: ["matricno", "matric_no", "username", "id", "admission_no", "studentid"] },
                 { key: "name", aliases: ["name", "firstname", "first_name"] },
                 { key: "surname", aliases: ["surname", "lastname", "last_name"] },
-                { key: "sex", aliases: ["sex", "gender"] },
-                { key: "birthday", aliases: ["birthday", "dob", "birth_date", "date_of_birth"] },
             ];
         }
         if (isEnroll) {
@@ -252,9 +250,9 @@ const CsvImportModal = ({ mode, targetId, targetName, students }: CsvImportModal
                 return;
             }
 
-            csvContent = "matricNo,surname,name,sex,birthday\n" + lines.map((line) => {
+            csvContent = "matricNo,surname,name\n" + lines.map((line) => {
                 const parts = line.split(",").map((p) => p.trim());
-                return `${parts[0]},${parts[1]},${parts[2]},MALE,2000-01-01`;
+                return `${parts[0]},${parts[1]},${parts[2]}`;
             }).join("\n");
         } else if (isLecturerImport) {
             const lines = manualInput
@@ -445,9 +443,9 @@ const CsvImportModal = ({ mode, targetId, targetName, students }: CsvImportModal
                                                 {isStudentImport && (
                                                     <p>
                                                         <span className="font-semibold text-slate-800">Required columns:</span>{" "}
-                                                        <code>matricNo</code>, <code>name</code>, <code>surname</code>, <code>sex</code>, <code>birthday</code> (YYYY-MM-DD)
+                                                        <code>matricNo</code>, <code>name</code>, <code>surname</code>
                                                         <br />
-                                                        <span className="font-semibold text-slate-800">Optional:</span> <code>email</code>, <code>phone</code>, <code>address</code>
+                                                        <span className="font-semibold text-slate-800">Optional:</span> <code>birthday</code> (YYYY-MM-DD), <code>sex</code> (MALE/FEMALE), <code>email</code>, <code>phone</code>, <code>address</code>
                                                     </p>
                                                 )}
                                                 {isLecturerImport && (

@@ -70,11 +70,11 @@ export const studentSchema = z.object({
     .optional()
     .or(z.literal("")),
   phone: z.string().optional(),
-  address: z.string().optional().or(z.literal("")).default(""),
+  address: z.string().optional().or(z.literal("")),
   img: z.string().optional(),
   bloodType: z.string().optional().or(z.literal("")),
-  birthday: z.coerce.date({ message: "Birthday is required!" }),
-  sex: z.enum(["MALE", "FEMALE"], { message: "Sex is required!" }),
+  birthday: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.date().optional()),
+  sex: z.enum(["MALE", "FEMALE"]).optional().or(z.literal("").transform(() => undefined)),
   gradeId: z.coerce.number().optional(),
   classId: z.coerce.number().min(1, { message: "Class/Cohort is required!" }),
 });

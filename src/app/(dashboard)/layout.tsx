@@ -1,9 +1,11 @@
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import BottomTabBar from "@/components/BottomTabBar";
+import IncompleteProfileBanner from "@/components/IncompleteProfileBanner";
 import { OrgMetadataProvider } from "@/components/OrgMetadataProvider";
 import { getOrgContext } from "@/lib/tenant";
 import prisma from "@/lib/prisma-base";
+import { auth } from "@clerk/nextjs/server";
 import type { InstitutionType, OrgMetadata } from "@/types/organization";
 
 // Force dynamic rendering so metadata changes are always reflected
@@ -69,6 +71,43 @@ export default async function DashboardLayout({
   const faviconUrl = metadata?.uiConfig?.faviconUrl;
   const siteTitle = metadata?.uiConfig?.sidebarTitle;
 
+  // Check if current user has an incomplete profile
+  const { userId, sessionClaims } = auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  const missingFields: string[] = [];
+
+  if (userId && role === "student") {
+    try {
+      const student = await prisma.student.findUnique({
+        where: { id: userId },
+        select: { email: true, phone: true, birthday: true, address: true },
+      });
+      if (student) {
+        if (!student.email) missingFields.push("email");
+        if (!student.phone) missingFields.push("phone");
+        if (!student.birthday) missingFields.push("birthday");
+        if (!student.address) missingFields.push("address");
+      }
+    } catch {
+      // Graceful fallback
+    }
+  } else if (userId && role === "teacher") {
+    try {
+      const teacher = await prisma.teacher.findUnique({
+        where: { id: userId },
+        select: { email: true, phone: true, birthday: true, address: true },
+      });
+      if (teacher) {
+        if (!teacher.email) missingFields.push("email");
+        if (!teacher.phone) missingFields.push("phone");
+        if (!teacher.birthday) missingFields.push("birthday");
+        if (!teacher.address) missingFields.push("address");
+      }
+    } catch {
+      // Graceful fallback
+    }
+  }
+
   // Inject CSS custom properties directly on the wrapper div
   const themeVars: React.CSSProperties & Record<string, string> = {
     "--org-primary": primaryColor,
@@ -97,6 +136,9 @@ export default async function DashboardLayout({
         {/* RIGHT - Main Content */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
           <Navbar />
+          {userId && missingFields.length > 0 && (
+            <IncompleteProfileBanner userId={userId} missingFields={missingFields} />
+          )}
           <div className="pb-20 md:pb-0">
             {children}
           </div>

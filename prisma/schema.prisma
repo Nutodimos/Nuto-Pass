@@ -74,10 +74,10 @@ model Student {
   surname     String
   email       String?      @unique
   phone       String?      @unique
-  address     String
+  address     String?
   img         String?
   bloodType   String?
-  sex         UserSex
+  sex         UserSex?
   isActive    Boolean      @default(true)
   createdAt   DateTime     @default(now())
   classId     Int
@@ -87,7 +87,7 @@ model Student {
   attendances  Attendance[]
   submissions  AssignmentSubmission[]
   enrollments  CourseEnrollment[]
-  birthday     DateTime
+  birthday     DateTime?
   biometricId String?      @unique
 
 

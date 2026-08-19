@@ -138,21 +138,65 @@ export async function POST(req: NextRequest) {
                 }
             }
 
-            try {
-                // Create Clerk user with staffId as username and default password
-                const user = await clerkClient().users.createUser({
-                    username: staffId,
-                    password: staffId,
-                    firstName: name,
-                    lastName: surname,
-                    publicMetadata: { role: "teacher", organizationId: organizationId },
-                    ...(email ? { emailAddress: [email] } : {}),
-                });
+            // Sanitize username for Clerk
+            const clerkUsername = staffId.toLowerCase().replace(/[^a-z0-9_.]/g, "_");
+            const defaultPassword = "CPE@Pass2025!";
+            const clerkEmail = email || `${clerkUsername}@staff.cpe.edu.ng`;
 
-                // Create Teacher in database
-                await prisma.teacher.create({
-                    data: {
-                        id: user.id,
+            try {
+                // Create or find Clerk user with sanitized staffId and default password
+                let clerkUserId: string;
+                try {
+                    const user = await clerkClient().users.createUser({
+                        username: clerkUsername,
+                        password: defaultPassword,
+                        firstName: name,
+                        lastName: surname,
+                        emailAddress: [clerkEmail],
+                        publicMetadata: { role: "teacher", organizationId: organizationId },
+                    });
+                    clerkUserId = user.id;
+                } catch (clerkErr: any) {
+                    const byUsername = await clerkClient().users.getUserList({
+                        username: [clerkUsername],
+                    });
+                    if (byUsername.data.length > 0) {
+                        clerkUserId = byUsername.data[0].id;
+                    } else {
+                        const byEmail = await clerkClient().users.getUserList({
+                            emailAddress: [clerkEmail],
+                        });
+                        if (byEmail.data.length > 0) {
+                            clerkUserId = byEmail.data[0].id;
+                        } else {
+                            throw clerkErr;
+                        }
+                    }
+                }
+
+                // Create or update Teacher in database
+                await prisma.teacher.upsert({
+                    where: { username: staffId },
+                    update: {
+                        id: clerkUserId,
+                        name,
+                        surname,
+                        email: email || null,
+                        phone: phone || null,
+                        address: address || null,
+                        sex: sex || null,
+                        birthday: birthday || null,
+                        organizationId: organizationId,
+                        ...(matchedSubjectIds.length > 0
+                            ? {
+                                subjects: {
+                                    connect: matchedSubjectIds.map(id => ({ id })),
+                                },
+                            }
+                            : {}),
+                    },
+                    create: {
+                        id: clerkUserId,
                         username: staffId,
                         name,
                         surname,
@@ -174,7 +218,11 @@ export async function POST(req: NextRequest) {
 
                 results.created++;
             } catch (err: any) {
-                const message = err?.errors?.[0]?.message || err?.message || "Unknown error";
+                const message =
+                    err?.errors?.[0]?.longMessage ||
+                    err?.errors?.[0]?.message ||
+                    err?.message ||
+                    "Unknown error";
                 results.errors.push(`${staffId} — ${message}`);
             }
         }

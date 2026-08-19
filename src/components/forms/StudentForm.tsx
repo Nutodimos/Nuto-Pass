@@ -80,7 +80,7 @@ const StudentForm = ({
   const onSubmit = handleSubmit((formData) => {
     let finalPassword = formData.password;
     if (autoPassword && type === "create") {
-      finalPassword = formData.username;
+      finalPassword = "CPE@Pass2025!";
     }
 
     // Auto-resolve gradeId if not already set
@@ -103,10 +103,16 @@ const StudentForm = ({
   useEffect(() => {
     if (state.success) {
       toast.success(`${taxonomy.student} ${type === "create" ? "created" : "updated"} successfully!`);
-      setOpen(false);
-      router.refresh();
+      setTimeout(() => {
+        setOpen(false);
+        router.refresh();
+      }, 100);
     } else if (state.error) {
-      toast.error((state as any).messages ? (state as any).messages.join("\n") : "Something went wrong!");
+      toast.error(
+        (state as any).messages
+          ? (state as any).messages.join("\n")
+          : `Failed to ${type === "create" ? "create" : "update"} ${taxonomy.student.toLowerCase()}.`
+      );
     }
   }, [state, router, type, setOpen, taxonomy.student]);
 
@@ -156,7 +162,7 @@ const StudentForm = ({
               />
               <span className="flex items-center gap-1.5 font-medium">
                 <KeyRound className="w-4 h-4 text-CPEGold" />
-                Use {idLabel} as default password {usernameVal ? `("${usernameVal}")` : ""}
+                Use default password (&quot;CPE@Pass2025!&quot;)
               </span>
             </label>
 
@@ -227,7 +233,7 @@ const StudentForm = ({
           error={errors.bloodType}
         />
         <InputField
-          label="Birthday"
+          label="Birthday (Optional)"
           name="birthday"
           defaultValue={data?.birthday ? new Date(data.birthday).toISOString().split("T")[0] : ""}
           register={register}

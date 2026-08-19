@@ -10,7 +10,6 @@ import {
   deleteMaterial,
   deleteLesson,
 } from "@/lib/actions";
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
@@ -18,6 +17,16 @@ import { createPortal } from "react-dom";
 import { useFormState } from "react-dom";
 import { toast } from "react-toastify";
 import { FormContainerProps } from "./FormContainer";
+
+import TeacherForm from "./forms/TeacherForm";
+import StudentForm from "./forms/StudentForm";
+import SubjectForm from "./forms/SubjectForm";
+import ClassForm from "./forms/ClassForm";
+import AssignmentForm from "./forms/AssignmentForm";
+import AssignmentSubmissionForm from "./forms/AssignmentSubmissionForm";
+import AnnouncementForm from "./forms/AnnouncementForm";
+import MaterialForm from "./forms/MaterialForm";
+import LessonForm from "./forms/LessonForm";
 
 const deleteActionMap = {
   subject: deleteSubject,
@@ -31,46 +40,6 @@ const deleteActionMap = {
   material: deleteMaterial,
   courseEnrollment: null,
 };
-
-const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
-  ssr: false,
-  loading: () => <h1>Loading...</h1>,
-});
-const StudentForm = dynamic(() => import("./forms/StudentForm"), {
-  ssr: false,
-  loading: () => <h1>Loading...</h1>,
-});
-const SubjectForm = dynamic(() => import("./forms/SubjectForm"), {
-  ssr: false,
-  loading: () => <h1>Loading...</h1>,
-});
-const ClassForm = dynamic(() => import("./forms/ClassForm"), {
-  ssr: false,
-  loading: () => <h1>Loading...</h1>,
-});
-
-const AssignmentForm = dynamic(() => import("./forms/AssignmentForm"), {
-  ssr: false,
-  loading: () => <h1>Loading...</h1>,
-});
-
-const AssignmentSubmissionForm = dynamic(() => import("./forms/AssignmentSubmissionForm"), {
-  ssr: false,
-  loading: () => <h1>Loading...</h1>,
-});
-
-const AnnouncementForm = dynamic(() => import("./forms/AnnouncementForm"), {
-  ssr: false,
-  loading: () => <h1>Loading...</h1>,
-});
-const MaterialForm = dynamic(() => import("./forms/MaterialForm"), {
-  ssr: false,
-  loading: () => <h1>Loading...</h1>,
-});
-const LessonForm = dynamic(() => import("./forms/LessonForm"), {
-  ssr: false,
-  loading: () => <h1>Loading...</h1>,
-});
 
 const forms: {
   [key: string]: (
@@ -128,7 +97,6 @@ const forms: {
       relatedData={relatedData}
     />
   ),
-
   announcement: (setOpen, type, data, relatedData) => (
     <AnnouncementForm
       type={type}

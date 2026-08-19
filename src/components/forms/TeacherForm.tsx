@@ -56,7 +56,7 @@ const TeacherForm = ({
       bloodType: data?.bloodType || "",
       sex: data?.sex || "MALE",
       birthday: data?.birthday ? new Date(data.birthday).toISOString().split("T")[0] : undefined,
-      subjects: data?.subjects?.map((s: any) => typeof s === "object" ? s.id.toString() : s.toString()) || [],
+      subjects: data?.subjects?.map((s: any) => typeof s === "object" ? s?.id?.toString() : s?.toString()).filter(Boolean) || [],
     },
   });
 
@@ -73,7 +73,7 @@ const TeacherForm = ({
   const onSubmit = handleSubmit((formData) => {
     let finalPassword = formData.password;
     if (autoPassword && type === "create") {
-      finalPassword = formData.username;
+      finalPassword = "CPE@Pass2025!";
     }
 
     formAction({
@@ -158,7 +158,7 @@ const TeacherForm = ({
               />
               <span className="flex items-center gap-1.5 font-medium">
                 <KeyRound className="w-4 h-4 text-CPEGold" />
-                Use {idLabel} as default password {usernameVal ? `("${usernameVal}")` : ""}
+                Use default password (&quot;CPE@Pass2025!&quot;)
               </span>
             </label>
 

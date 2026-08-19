@@ -35,10 +35,10 @@ const SubjectForm = ({
       id: data?.id,
       name: data?.name || "",
       title: data?.title || "",
-      credits: data?.credits !== undefined ? Number(data.credits) : undefined,
-      semester: data?.semester !== undefined ? data.semester.toString() : "1",
+      credits: data?.credits !== undefined && data?.credits !== null ? Number(data.credits) : undefined,
+      semester: data?.semester !== undefined && data?.semester !== null ? data.semester.toString() : "",
       level: data?.level !== undefined && data?.level !== null ? data.level.toString() : "",
-      teachers: data?.teachers?.map((t: any) => (typeof t === "object" ? t.id : t.toString())) || [],
+      teachers: data?.teachers?.map((t: any) => (typeof t === "object" ? t?.id : t?.toString())).filter(Boolean) || [],
     },
   });
 
@@ -148,10 +148,10 @@ const SubjectForm = ({
           <select
             className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-gray-50 text-sm text-gray-800 focus:border-CPENavy focus:bg-white focus:outline-none transition-all duration-200"
             {...register("semester")}
-            defaultValue={data?.semester ?? "1"}
           >
-            <option value="1">Harmattan Semester</option>
-            <option value="2">Rain Semester</option>
+            <option value="">Any / Both Semesters</option>
+            <option value="1">Harmattan Semester (1st)</option>
+            <option value="2">Rain Semester (2nd)</option>
           </select>
           {errors.semester?.message && (
             <p className="text-xs text-red-400">

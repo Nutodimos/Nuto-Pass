@@ -8,14 +8,26 @@ import { clerkClient } from "@clerk/nextjs/server";
 import Papa from "papaparse";
 
 type CsvStudentRow = {
-    matricNo: string;
-    name: string;
-    surname: string;
+    matricNo?: string;
+    matric_no?: string;
+    username?: string;
+    id?: string;
+    admission_no?: string;
+    name?: string;
+    firstName?: string;
+    first_name?: string;
+    surname?: string;
+    lastName?: string;
+    last_name?: string;
     email?: string;
     phone?: string;
-    sex: string;
-    birthday: string;
-    address: string;
+    sex?: string;
+    gender?: string;
+    birthday?: string;
+    dob?: string;
+    birth_date?: string;
+    date_of_birth?: string;
+    address?: string;
 };
 
 export async function POST(req: NextRequest) {
@@ -106,7 +118,7 @@ export async function POST(req: NextRequest) {
         };
 
         for (const row of parsed.data) {
-            const matricNo = row.matricNo?.trim();
+            const matricNo = (row.matricNo || row.matric_no || row.username || row.id || row.admission_no)?.trim();
 
             if (!matricNo) {
                 results.errors.push("Row missing matricNo — skipped");
@@ -123,57 +135,96 @@ export async function POST(req: NextRequest) {
                 continue;
             }
 
-            // Validate required fields
-            const name = row.name?.trim();
-            const surname = row.surname?.trim();
-            const sex = row.sex?.trim().toUpperCase();
-            const birthday = row.birthday?.trim();
-            const address = row.address?.trim();
+            // Validate required fields: ONLY matricNo, name, surname
+            const name = (row.name || row.firstName || row.first_name)?.trim();
+            const surname = (row.surname || row.lastName || row.last_name)?.trim();
 
             if (!name || !surname) {
                 results.errors.push(`${matricNo} — missing name or surname`);
                 continue;
             }
 
-            if (sex !== "MALE" && sex !== "FEMALE") {
-                results.errors.push(`${matricNo} — invalid sex (must be MALE or FEMALE)`);
-                continue;
+            // Optional fields
+            const rawSex = (row.sex || row.gender)?.trim().toUpperCase();
+            const sex = rawSex === "MALE" || rawSex === "FEMALE" ? (rawSex as "MALE" | "FEMALE") : undefined;
+
+            const birthdayStr = (row.birthday || row.dob || row.birth_date || row.date_of_birth)?.trim();
+            let parsedBirthday: Date | undefined = undefined;
+            if (birthdayStr) {
+                const parsedDate = new Date(birthdayStr);
+                if (!isNaN(parsedDate.getTime())) {
+                    parsedBirthday = parsedDate;
+                }
             }
 
-            if (!birthday) {
-                results.errors.push(`${matricNo} — missing birthday`);
-                continue;
-            }
+            const email = row.email?.trim() || null;
+            const phone = row.phone?.trim() || null;
+            const address = row.address?.trim() || null;
 
-            const parsedDate = new Date(birthday);
-            if (isNaN(parsedDate.getTime())) {
-                results.errors.push(`${matricNo} — invalid birthday format`);
-                continue;
-            }
+            // Sanitize username and email for Clerk
+            const formattedMatric = matricNo.toLowerCase().replace(/[\/\\]/g, "-").replace(/[^a-z0-9_-]/g, "");
+            const clerkUsername = matricNo.toLowerCase().replace(/[^a-z0-9_.]/g, "_");
+            const defaultPassword = "CPE@Pass2025!";
+            const studentEmail = email || `${formattedMatric}@students.unilorin.edu.ng`;
 
             try {
-                // Create Clerk user with matric no as username and password
-                const user = await clerkClient().users.createUser({
-                    username: matricNo,
-                    password: matricNo,
-                    firstName: name,
-                    lastName: surname,
-                    publicMetadata: { role: "student", organizationId: organizationId },
-                    ...(row.email?.trim() ? { emailAddress: [row.email.trim()] } : {}),
-                });
+                // Create or find Clerk user (Clerk instance requires emailAddress)
+                let clerkUserId: string;
+                try {
+                    const user = await clerkClient().users.createUser({
+                        username: clerkUsername,
+                        password: defaultPassword,
+                        firstName: name,
+                        lastName: surname,
+                        emailAddress: [studentEmail],
+                        publicMetadata: { role: "student", organizationId: organizationId },
+                    });
+                    clerkUserId = user.id;
+                } catch (clerkErr: any) {
+                    // If user already exists in Clerk (e.g. from previous run), look them up
+                    const byUsername = await clerkClient().users.getUserList({
+                        username: [clerkUsername],
+                    });
+                    if (byUsername.data.length > 0) {
+                        clerkUserId = byUsername.data[0].id;
+                    } else {
+                        const byEmail = await clerkClient().users.getUserList({
+                            emailAddress: [studentEmail],
+                        });
+                        if (byEmail.data.length > 0) {
+                            clerkUserId = byEmail.data[0].id;
+                        } else {
+                            throw clerkErr;
+                        }
+                    }
+                }
 
-                // Create Student in database
-                await prisma.student.create({
-                    data: {
-                        id: user.id,
+                // Create or update Student in database
+                await prisma.student.upsert({
+                    where: { username: matricNo },
+                    update: {
+                        id: clerkUserId,
+                        name,
+                        surname,
+                        email: studentEmail,
+                        phone: phone,
+                        address: address,
+                        sex: sex || null,
+                        birthday: parsedBirthday || null,
+                        gradeId: classWithGrade.gradeId,
+                        classId: classId,
+                        organizationId: organizationId,
+                    },
+                    create: {
+                        id: clerkUserId,
                         username: matricNo,
                         name,
                         surname,
-                        email: row.email?.trim() || null,
-                        phone: row.phone?.trim() || null,
-                        address: address || "",
-                        sex: sex as "MALE" | "FEMALE",
-                        birthday: parsedDate,
+                        email: studentEmail,
+                        phone: phone,
+                        address: address,
+                        sex: sex || null,
+                        birthday: parsedBirthday || null,
                         gradeId: classWithGrade.gradeId,
                         classId: classId,
                         organizationId: organizationId,
@@ -183,7 +234,10 @@ export async function POST(req: NextRequest) {
                 results.created++;
             } catch (err: any) {
                 const message =
-                    err?.errors?.[0]?.message || err?.message || "Unknown error";
+                    err?.errors?.[0]?.longMessage ||
+                    err?.errors?.[0]?.message ||
+                    err?.message ||
+                    "Unknown error";
                 results.errors.push(`${matricNo} — ${message}`);
             }
         }

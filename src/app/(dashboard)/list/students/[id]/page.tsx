@@ -82,9 +82,16 @@ const SingleStudentPage = async ({
               <div className="flex-1 text-white min-w-0">
                 <div className="flex flex-row items-start md:items-center justify-between gap-2 mb-2 md:mb-4">
                   <div className="flex flex-col min-w-0">
-                    <h1 className="text-xl md:text-2xl font-bold truncate">
-                      {student.name} {student.surname}
-                    </h1>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h1 className="text-xl md:text-2xl font-bold truncate">
+                        {student.name} {student.surname}
+                      </h1>
+                      {student.class?.name?.toLowerCase().includes("spill") && (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-400/20 text-amber-200 border border-amber-400/40">
+                          Spillover
+                        </span>
+                      )}
+                    </div>
                     <span className="text-sm text-white/80 font-medium truncate">Matric: {student.username}</span>
                   </div>
                   {role === "admin" && (
@@ -125,7 +132,7 @@ const SingleStudentPage = async ({
                       <Calendar className="w-4 h-4 text-white" />
                     </div>
                     <Calendar className="w-3.5 h-3.5 md:hidden text-white shrink-0" />
-                    <span>{new Intl.DateTimeFormat("en-GB").format(student.birthday)}</span>
+                    <span>{student.birthday ? new Intl.DateTimeFormat("en-GB").format(student.birthday) : "-"}</span>
                   </div>
                 </div>
               </div>
